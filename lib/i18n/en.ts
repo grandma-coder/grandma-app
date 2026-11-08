@@ -3434,6 +3434,7 @@ export const en: TranslationKeys = {
   careCircle_step3_what_can: 'What can {{name}} do?',
   careCircle_step4_how_invite: 'How do you want to invite {{name}}? Pick one method below.',
   careCircle_field_email_address: 'Email address',
+  careCircle_field_email_placeholder: 'name@email.com',
   careCircle_field_phone_number: 'Phone number',
   careCircle_link_share_desc: 'A share sheet will open so you can send the invite link via any app.',
   careCircle_field_email: 'Email',

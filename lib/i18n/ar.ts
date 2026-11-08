@@ -6196,4 +6196,5 @@ export const ar: TranslationKeys = {
   a11y_sourcesCount: "{{label}}, {{count}} sources",
   profile_sub_cycleLateOne: "1 day late",
   profile_sub_cycleLate: "{{count}} days late",
+  careCircle_field_email_placeholder: "name@email.com",
 }

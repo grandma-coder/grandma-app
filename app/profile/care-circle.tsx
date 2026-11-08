@@ -1802,7 +1802,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
                   <TextInput
                     value={inviteEmail}
                     onChangeText={setInviteEmail}
-                    placeholder="caregiver@email.com"
+                    placeholder={t('careCircle_field_email_placeholder')}
                     placeholderTextColor={mutedColor}
                     keyboardType="email-address"
                     autoCapitalize="none"

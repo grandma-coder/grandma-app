@@ -3431,6 +3431,7 @@ export interface TranslationKeys {
   careCircle_step3_what_can: string
   careCircle_step4_how_invite: string
   careCircle_field_email_address: string
+  careCircle_field_email_placeholder: string
   careCircle_field_phone_number: string
   careCircle_link_share_desc: string
   careCircle_field_email: string

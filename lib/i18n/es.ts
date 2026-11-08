@@ -6199,4 +6199,5 @@ export const es: TranslationKeys = {
   channelBrowser_emptySubtitle: "Sé la primera: crea un canal para historias de parto, lactancia, recetas o un encuentro local.",
   insights_quotedText: "\"{{text}}\"",
   insights_noArticlesAge: "No hay artículos que coincidan con este filtro para la edad de {{name}}. Prueba con \"Todos\".",
+  careCircle_field_email_placeholder: "nombre@correo.com",
 }
