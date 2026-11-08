@@ -1947,7 +1947,7 @@ export const ptBR: TranslationKeys = {
   cycleOnboarding_q_ttc: "Você está tentando engravidar?",
   cycleOnboarding_q_periodDuration: "Quanto tempo sua menstruação costuma durar?",
   cycleOnboarding_q_conditions: "Alguma condição que devemos saber?",
-  cycleOnboarding_condition_pcos: "SOP",
+  cycleOnboarding_condition_pcos: "SOP (ovários policísticos)",
   cycleOnboarding_condition_endometriosis: "Endometriose",
   cycleOnboarding_condition_other: "Outra",
   cycleOnboarding_condition_preferNotToSay: "Prefiro não dizer",

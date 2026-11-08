@@ -93,11 +93,11 @@ export function ActionDisc({
           {loading ? <ActivityIndicator color={ink} /> : children}
         </View>
       </Animated.View>
-      <Animated.Text style={[styles.label, { color: ink, opacity: pop }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+      <Animated.Text style={[styles.label, { color: ink, opacity: disabled && !loading ? 0.45 : pop }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {label}
       </Animated.Text>
       {underline ? (
-        <Animated.View style={{ opacity: pop, marginTop: 1 }}>
+        <Animated.View style={{ opacity: disabled && !loading ? 0.45 : pop, marginTop: 1 }}>
           <Svg width={62} height={8} viewBox="0 0 60 8">
             <Path d="M2 5 C12 2 20 7 30 4 S48 2 58 5" stroke={ACCENT} strokeWidth={2.6} fill="none" strokeLinecap="round" />
           </Svg>
