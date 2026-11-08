@@ -11,7 +11,7 @@ import { computeCrossInsights } from './kidsCrossInsights'
 import { estimatePercentile, type Sex, type Metric } from './growthStandards'
 import { t, translations } from './i18n'
 import { useLanguageStore } from '../store/useLanguageStore'
-import { dateLoc } from './kpLocale'
+import { dateLoc, numLoc } from './kpLocale'
 
 /**
  * Shared return shape every `build<Pillar>Insight` produces (spec §6): one
@@ -292,11 +292,11 @@ export function buildSleepInsight(analytics: AnalyticsData, ageMonths: number, c
 
   let lead: string
   if (deficit > 0.25) {
-    lead = t('kp_pi_slUnder', { name: childName, avg: sleep.avgHours.toFixed(1), gap: deficit.toFixed(1), target, trend: trendPhrase })
+    lead = t('kp_pi_slUnder', { name: childName, avg: numLoc(sleep.avgHours, 1, 1), gap: numLoc(deficit, 1, 1), target, trend: trendPhrase })
   } else if (deficit < -0.25) {
-    lead = t('kp_pi_slAbove', { name: childName, avg: sleep.avgHours.toFixed(1), target, trend: trendPhrase })
+    lead = t('kp_pi_slAbove', { name: childName, avg: numLoc(sleep.avgHours, 1, 1), target, trend: trendPhrase })
   } else {
-    lead = t('kp_pi_slAt', { name: childName, avg: sleep.avgHours.toFixed(1), target, trend: trendPhrase })
+    lead = t('kp_pi_slAt', { name: childName, avg: numLoc(sleep.avgHours, 1, 1), target, trend: trendPhrase })
   }
 
   const sleepMood = computeCrossInsights(logs, ageMonths).find((c) => c.kind === 'sleep_mood')
@@ -344,7 +344,7 @@ export function buildNutritionInsight(analytics: AnalyticsData, ageMonths: numbe
     const totalFeeds = nutrition.mealFrequency.reduce((a, b) => a + b, 0)
     const loggedDays = nutrition.mealFrequency.filter((m) => m > 0).length
     const avgPerDay = loggedDays > 0 ? totalFeeds / loggedDays : 0
-    lead = t('kp_pi_nuMilk', { avg: avgPerDay.toFixed(1), window })
+    lead = t('kp_pi_nuMilk', { avg: numLoc(avgPerDay, 1, 1), window })
   } else {
     const newFoodsCount = countNewFoods(logs, dateRange)
     const newFoodsPhrase = t(newFoodsCount === 1 ? 'kp_pi_nuNew1' : 'kp_pi_nuNewN', { n: newFoodsCount, window })

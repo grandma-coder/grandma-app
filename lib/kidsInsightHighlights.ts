@@ -7,6 +7,8 @@
 // `analyticsData` are fine (erased at compile time, no runtime dependency).
 import type { AnalyticsData, WellnessScores } from './analyticsData'
 import { getAgeSleepTarget } from './kidsScoring'
+import { t as tNow, translations, type TranslationKey } from './i18n'
+import { numLoc } from './kpLocale'
 
 export type PillarKey = 'nutrition' | 'sleep' | 'mood' | 'health' | 'growth' | 'activity'
 
@@ -20,16 +22,16 @@ export const PILLAR_ORDER: PillarKey[] = ['nutrition', 'sleep', 'mood', 'health'
 // a `/10` value in a sentence. See the honest-scores spec.
 const NARRATIVE_PILLAR_ORDER: PillarKey[] = PILLAR_ORDER.filter((k) => k !== 'health')
 
-// Label-only lookup for narrative sentences. Kept in sync by hand with
-// PILLAR_CONFIG in components/analytics/KidsAnalytics.tsx (which also carries
-// icon/color — UI concerns this pure module intentionally does not import).
-const PILLAR_LABELS: Record<PillarKey, string> = {
-  nutrition: 'Nutrition',
-  sleep: 'Sleep',
-  mood: 'Mood',
-  health: 'Health',
-  growth: 'Growth',
-  activity: 'Activity',
+// Label-only lookup for narrative sentences. A function (not a constant) so
+// the label follows the app language at call time.
+function pillarLabel(key: PillarKey): string {
+  return tNow(`kih_pillar_${key}` as TranslationKey)
+}
+
+/** Lowercase display name for a stored mood value (falls back to the raw value). */
+function moodLabel(raw: string): string {
+  const key = `kids_logForm_mood${raw.charAt(0).toUpperCase()}${raw.slice(1).toLowerCase()}`
+  return key in translations.en ? tNow(key as TranslationKey).toLowerCase() : raw
 }
 
 export type InsightHighlight = { pillar: PillarKey; score: number; reason: string }
@@ -61,8 +63,9 @@ export interface InsightOptions {
   neutral?: boolean
 }
 
-function plural(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`
+/** Picks the `_one` / `_other` key by count and fills `{{count}}`. */
+function pl(base: string, n: number, params: Record<string, string | number> = {}): string {
+  return tNow(`${base}${n === 1 ? '_one' : '_other'}` as TranslationKey, { count: n, ...params })
 }
 
 /**
@@ -76,7 +79,7 @@ export function neutralPillarFact(key: PillarKey, analytics: AnalyticsData, ageM
     case 'sleep': {
       if (a?.sleep?.hasData) {
         const target = getAgeSleepTarget(ageMonths)
-        return `Sleep averaged ${a.sleep.avgHours.toFixed(1)} h a day on logged days — about ${target} h is the usual guide at this age.`
+        return tNow('kih_fact_sleep', { avg: numLoc(a.sleep.avgHours, 1, 1), target })
       }
       break
     }
@@ -84,13 +87,11 @@ export function neutralPillarFact(key: PillarKey, analytics: AnalyticsData, ageM
       const n = a?.nutrition
       if (n?.hasData) {
         const total = n.mealFrequency.reduce((x, y) => x + y, 0)
-        if (n.mode === 'milk') return `Logged ${plural(total, 'feed', 'feeds')}.`
+        if (n.mode === 'milk') return pl('kih_fact_feeds', total)
         const good = (n.eatQuality?.good ?? []).reduce((x, y) => x + y, 0)
         const pct = total > 0 ? Math.round((good / total) * 100) : 0
         // 0% usually means the quality field was skipped, not that nothing was eaten — leave it out.
-        return pct > 0
-          ? `Logged ${plural(total, 'meal', 'meals')}, ${pct}% marked "ate well".`
-          : `Logged ${plural(total, 'meal', 'meals')}.`
+        return pct > 0 ? pl('kih_fact_mealsPct', total, { pct }) : pl('kih_fact_meals', total)
       }
       break
     }
@@ -98,28 +99,28 @@ export function neutralPillarFact(key: PillarKey, analytics: AnalyticsData, ageM
       const moods = a?.mood?.dominantMoods ?? []
       const total = moods.reduce((x, m) => x + m.count, 0)
       if (a?.mood?.hasData && total > 0) {
-        return `Logged ${plural(total, 'mood', 'moods')} — ${moods[0].mood} came up most.`
+        return pl('kih_fact_moods', total, { mood: moodLabel(moods[0].mood) })
       }
       break
     }
     case 'activity': {
       const act = a?.activity
       if (act?.hasData) {
-        return `Active on ${act.activeDays} of the last ${act.dailySessions.length} days.`
+        return tNow('kih_fact_active', { days: act.activeDays, total: act.dailySessions.length })
       }
       break
     }
     case 'growth': {
       const g = a?.growth
       if (g?.hasData) {
-        return `${plural(g.weights.length + g.heights.length, 'growth measurement', 'growth measurements')} on record.`
+        return pl('kih_fact_growth', g.weights.length + g.heights.length)
       }
       break
     }
     case 'health':
       break
   }
-  return `Grandma noticed a pattern in ${PILLAR_LABELS[key].toLowerCase()} — tap to see the week.`
+  return tNow('kih_fact_generic', { pillar: pillarLabel(key).toLowerCase() })
 }
 
 // Confidence floor below which a pillar's score is too thin (too few logged
@@ -157,15 +158,15 @@ export function buildInsightHighlights(
     scores.overall >= 7 ? 'on track' :
     scores.overall >= 5 ? 'developing' :
     'needs attention'
-  const overallPhrase =
-    scores.overall >= 8.5 ? 'is doing excellently' :
-    scores.overall >= 7 ? 'is on track' :
-    scores.overall >= 5 ? 'is developing' :
-    'needs some attention'
+  const overallPhrase = tNow((
+    scores.overall >= 8.5 ? 'kih_phrase_excellent' :
+    scores.overall >= 7 ? 'kih_phrase_onTrack' :
+    scores.overall >= 5 ? 'kih_phrase_developing' :
+    'kih_phrase_attention') as TranslationKey)
 
   const parts: string[] = neutral
-    ? (logCount > 0 ? [`Grandma looked at ${plural(logCount, 'log', 'logs')} for ${childName}.`] : [])
-    : [`${childName} ${overallPhrase} — ${scores.overall.toFixed(1)}/10 overall.`]
+    ? (logCount > 0 ? [pl('kih_looked', logCount, { name: childName })] : [])
+    : [tNow('kih_overall', { name: childName, phrase: overallPhrase, score: numLoc(scores.overall, 1, 1) })]
 
   // When the overall read itself is too thin (few logged days across
   // pillars), don't dress up any single pillar's value as a confident
@@ -174,16 +175,16 @@ export function buildInsightHighlights(
 
   let concern: InsightHighlight | null = null
   if (!lowOverallConf && lowest && scores[lowest].value < 7 && scores[lowest].confidence >= LOW_CONF) {
-    let reason = `${PILLAR_LABELS[lowest]} is the main area to work on at ${scores[lowest].value.toFixed(1)}/10.`
+    let reason = tNow('kih_concern_generic', { pillar: pillarLabel(lowest), score: numLoc(scores[lowest].value, 1, 1) })
     if (lowest === 'sleep' && analytics.sleep.hasData) {
       const target = getAgeSleepTarget(ageMonths)
-      const deficit = (target - analytics.sleep.avgHours).toFixed(1)
-      reason = `Sleep is the main focus — averaging ${analytics.sleep.avgHours.toFixed(1)}h vs ${target}h target (${deficit}h short).`
+      const deficit = numLoc(target - analytics.sleep.avgHours, 1, 1)
+      reason = tNow('kih_concern_sleep', { avg: numLoc(analytics.sleep.avgHours, 1, 1), target, deficit })
     } else if (lowest === 'nutrition' && analytics.nutrition.hasData) {
       const total = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
       const good = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
       const pct = total > 0 ? Math.round((good / total) * 100) : 0
-      reason = `Nutrition needs attention — ${pct}% of meals eaten well this week (score: ${scores.nutrition.value.toFixed(1)}/10).`
+      reason = tNow('kih_concern_nutrition', { pct, score: numLoc(scores.nutrition.value, 1, 1) })
     }
     if (neutral) reason = neutralPillarFact(lowest, analytics, ageMonths)
     parts.push(reason)
@@ -192,14 +193,14 @@ export function buildInsightHighlights(
 
   let strength: InsightHighlight | null = null
   if (!lowOverallConf && highest && scores[highest].value >= 8 && scores[highest].confidence >= LOW_CONF && highest !== lowest) {
-    let reason = `${PILLAR_LABELS[highest]} is a strength at ${scores[highest].value.toFixed(1)}/10.`
+    let reason = tNow('kih_strength_generic', { pillar: pillarLabel(highest), score: numLoc(scores[highest].value, 1, 1) })
     if (highest === 'sleep' && analytics.sleep.hasData) {
-      reason = `Sleep is a strength — ${analytics.sleep.avgHours.toFixed(1)}h avg with great consistency!`
+      reason = tNow('kih_strength_sleep', { avg: numLoc(analytics.sleep.avgHours, 1, 1) })
     } else if (highest === 'nutrition' && analytics.nutrition.hasData) {
       const total = analytics.nutrition.mealFrequency.reduce((a, b) => a + b, 0)
       const good = analytics.nutrition.eatQuality.good.reduce((a, b) => a + b, 0)
       const pct = total > 0 ? Math.round((good / total) * 100) : 0
-      reason = `Nutrition is a strength — ${pct}% of meals eaten well (${scores.nutrition.value.toFixed(1)}/10).`
+      reason = tNow('kih_strength_nutrition', { pct, score: numLoc(scores.nutrition.value, 1, 1) })
     }
     if (neutral) reason = neutralPillarFact(highest, analytics, ageMonths)
     parts.push(reason)
@@ -207,7 +208,7 @@ export function buildInsightHighlights(
   }
 
   if (lowOverallConf) {
-    parts.push(`Log a few more days for a clearer read on ${childName}'s week.`)
+    parts.push(tNow('kih_logMore', { name: childName }))
   }
 
   // Health is reference-only (no score in the narrative above), but a
@@ -216,9 +217,7 @@ export function buildInsightHighlights(
   // chaining because some callers pass partial analytics fixtures.
   const healthConcerns = analytics.health?.concernEvents ?? 0
   if (healthConcerns > 0) {
-    parts.push(neutral
-      ? `${plural(healthConcerns, 'fever, injury or doctor note', 'fever, injury or doctor notes')} logged this week.`
-      : `${healthConcerns} health concern${healthConcerns === 1 ? '' : 's'} flagged this week — worth a look.`)
+    parts.push(pl(neutral ? 'kih_health_neutral' : 'kih_health_flagged', healthConcerns))
   }
 
   let trend: InsightTrend | null = null
@@ -239,9 +238,10 @@ export function buildInsightHighlights(
   if (trendPillar) {
     const direction: 'improving' | 'declining' = scores[trendPillar].trend > 0 ? 'improving' : 'declining'
     const delta = Math.abs(scores[trendPillar].trend)
+    const pillar = pillarLabel(trendPillar)
     parts.push(neutral
-      ? `${PILLAR_LABELS[trendPillar]}: ${direction === 'improving' ? 'steadier' : 'less steady'} than last week.`
-      : `${PILLAR_LABELS[trendPillar]} ${direction} ${delta}% this week.`)
+      ? tNow(direction === 'improving' ? 'kih_trend_steadier' : 'kih_trend_lessSteady', { pillar })
+      : tNow(direction === 'improving' ? 'kih_trend_improving' : 'kih_trend_declining', { pillar, delta }))
     trend = { pillar: trendPillar, direction, delta }
   }
 
@@ -270,35 +270,36 @@ export function buildInsightActions(
     switch (concern.pillar) {
       case 'sleep': {
         const target = getAgeSleepTarget(ageMonths)
-        actions.push(`Aim for ${target}h tonight — try bringing bedtime 30 min earlier.`)
-        actions.push('Keep the last hour calm: dim lights, wind-down routine, no screens.')
+        actions.push(tNow('kih_act_sleep1', { target }))
+        actions.push(tNow('kih_act_sleep2'))
         break
       }
       case 'nutrition':
-        actions.push('Offer a protein + veg combo at the next meal — small portions, no pressure.')
-        actions.push('Plan 2 snack windows between meals so appetite is stronger at mealtime.')
+        actions.push(tNow('kih_act_nutrition1'))
+        actions.push(tNow('kih_act_nutrition2'))
         break
       case 'activity':
-        actions.push('Fit in 30 min of outdoor play — even a short walk counts.')
-        actions.push('Break up screen time with active bursts: dancing, stretches, chase games.')
+        actions.push(tNow('kih_act_activity1'))
+        actions.push(tNow('kih_act_activity2'))
         break
       case 'mood':
-        actions.push('Look for patterns — tired, hungry, overstimulated? Address the trigger first.')
-        actions.push('Carve out 15 min of one-on-one connection time today.')
+        actions.push(tNow('kih_act_mood1'))
+        actions.push(tNow('kih_act_mood2'))
         break
       case 'health':
-        actions.push('Log any symptoms in the calendar so the pattern is easy to spot.')
-        actions.push('If anything persists beyond 48h, book a pediatrician check-in.')
+        actions.push(tNow('kih_act_health1'))
+        actions.push(tNow('kih_act_health2'))
         break
       case 'growth':
-        actions.push('Keep logging weight + height weekly — trend matters more than a single point.')
+        actions.push(tNow('kih_act_growth1'))
         break
     }
   }
   if (trend && trend.direction === 'declining' && (!concern || trend.pillar !== concern.pillar)) {
+    const pillar = pillarLabel(trend.pillar)
     actions.push(neutral
-      ? `${PILLAR_LABELS[trend.pillar]} looks less steady than last week — worth a closer look.`
-      : `${PILLAR_LABELS[trend.pillar]} dropped ${trend.delta}% this week — worth a closer look.`)
+      ? tNow('kih_act_lessSteady', { pillar })
+      : tNow('kih_act_dropped', { pillar, delta: trend.delta }))
   }
   return actions.slice(0, 2)
 }

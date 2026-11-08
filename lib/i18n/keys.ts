@@ -6507,6 +6507,60 @@ export interface TranslationKeys {
   app_journey_add: string
   paywall_autoRenewLegal: string
   kids_analytics_referenceVaccines: string
+  kih_pillar_nutrition: string
+  kih_pillar_sleep: string
+  kih_pillar_mood: string
+  kih_pillar_health: string
+  kih_pillar_growth: string
+  kih_pillar_activity: string
+  kih_fact_sleep: string
+  kih_fact_feeds_one: string
+  kih_fact_feeds_other: string
+  kih_fact_mealsPct_one: string
+  kih_fact_mealsPct_other: string
+  kih_fact_meals_one: string
+  kih_fact_meals_other: string
+  kih_fact_moods_one: string
+  kih_fact_moods_other: string
+  kih_fact_active: string
+  kih_fact_growth_one: string
+  kih_fact_growth_other: string
+  kih_fact_generic: string
+  kih_phrase_excellent: string
+  kih_phrase_onTrack: string
+  kih_phrase_developing: string
+  kih_phrase_attention: string
+  kih_looked_one: string
+  kih_looked_other: string
+  kih_overall: string
+  kih_concern_generic: string
+  kih_concern_sleep: string
+  kih_concern_nutrition: string
+  kih_strength_generic: string
+  kih_strength_sleep: string
+  kih_strength_nutrition: string
+  kih_logMore: string
+  kih_health_neutral_one: string
+  kih_health_neutral_other: string
+  kih_health_flagged_one: string
+  kih_health_flagged_other: string
+  kih_trend_steadier: string
+  kih_trend_lessSteady: string
+  kih_trend_improving: string
+  kih_trend_declining: string
+  kih_act_sleep1: string
+  kih_act_sleep2: string
+  kih_act_nutrition1: string
+  kih_act_nutrition2: string
+  kih_act_activity1: string
+  kih_act_activity2: string
+  kih_act_mood1: string
+  kih_act_mood2: string
+  kih_act_health1: string
+  kih_act_health2: string
+  kih_act_growth1: string
+  kih_act_lessSteady: string
+  kih_act_dropped: string
   common_unit_h: string
   wallet_memories_chipLabel: string
   a11y_openSettings: string
