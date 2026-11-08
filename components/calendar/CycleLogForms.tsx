@@ -987,7 +987,7 @@ export function BbtForm({
   const { accent, tint, ink } = phaseColors(phase, stickers)
 
   // A canonical tenths-°C value → the display string in the user's unit.
-  const showTemp = (t10: number) => cToDisplay(t10 / 10, tempUnit).toFixed(1)
+  const showTemp = (t10: number) => numLoc(cToDisplay(t10 / 10, tempUnit), 1, 1)
 
   async function save() {
     setSaving(true)
