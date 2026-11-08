@@ -16,7 +16,7 @@ Atualizado a cada tarefa. ✅ feito · 🔄 em andamento · ⬜ a fazer · 👤 
 | T10 | Lembretes locais no idioma do app e reagendados ao trocar idioma ✅; push de campanha do admin tem 1 texto só e o idioma do usuário não fica no banco | Claude | ✅ (👤 decidir) |
 | T11 | Convite: link antigo `invite/…` dava 404 → rota de redirecionamento; texto com "Guru Grandma" e masculino → corrigido; nome antigo removido do app | Claude | ✅ |
 | T12 | Inventário de dados para App Privacy → `docs/beta/app-privacy-inventory.md` (👤 decidir Anthropic/Skeleton na política) | Claude | ✅ |
-| T13 | Teste de ponta a ponta com conta nova: 4 jornadas × 3 idiomas | Claude | ⬜ 👤 e-mail de teste |
+| T13 | Conta nova no iPhone SE: filhos+ciclo (EN), gravidez (ES), menopausa (PT), calendário, notas, ajustes. 13 bugs achados e corrigidos (ver known-issues). Não coberto no simulador: convite de cuidadora entre 2 contas, lembretes no aparelho, Apple/Google login | Claude | ✅ |
 | T14 | PR aberto: https://github.com/grandma-coder/grandma-app/pull/2 (👤 merge depois de T15/T16) | Claude | ✅ |
 | T15 | Aplicar migração de segurança + rodar `prod-verification.sql` | Igor | ⬜ |
 | T16 | Build final + TestFlight interno no aparelho | Igor | ⬜ |

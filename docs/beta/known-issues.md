@@ -13,7 +13,7 @@ abrir de novo. Atualizar a cada build.
 | Recompensas / ranking | Não aparecem | Flag desligada no beta |
 | Assinatura | Não há paywall | Flag desligada no beta |
 | Android | Sem build Android | Beta só iOS (decisão pendente) |
-| Ícones de atividade | Natação usa sol, música usa sino, dança usa estrela | Faltam figurinhas próprias |
+| Ícones de atividade | Natação usa sol, música usa sino, dança usa estrela; na menopausa, "café" usa copo e "álcool" usa frutinhas | Faltam figurinhas próprias |
 
 ## Bugs conhecidos em aberto
 
@@ -32,3 +32,13 @@ abrir de novo. Atualizar a cada build.
 - "Cartão de [criança]" com caixas "?" no lugar dos ícones.
 - Textos quebrando com fonte grande do sistema.
 - Chaves de Ajustes inacessíveis para o VoiceOver.
+- Conta nova: a home do ciclo perguntava de novo a data da última menstruação logo depois do onboarding.
+- Conta nova: sem linha em `profiles` (nome, privacidade e unidades não salvavam).
+- Onboarding de filhos com foto-ícone dava tela vermelha; médias de sono/comida dividiam por 7 dias mesmo com 1 registro.
+- Passos "parceiro/cuidadora" no onboarding de filhos e gravidez prometiam convite e só guardavam o nome (removidos).
+- Ajustes mostrava "Dia 4 · Menstruação" quando a home dizia "3 dias de atraso".
+- Data prevista do parto aceitava até 304 dias (máx. agora 280).
+- Espanhol: "viaje"/"proveedor" → "etapa"/"médico"; 19 textos PT/ES com barras invertidas ou em inglês.
+- Escolhas quebrando palavra no meio em iPhone pequeno ("Tranquil-a").
+- Decimais com ponto em PT/ES (8.0 h, 27.8 cm) → vírgula.
+- Gota vermelha (menstruação) usada para água, banho, natação e álcool.
