@@ -2014,7 +2014,7 @@ export const ptBR: TranslationKeys = {
   auth_welcome_rebus: "Seu ciclo [flower], sua gravidez [heart], seus filhos [baby]. Num app só [phone].",
   auth_startHere: "Começar",
   auth_signInError: "Erro de entrada",
-  auth_welcome_back: "bem-vinda de volta, querida.",
+  auth_welcome_back: "de volta, querida.",
   auth_welcome_waiting: "Grandma estava esperando.",
   auth_orSignInEmail: "ou entre com email",
   auth_emailLabel: "EMAIL",

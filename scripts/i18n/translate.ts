@@ -37,6 +37,7 @@ function systemPrompt(lang: string): string {
     'Keep every {{param}} exactly as written (same name, braces). Keep numbers, units, doses, ranges, percentages, drug names, organisation names (WHO, ACOG, NHS, CDC…) and the name "Grandma" exactly.',
     'Medical facts must be translated faithfully: do not add, soften, strengthen or drop any claim. Keep \\n line breaks where they are.',
     'Never call the body "normal". No scores, no pressure.',
+    'Some titles are split across keys and shown one after the other (e.g. "Welcome" then "back, dear."). A fragment stays a fragment: translate only its own words, never repeat the previous part.',
     'Input is a JSON object of key → English. Reply with ONLY a JSON object with exactly the same keys and the translated strings as values.',
   ].join('\n')
 }
