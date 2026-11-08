@@ -13,7 +13,7 @@ const BLOB_STICKER: Partial<Record<CharacterName, SiteStickerName>> = {
   ovulation: 'egg', nutrition: 'avocado', night: 'moon', heartbeat: 'heart', kick: 'foot',
   contraction: 'stopwatch', baby: 'baby', sleep: 'zz', feeding: 'bottle', growth: 'ruler',
   vaccine: 'syringe', community: 'house', selfcare: 'flower', health: 'thermo', star: 'star',
-  heart: 'heart', water: 'drop', sparkle: 'star', sun: 'sun', gem: 'plum', crown: 'owl',
+  heart: 'heart', water: 'glass', sparkle: 'star', sun: 'sun', gem: 'plum', crown: 'owl',
   photo: 'camera',
 }
 

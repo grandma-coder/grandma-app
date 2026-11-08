@@ -157,8 +157,8 @@ const kitStyles = StyleSheet.create({
 
 // Site look: Character concept → site sticker (falls back to the Character blob).
 const SITE_FOR_BLOB: Partial<Record<CharacterName, SiteStickerName>> = {
-  sleep: 'moon', night: 'moon', nutrition: 'avocado', calories: 'avocado', water: 'drop', temperature: 'thermo',
-  feeding: 'bottle', milk: 'bottle', diaper: 'diaper', potty: 'diaper', bath: 'drop', baby: 'baby',
+  sleep: 'moon', night: 'moon', nutrition: 'avocado', calories: 'avocado', water: 'glass', temperature: 'thermo',
+  feeding: 'bottle', milk: 'bottle', diaper: 'diaper', potty: 'diaper', bath: 'cloud', baby: 'baby',
   medicine: 'syringe', vaccine: 'syringe', heartbeat: 'heart', checkup: 'doc', exam: 'doc',
   period: 'drop', ovulation: 'egg', kick: 'shoe', ultrasound: 'camera', growth: 'ruler', activity: 'shoe',
   star: 'star', sparkle: 'star', sun: 'flower', heart: 'heart', health: 'heart',

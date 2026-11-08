@@ -5273,7 +5273,7 @@ function ActivityDetailModal({ visible, onClose, caloriesTotal, caloriesTarget, 
                   {[
                     { Icon: Baby, sticker: 'heart' as const, value: feedingBreast.toLocaleString(dateLoc()), label: tNow('kids_home_feeding_modal_breast'), fill: StickerPalette.pinkSoft, accent: StickerPalette.pink, tilt: -2 },
                     { Icon: Milk, sticker: 'bottle' as const, value: feedingBottle.toLocaleString(dateLoc()), label: tNow('kids_home_feeding_modal_bottle'), fill: StickerPalette.blueSoft, accent: StickerPalette.blue, tilt: 2 },
-                    { Icon: Droplets, sticker: 'drop' as const, value: feedingMl > 0 ? `${feedingMl.toLocaleString(dateLoc())}ml` : '—', label: tNow('kids_home_feeding_modal_total_vol'), fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
+                    { Icon: Droplets, sticker: 'bottle' as const, value: feedingMl > 0 ? `${feedingMl.toLocaleString(dateLoc())}ml` : '—', label: tNow('kids_home_feeding_modal_total_vol'), fill: StickerPalette.peachSoft, accent: StickerPalette.peach, tilt: -1.5 },
                   ].map((card, i) => (
                     <View
                       key={i}

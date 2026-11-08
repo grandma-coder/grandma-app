@@ -69,7 +69,7 @@ export function BirthTypeCard({ birthType, onPress }: BirthTypeCardProps) {
   const siteSticker: SiteStickerName =
     birthType.id === 'home-birth' ? 'house'
     : birthType.sticker === 'csection' || birthType.sticker === 'cross' ? 'doc'
-    : birthType.sticker === 'water' || birthType.sticker === 'drop' ? 'drop'
+    : birthType.sticker === 'water' || birthType.sticker === 'drop' ? 'cloud'
     : birthType.sticker === 'leaf' ? 'leaf'
     : 'heart'
 

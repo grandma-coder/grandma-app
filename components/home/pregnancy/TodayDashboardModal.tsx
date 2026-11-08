@@ -381,7 +381,7 @@ function CalmBody(p: {
 
       <FadeUp index={i++}>
         <Divider />
-        <Row sticker="drop" label={t('pregnancy_todayDash_labelHydration')} value={`${p.waterVal}/8`} sub={t('pregnancy_dashboard_perEight')} />
+        <Row sticker="glass" label={t('pregnancy_todayDash_labelHydration')} value={`${p.waterVal}/8`} sub={t('pregnancy_dashboard_perEight')} />
         <View style={styles.dropletRow}>
           {Array.from({ length: 8 }, (_, d) => (
             <Droplet key={d} filled={d < p.waterVal} fill={getModeColorSoft('kids')} muted={colors.borderStrong} ink={ink} />

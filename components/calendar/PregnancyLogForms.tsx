@@ -362,10 +362,10 @@ const APPOINTMENT_STICKER: Record<string, SiteStickerName> = {
   'Group B strep': 'otest', Specialist: 'heart', Other: 'pencil',
 }
 const EXERCISE_STICKER: Record<string, SiteStickerName> = {
-  Yoga: 'flower', Walk: 'shoe', Swim: 'drop', Stretching: 'leaf', Pilates: 'star', Other: 'pencil',
+  Yoga: 'flower', Walk: 'shoe', Swim: 'sun', Stretching: 'leaf', Pilates: 'star', Other: 'pencil',
 }
 const NESTING_STICKER: Record<string, SiteStickerName> = {
-  Nursery: 'crib', Cleaning: 'drop', Laundry: 'bodysuit', Shopping: 'stroller', Organizing: 'books', Other: 'pencil',
+  Nursery: 'crib', Cleaning: 'house', Laundry: 'bodysuit', Shopping: 'stroller', Organizing: 'books', Other: 'pencil',
 }
 const BIRTH_PREP_STICKER: Record<string, SiteStickerName> = {
   'Hospital bag': 'backpack', 'Birth plan': 'doc', Classes: 'brain', Postpartum: 'flower',

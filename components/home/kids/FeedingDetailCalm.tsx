@@ -31,7 +31,7 @@ const GROUP: Record<string, { sticker: SiteStickerName; tone: string }> = {
   grain: { sticker: 'corn', tone: stickers.peachSoft },
   protein: { sticker: 'egg', tone: stickers.pinkSoft },
   dairy: { sticker: 'bottle', tone: stickers.blueSoft },
-  drink: { sticker: 'drop', tone: stickers.blueSoft },
+  drink: { sticker: 'glass', tone: stickers.blueSoft },
   snack: { sticker: 'rasp', tone: stickers.lilacSoft },
   mixed: { sticker: 'avocado', tone: stickers.greenSoft },
 }
@@ -147,7 +147,7 @@ export function FeedingDetailCalm(p: FeedingDetailCalmProps) {
           <View style={styles.stats}>
             {p.feedingBreast > 0 ? <Stat sticker="heart" value={`${p.feedingBreast}`} label={t('feedCalm_breast')} /> : null}
             {p.feedingBottle > 0 ? <Stat sticker="bottle" value={`${p.feedingBottle}`} label={t('feedCalm_bottle')} /> : null}
-            {perBottle > 0 ? <Stat sticker="drop" value={`${perBottle} ml`} label={t('feedCalm_avgBottle')} /> : null}
+            {perBottle > 0 ? <Stat sticker="bottle" value={`${perBottle} ml`} label={t('feedCalm_avgBottle')} /> : null}
           </View>
         </FadeUp>
       ) : null}

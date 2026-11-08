@@ -28,7 +28,8 @@ export const TRIGGER_SYMPTOMS = new Set(['hot_flash', 'night_sweat'])
 
 export const TRIGGER_STICKER: Record<MenopauseTrigger, SiteStickerName> = {
   coffee: 'glass',
-  alcohol: 'drop',
+  // Red drop is reserved for period/bleeding. Grape-like cluster until a wine/coffee sticker exists.
+  alcohol: 'rasp',
   spicy_food: 'flame',
   stress: 'brain',
   warm_room: 'sun',

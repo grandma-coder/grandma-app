@@ -328,7 +328,7 @@ function formatLogValue(log: PregnancyCalendarLog): string {
 // (non-diffuse) rendering; every diffuse path keeps its own primitives.
 
 const PREG_LOG_STICKER: Record<string, SiteStickerName> = {
-  mood: 'face3', symptom: 'thermo', vitamins: 'leaf', water: 'drop', sleep: 'moon',
+  mood: 'face3', symptom: 'thermo', vitamins: 'leaf', water: 'glass', sleep: 'moon',
   exercise: 'shoe', kick_count: 'baby', weight: 'ruler', appointment: 'cal', exam_result: 'doc',
   nutrition: 'avocado', kegel: 'flower', nesting: 'house', birth_prep: 'backpack', contraction: 'flame',
   // canonical journey map wins — one sticker per log type everywhere

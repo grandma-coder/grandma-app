@@ -28,7 +28,7 @@ import {
 const SCREEN_W = Dimensions.get('window').width
 
 const SITE_STICKER: Record<'weight' | 'water' | 'sleep' | 'exercise', SiteStickerName> = {
-  weight: 'me', water: 'drop', sleep: 'moon', exercise: 'shoe',
+  weight: 'me', water: 'glass', sleep: 'moon', exercise: 'shoe',
 }
 
 export type SimpleLogType = 'weight' | 'water' | 'sleep' | 'exercise'
