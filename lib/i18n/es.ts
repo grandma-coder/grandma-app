@@ -2080,7 +2080,7 @@ export const es: TranslationKeys = {
   onboardingJourney_heading1: "¿En qué etapa",
   onboardingJourney_heading2: "estás?",
   onboardingJourney_addSubtitle: "Tus datos existentes permanecen exactamente como están.",
-  onboardingJourney_subtitle: "Elige el que se ajuste a hoy. Puedes cambiar en cualquier momento.",
+  onboardingJourney_subtitle: "Elige la que se ajuste a hoy. Puedes cambiar en cualquier momento.",
   onboardingJourney_activeBadge: "Activo",
   onboardingJourney_addCta: "Agregar etapa →",
   onboardingTransition_pregnancy_heading: "Ahora, hablemos de\ntu pequeño en camino",

@@ -22,6 +22,7 @@ abrir de novo. Atualizar a cada build.
 | Guia de parto | Trecho editado pelo admin pode aparecer em inglês | Tradutor do servidor (`translate-content`) fora do ar; conteúdo embutido está traduzido |
 | Notificações antigas | Contas antigas podem ter notificações gravadas em inglês | Só contas criadas antes da correção; limpeza pendente |
 | Onboarding do ciclo | Condições e suplementos não ficam salvos quando a data da última menstruação é "não sei" | Precisa de coluna nova no banco |
+| Onboarding (nome) | No campo de nome vazio, o texto de exemplo aparece mais baixo que o cursor (iOS). O texto digitado fica no lugar certo | Cosmético; 3 hipóteses testadas (altura fixa, autoFocus, letterSpacing) sem sucesso |
 | Sem internet | Registro sem conexão mostra erro e não fica pendente para reenviar | Sem fila offline |
 | Vila (marketplace) | Anúncio "CRIB" de teste do Igor, com imagem em inglês, aparece para todos | Apagar anúncios de teste antes do beta |
 | Círculo de Cuidados | Convite falha com "Seu círculo de cuidado está cheio" mesmo sem ninguém no círculo | Migração `20261102200000_paywall_flag` faltando em produção (T15) |
