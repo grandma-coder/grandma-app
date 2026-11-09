@@ -22,7 +22,7 @@
   "privacy": {
     "metaTitle": "Privacy Policy | Grandma",
     "title": "Privacy Policy",
-    "updated": "Last updated · October 30, 2026",
+    "updated": "Last updated · November 9, 2026",
     "note": "This is the authoritative version.",
     "intro": "Your privacy matters to us. This policy explains what data we collect, how we use it, and how you can control it.",
     "sections": [
@@ -30,7 +30,7 @@
         "heading": "What We Collect",
         "paragraphs": [
           "Grandma collects the information you provide directly: your email address, name, and any health data you choose to log (cycle information, pregnancy details, child growth data, symptoms, notes).",
-          "We also collect basic usage data to improve the app experience, including which features you use and how often. We do not track your location or access your contacts."
+          "We do not use analytics or advertising tools, and we do not track you across other apps or websites. We do not access your device's location or your contacts. If you type a city or address in your profile, we store that text."
         ]
       },
       {
@@ -43,14 +43,21 @@
       {
         "heading": "AI Processing",
         "paragraphs": [
-          "Grandma is powered by Claude, Anthropic's AI assistant. When you chat with Guru Grandma, your messages are sent to Anthropic's API for processing. Anthropic does not use your conversations to train their models when accessed via API.",
-          "Your health data may be included in chat context to provide personalized responses. You can disable this in Settings."
+          "Some features use Claude, Anthropic's AI model. When you chat with Grandma, scan a meal or an exam, read personalised insights, or use automatic translation, the text, photo or summary of your logs needed for that feature is sent to Anthropic's API. Anthropic does not use data sent through its API to train its models.",
+          "This only happens when you use one of these features. Your health data may be included in chat context to give personalised answers; you can turn this off in Settings."
         ]
       },
       {
         "heading": "Payment Processing",
         "paragraphs": [
           "Payments are processed through RevenueCat, which handles subscriptions across iOS and Android. We do not store your payment card details — all payment processing is handled by Apple Pay, Google Pay, or RevenueCat's secure payment infrastructure."
+        ]
+      },
+      {
+        "heading": "Service Providers",
+        "paragraphs": [
+          "We share data only with the providers we need to run Grandma, and only for that purpose. We never sell your data.",
+          "Supabase stores your account, logs and photos. Anthropic processes the AI features described above. Sentry receives technical error reports, without your email, IP address or screen content. OpenStreetMap (Nominatim) receives the text you type when searching for a city or address. Expo delivers push notifications using your device's notification token. Apple and Google handle sign-in with Apple or Google when you choose it."
         ]
       },
       {
@@ -108,7 +115,7 @@
   "terms": {
     "metaTitle": "Terms of Service | Grandma",
     "title": "Terms of Service",
-    "updated": "Last updated · May 15, 2026",
+    "updated": "Last updated · November 9, 2026",
     "note": "This is the authoritative version.",
     "intro": "By using Grandma, you agree to these terms. Please read them carefully.",
     "sections": [
