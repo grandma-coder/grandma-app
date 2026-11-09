@@ -60,6 +60,7 @@ import { HankenGrotesk_700Bold } from '@expo-google-fonts/hanken-grotesk/700Bold
 import { HankenGrotesk_700Bold_Italic } from '@expo-google-fonts/hanken-grotesk/700Bold_Italic'
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
+import { restoreJourneys } from '../lib/restoreJourneys'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
 import { useConsentStore } from '../store/useConsentStore'
@@ -227,10 +228,6 @@ export default function RootLayout() {
   const devActive = useDevStore((s) => s.active)
 
   const setChildren = useChildStore((s) => s.setChildren)
-  // Boot path uses setModeUnsafe because the coerce below runs the same
-  // tick as setBehaviors() — the guard would race against the just-set
-  // enrolled list. Coerce safety is enforced manually below.
-  const setMode = useModeStore((s) => s.setModeUnsafe)
   const enrolledBehaviors = useBehaviorStore((s) => s.enrolledBehaviors)
   const behaviorHydrated = useBehaviorStore((s) => s.hydrated)
   // Gate rendering on mode hydration too — otherwise the tab layout renders
@@ -413,20 +410,11 @@ export default function RootLayout() {
       } else if (!behErr) {
         authLog(`[auth] behaviors found: ${dbBehaviors?.length ?? 0}`)
       }
-      const localBehaviors = useBehaviorStore.getState().enrolledBehaviors
       const serverTypes: ('pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause')[] =
         dbBehaviors?.map((b: any) => behaviorFromDbType(b.type)) ?? []
-      if (localBehaviors.length === 0 && serverTypes.length > 0) {
-        useBehaviorStore.getState().setBehaviors(serverTypes)
-      }
-      // Coerce active mode into something the user is actually enrolled in.
-      // Prevents the home screen from rendering Kids when the user has
-      // only Pregnancy enrolled (or vice versa) after a fresh install.
-      const enrolledAfter = useBehaviorStore.getState().enrolledBehaviors
-      const currentMode = useModeStore.getState().mode
-      if (enrolledAfter.length > 0 && !enrolledAfter.includes(currentMode)) {
-        setMode(enrolledAfter[0] as any)
-      }
+      // Restore enrollment if the device has none, coerce the active mode into an
+      // enrolled journey, and keep the journey switcher on that same journey.
+      restoreJourneys(serverTypes)
 
       // ─── Children via child_caregivers join ──────────────────────────
       const { data: links, error: linksErr } = linksRes as any
@@ -608,7 +596,7 @@ export default function RootLayout() {
       clearTimeout(safety)
       subscription.unsubscribe()
     }
-  }, [setChildren, setMode])
+  }, [setChildren])
 
   // ─── Route guard ──────────────────────────────────────────────────────────
   // Onboarding is complete when user has enrolled behaviors (works for all
