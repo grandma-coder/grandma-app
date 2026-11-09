@@ -522,7 +522,7 @@ export const es: TranslationKeys = {
   foodPhotoEntry_title: "Registrar una Comida",
   foodPhotoEntry_ratingLabel: "¿Cuánto les gustó?",
   tabFan_kicker: "· menú ·",
-  tabFan_whereTo: "a dónde ir, ",
+  tabFan_whereTo: "¿a dónde ir, ",
   tabFan_pickCorner: "elige una esquina",
   preg_contractions_title: "CRONÓMETRO DE CONTRACCIONES",
   preg_contractions_subtitle: "Registra el tiempo y la duración entre contracciones",
