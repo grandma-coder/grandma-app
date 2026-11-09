@@ -64,6 +64,7 @@ import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import type { MenopauseStage } from '../../../lib/menopauseStage'
 import { menopauseGroupLabel } from '../../../components/menopause/menopauseIcons'
 import { useTranslation, t as tNow } from '../../../lib/i18n'
+import { useConsentStore } from '../../../store/useConsentStore'
 import {
   ALL_MENOPAUSE_SYMPTOMS,
   menopauseSymptomLabel,
@@ -265,6 +266,10 @@ export default function MenopauseOnboarding() {
         }
         if (parentName) profilePayload.name = parentName
         if (parentDob) profilePayload.dob = parentDob
+        // Same consent record the other three flows write — a menopause-only user
+        // otherwise has no consented_at on the server.
+        const consentedAt = useConsentStore.getState().consentedAt
+        if (consentedAt) profilePayload.consented_at = consentedAt
         const { error: profileErr } = await supabase
           .from('profiles')
           .upsert(profilePayload, { onConflict: 'id' })
