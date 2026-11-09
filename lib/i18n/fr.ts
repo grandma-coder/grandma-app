@@ -6288,4 +6288,5 @@ export const fr: TranslationKeys = {
   kih_act_lessSteady: "{{pillar}} looks less steady than last week — worth a closer look.",
   kih_act_dropped: "{{pillar}} dropped {{delta}}% this week — worth a closer look.",
   greeting_noName: "dear",
+  kidsTile_moodLogs_one: "1 point humeur",
 }

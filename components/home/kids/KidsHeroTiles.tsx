@@ -244,7 +244,7 @@ export function KidsHeroTiles(p: KidsHeroTilesProps) {
               )
             })}
           </View>
-          <Text style={subStyle}>{hasMood ? t('kidsTile_moodLogs', { n: moodTotal }) : t('kids_home_tile_tap_to_log')}</Text>
+          <Text style={subStyle}>{hasMood ? t(moodTotal === 1 ? 'kidsTile_moodLogs_one' : 'kidsTile_moodLogs', { n: moodTotal }) : t('kids_home_tile_tap_to_log')}</Text>
           </FadeIn>}
         </Tile>
       </View>

@@ -990,6 +990,7 @@ export const ptBR: TranslationKeys = {
   kidsTile_ofDay: "de {{n}} por dia",
   kidsTile_activeDays: "{{a}} de {{d}} dias ativos",
   kidsTile_moodLogs: "{{n}} registros",
+  kidsTile_moodLogs_one: "1 registro",
   kids_home_mood_mostly: "Principalmente {{label}}",
   kids_home_mood_tap_details: "Toque para detalhes",
   kids_home_mood_empty_title: "Nenhum humor registrado ainda",

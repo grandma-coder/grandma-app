@@ -1111,6 +1111,7 @@ export const en: TranslationKeys = {
   kidsTile_ofDay: "of {{n}} a day",
   kidsTile_activeDays: "{{a}} of {{d}} days active",
   kidsTile_moodLogs: "{{n}} check-ins",
+  kidsTile_moodLogs_one: "1 check-in",
   kids_home_mood_mostly: 'Mostly {{label}}',
   kids_home_mood_tap_details: 'Tap for details',
   kids_home_mood_empty_title: 'No moods yet',
