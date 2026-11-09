@@ -44,6 +44,8 @@ import { CycleLogConfirm } from './CycleLogConfirm'
 import { useUnitsStore } from '../../../store/useUnitsStore'
 import { cToDisplay, kgToDisplay } from '../../../lib/units'
 import { isFutureDate } from '../../../lib/futureDate'
+import { useIsMinor } from '../../../hooks/useIsMinor'
+import { MINOR_HIDDEN_CYCLE_LOGS } from '../../../lib/ageRules'
 
 /** Chip key → the cycle_logs sheet it opens. */
 type CycleSheetType =
@@ -113,7 +115,9 @@ export function CycleTodaySummaryCard({ phase, bare = false, date, onLoggingActi
   const [pickerOpen, setPickerOpen] = useState(false)
   const enabledKeys = useCycleQuickLogStore((s) => s.enabledKeys)
   const quickHydrated = useCycleQuickLogStore((s) => s.hydrated)
-  const activeKeys = !bare && quickHydrated ? enabledKeys : DEFAULT_CYCLE_QUICK_LOG_KEYS
+  const minor = useIsMinor()
+  const activeKeys = (!bare && quickHydrated ? enabledKeys : DEFAULT_CYCLE_QUICK_LOG_KEYS)
+    .filter((k) => !(minor && MINOR_HIDDEN_CYCLE_LOGS.has(cycleQuickLogByKey(k)?.sheet ?? '')))
   useEffect(() => {
     void supabase.auth.getSession().then(({ data: { session } }) =>
       setUserId(session?.user.id),

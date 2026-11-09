@@ -36,6 +36,7 @@ import { StickerPalette } from '../../components/stickers/BrandStickers'
 import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
+import { useIsMinor } from '../../hooks/useIsMinor'
 
 // ─── Collage Strip constants ───────────────────────────────────────────────
 const STRIP_HEIGHT = 84
@@ -161,7 +162,8 @@ function CenterTabButton() {
   // Daily Rewards is behind the remote daily_rewards flag; off = not in the menu.
   const rewardsOn = useDailyRewardsEnabled()
   // AI insights (generate-insights → Claude) ride the same flag as the chat — no AI cost while it's off.
-  const items = WHEEL_ITEMS.filter((it) => (it.id !== 'chat' || chatOn) && (it.id !== 'insights' || chatOn) && (it.id !== 'rewards' || rewardsOn))
+  const minor = useIsMinor()
+  const items = WHEEL_ITEMS.filter((it) => (it.id !== 'chat' || chatOn) && (it.id !== 'insights' || chatOn) && (it.id !== 'rewards' || rewardsOn) && !(minor && (it.id === 'garage' || it.id === 'community')))
   // Aurora swirl — a slow continuous rotation of the pastel bloom field behind
   // the menu, so it drifts like the reference gradient instead of sitting flat.
   const auroraSpin = useRef(new Animated.Value(0)).current

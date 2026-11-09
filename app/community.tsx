@@ -24,10 +24,12 @@ import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { useModeStore } from '../store/useModeStore'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '../lib/notifications'
+import { Redirect } from 'expo-router'
+import { useIsMinor } from '../hooks/useIsMinor'
 
 type CommunityTab = 'channels' | 'anonymous'
 
-export default function CommunityScreen() {
+function CommunityScreenInner() {
   const { colors, font } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -176,3 +178,11 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 14, letterSpacing: 0.1 },
   explainer: { fontSize: 12.5, lineHeight: 17, textAlign: 'center', paddingHorizontal: 32, marginBottom: 12 },
 })
+
+// Under-18s don't get the marketplace / community (lib/ageRules). A wrapper keeps the inner
+// screen's hook order stable while the profile (and so the age) loads.
+export default function CommunityScreen() {
+  const minor = useIsMinor()
+  if (minor) return <Redirect href="/(tabs)" />
+  return <CommunityScreenInner />
+}

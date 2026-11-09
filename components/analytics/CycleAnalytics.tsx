@@ -62,6 +62,7 @@ import { regularityWord, regularityWordKey, moodWord, moodWordKey } from '../../
 import { buildCycleNote } from '../../lib/grandmaNotes/cycle'
 import { GrandmaNote, GrandmaNotesTitle, NotesDetailsEyebrow } from '../notes/GrandmaNote'
 import { SkeletonChartSection, SkeletonStatRows } from './shared/AnalyticsSkeleton'
+import { useIsMinor } from '../../hooks/useIsMinor'
 
 /** Warm phase copy keyed by cycle phase — resolved through t() so it localizes. */
 const MONO = 'SpaceMono_400Regular'
@@ -219,6 +220,7 @@ export function CycleAnalytics() {
   // New signals — BBT, cervical mucus, intercourse (surfaced from logs that were
   // previously collected but never shown). Intercourse only surfaces for TTC.
   const isTTC = intent === 'ttc'
+  const minor = useIsMinor()
   const bbtLatest = bbt?.series.length ? bbt.series[bbt.series.length - 1].temp : null
   const bbtLabel = bbtLatest != null ? `${numLoc(cToDisplay(bbtLatest, tempUnitPref), 1, 1)}${tempLabel(tempUnitPref)}` : '—'
   const bbtSub = bbt?.shiftDay
@@ -455,7 +457,7 @@ export function CycleAnalytics() {
               onPress={() => setDetailType('mood')}
             />
           )}
-          {isTTC && (
+          {isTTC && !minor && (
             <GridTile
               tint={stickers.pinkSoft}
               sticker={<Heart size={22} fill={stickers.coral} />}

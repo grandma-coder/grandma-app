@@ -17,6 +17,8 @@ import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from '../../calendar/DiffuseLogT
 import { CYCLE_QUICK_LOGS } from '../../../lib/cycleQuickLogs'
 import { useCycleQuickLogStore } from '../../../store/useCycleQuickLogStore'
 import { QuickLogPickerGrid, type QuickLogGridItem } from '../QuickLogPickerGrid'
+import { useIsMinor } from '../../../hooks/useIsMinor'
+import { MINOR_HIDDEN_CYCLE_LOGS } from '../../../lib/ageRules'
 
 interface Props {
   visible: boolean
@@ -91,7 +93,8 @@ export function CycleQuickLogPicker({ visible, onClose }: Props) {
     onClose()
   }
 
-  const items: QuickLogGridItem[] = CYCLE_QUICK_LOGS.map((q) => {
+  const minor = useIsMinor()
+  const items: QuickLogGridItem[] = CYCLE_QUICK_LOGS.filter((q) => !(minor && MINOR_HIDDEN_CYCLE_LOGS.has(q.sheet))).map((q) => {
     const s = blobFor(q.sheet, themeStickers, diffuse)
     return {
       key: q.key,

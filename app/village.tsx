@@ -21,8 +21,10 @@ import { GarageScreen } from '../components/connections/GarageScreen'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '../lib/notifications'
 import { useTranslation } from '../lib/i18n'
+import { Redirect } from 'expo-router'
+import { useIsMinor } from '../hooks/useIsMinor'
 
-export default function VillageScreen() {
+function VillageScreenInner() {
   const { colors } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -95,3 +97,11 @@ const styles = StyleSheet.create({
   },
   notifBadgeText: { fontSize: 9, fontWeight: '800' },
 })
+
+// Under-18s don't get the marketplace / community (lib/ageRules). A wrapper keeps the inner
+// screen's hook order stable while the profile (and so the age) loads.
+export default function VillageScreen() {
+  const minor = useIsMinor()
+  if (minor) return <Redirect href="/(tabs)" />
+  return <VillageScreenInner />
+}

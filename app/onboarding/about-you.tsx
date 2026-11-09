@@ -24,6 +24,8 @@ import { useJourneyStore } from '../../store/useJourneyStore'
 import { HandDrawnBox } from '../../components/ui/HandDrawn'
 import { ACTION_TONES } from '../../components/ui/AuthDock'
 import { useTranslation } from '../../lib/i18n'
+import { getLocales } from 'expo-localization'
+import { latestAllowedDob } from '../../lib/ageRules'
 
 export default function AboutYouScreen() {
   const { colors, radius, font } = useTheme()
@@ -49,9 +51,9 @@ export default function AboutYouScreen() {
     else router.back()
   }
 
-  // Sensible DOB bounds: 13–100 years ago.
+  // DOB bounds: the region's minimum sign-up age (13, or 16 in the EU/EEA, UK, Canada) up to 100 years ago.
   const now = new Date()
-  const maxDob = new Date(now.getFullYear() - 13, now.getMonth(), now.getDate())
+  const maxDob = latestAllowedDob(getLocales()[0]?.regionCode, now)
   const minDob = new Date(now.getFullYear() - 100, now.getMonth(), now.getDate())
 
   return (

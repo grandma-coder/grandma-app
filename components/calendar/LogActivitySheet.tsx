@@ -24,6 +24,8 @@ import { DIFFUSE_LOG_CHARACTER, diffuseLogHue } from './DiffuseLogTimeline'
 import { SheetModal } from '../ui/SheetModal'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { CYCLE_LOG_STICKER } from '../../lib/logStickers'
+import { useIsMinor } from '../../hooks/useIsMinor'
+import { MINOR_HIDDEN_CYCLE_LOGS } from '../../lib/ageRules'
 
 export type LogType =
   | 'period_start' | 'period_end' | 'symptom' | 'mood' | 'basal_temp'
@@ -69,6 +71,7 @@ export function LogActivitySheet({ open, onClose, onSelect, title }: Props) {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
+  const minor = useIsMinor()
   const insets = useSafeAreaInsets()
 
   const paper = colors.surface
@@ -100,7 +103,7 @@ export function LogActivitySheet({ open, onClose, onSelect, title }: Props) {
       </View>
       <View style={styles.sheetBody}>
         <LogTileGrid>
-          {LOG_ENTRIES.map((e) => (
+          {LOG_ENTRIES.filter((e) => !(minor && MINOR_HIDDEN_CYCLE_LOGS.has(e.id))).map((e) => (
             <LogTile
               key={e.id}
               label={t(e.labelKey)}
