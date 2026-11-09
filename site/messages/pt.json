@@ -22,7 +22,7 @@
   "privacy": {
     "metaTitle": "Política de Privacidade | Grandma",
     "title": "Política de Privacidade",
-    "updated": "Atualizado em 30 de outubro de 2026",
+    "updated": "Atualizado em 9 de novembro de 2026",
     "note": "Esta é uma tradução. Em caso de divergência, vale a versão em inglês.",
     "intro": "A sua privacidade importa para nós. Esta política explica quais dados coletamos, como os usamos e como você pode controlá-los.",
     "sections": [
@@ -30,7 +30,7 @@
         "heading": "O que coletamos",
         "paragraphs": [
           "A grandma.app coleta as informações que você fornece diretamente: seu email, seu nome e os dados de saúde que você escolher registrar (informações do ciclo, detalhes da gravidez, dados de crescimento dos filhos, sintomas, anotações).",
-          "Também coletamos dados básicos de uso para melhorar a experiência no app, como quais recursos você usa e com que frequência. Não rastreamos a sua localização nem acessamos os seus contatos."
+          "Não usamos ferramentas de análise nem de publicidade, e não rastreamos você em outros apps ou sites. Não acessamos a localização do seu aparelho nem os seus contatos. Se você digitar uma cidade ou endereço no perfil, guardamos esse texto."
         ]
       },
       {
@@ -43,14 +43,21 @@
       {
         "heading": "Processamento por IA",
         "paragraphs": [
-          "A grandma.app funciona com o Claude, o assistente de IA da Anthropic. Quando você conversa com a Guru Vovó, as suas mensagens são enviadas à API da Anthropic para serem processadas. A Anthropic não usa as suas conversas para treinar os modelos dela quando o acesso é feito pela API.",
-          "Os seus dados de saúde podem entrar no contexto da conversa para gerar respostas personalizadas. Você pode desativar isso em Configurações."
+          "Alguns recursos usam o Claude, modelo de IA da Anthropic. Quando você conversa com a Grandma, escaneia uma refeição ou um exame, lê insights personalizados ou usa a tradução automática, o texto, a foto ou o resumo dos seus registros necessários para aquele recurso são enviados à API da Anthropic. A Anthropic não usa dados enviados pela API para treinar seus modelos.",
+          "Isso só acontece quando você usa um desses recursos. Seus dados de saúde podem entrar no contexto da conversa para dar respostas personalizadas; você pode desligar isso nos Ajustes."
         ]
       },
       {
         "heading": "Processamento de pagamentos",
         "paragraphs": [
           "Os pagamentos são processados pelo RevenueCat, que gerencia assinaturas no iOS e no Android. Não guardamos os dados do seu cartão — todo o processamento é feito pelo Apple Pay, pelo Google Pay ou pela infraestrutura segura de pagamentos do RevenueCat."
+        ]
+      },
+      {
+        "heading": "Prestadores de serviço",
+        "paragraphs": [
+          "Compartilhamos dados apenas com os prestadores de que precisamos para a grandma.app funcionar, e só para esse fim. Nunca vendemos seus dados.",
+          "O Supabase guarda sua conta, seus registros e fotos. A Anthropic processa os recursos de IA descritos acima. O Sentry recebe relatórios técnicos de erro, sem seu e-mail, IP ou conteúdo da tela. O OpenStreetMap (Nominatim) recebe o texto que você digita ao buscar uma cidade ou endereço. O Expo entrega as notificações usando o token de notificação do seu aparelho. Apple e Google cuidam do login com Apple ou Google quando você escolhe essa opção."
         ]
       },
       {
@@ -108,7 +115,7 @@
   "terms": {
     "metaTitle": "Termos de Uso | Grandma",
     "title": "Termos de Uso",
-    "updated": "Atualizado em 15 de maio de 2026",
+    "updated": "Atualizado em 9 de novembro de 2026",
     "note": "Esta é uma tradução. Em caso de divergência, vale a versão em inglês.",
     "intro": "Ao usar a grandma.app, você concorda com estes termos. Leia com atenção.",
     "sections": [
