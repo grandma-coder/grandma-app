@@ -6289,4 +6289,6 @@ export const hi: TranslationKeys = {
   kih_act_dropped: "{{pillar}} dropped {{delta}}% this week — worth a closer look.",
   greeting_noName: "dear",
   kidsTile_moodLogs_one: "1 चेक-इन",
+  kids_home_mood_loggedCount: "{{count}} मूड दर्ज",
+  kids_home_mood_loggedCount_one: "1 मूड दर्ज",
 }

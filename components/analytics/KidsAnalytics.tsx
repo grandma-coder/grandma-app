@@ -89,6 +89,7 @@ import {
 import { useChildStore } from '../../store/useChildStore'
 import { useGrandmaChatEnabled } from '../../store/useFeatureFlags'
 import { LineChart, BarChart, BubbleGrid, MoodBubbleCluster } from '../charts/SvgCharts'
+import { kidsMoodLabel } from '../../lib/kidsMoodLabel'
 import { DotCountRows, MilestoneTrail, type DotRow, SipColumns, MiniBarChart } from './shared/MiniCharts'
 import { bucketSeries } from './shared/bucketSeries'
 import { FullScreenChart } from '../charts/FullScreenChart'
@@ -4561,7 +4562,7 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
 }
 
 function MoodDistribution({ moods }: { moods: { mood: string; count: number }[] }) {
-  return <MoodBubbleCluster items={moods} />
+  return <MoodBubbleCluster items={moods.map((m) => ({ ...m, label: kidsMoodLabel(m.mood) }))} />
 }
 
 function MoodDailyChart({ dailyCounts, labels, width }: { dailyCounts: Record<string, number[]>; labels: string[]; width: number }) {

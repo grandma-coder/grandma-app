@@ -991,6 +991,8 @@ export const ptBR: TranslationKeys = {
   kidsTile_activeDays: "{{a}} de {{d}} dias ativos",
   kidsTile_moodLogs: "{{n}} registros",
   kidsTile_moodLogs_one: "1 registro",
+  kids_home_mood_loggedCount: "{{count}} humores registrados",
+  kids_home_mood_loggedCount_one: "1 humor registrado",
   kids_home_mood_mostly: "Principalmente {{label}}",
   kids_home_mood_tap_details: "Toque para detalhes",
   kids_home_mood_empty_title: "Nenhum humor registrado ainda",

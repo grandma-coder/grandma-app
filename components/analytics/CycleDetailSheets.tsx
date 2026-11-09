@@ -959,7 +959,7 @@ function MoodDetail() {
         {diffuse ? (
           // Standardized mood viz — the same blob-cluster (labeled circles + %)
           // used by Pregnancy + Kids mood sheets, via the shared MoodBubbleCluster.
-          <MoodBubbleCluster items={data.distribution} />
+          <MoodBubbleCluster items={data.distribution.map((d) => ({ ...d, label: t(MOOD_LABEL_KEYS[d.mood]) }))} />
         ) : (
           data.distribution.map((row) => {
             const pct = (row.count / maxCount) * 100

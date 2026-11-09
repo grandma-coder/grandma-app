@@ -991,6 +991,8 @@ export const es: TranslationKeys = {
   kidsTile_activeDays: "{{a}} de {{d}} días activos",
   kidsTile_moodLogs: "{{n}} registros",
   kidsTile_moodLogs_one: "1 registro",
+  kids_home_mood_loggedCount: "{{count}} estados de ánimo registrados",
+  kids_home_mood_loggedCount_one: "1 estado de ánimo registrado",
   kids_home_mood_mostly: "Principalmente {{label}}",
   kids_home_mood_tap_details: "Toca para detalles",
   kids_home_mood_empty_title: "Sin estados de ánimo aún",

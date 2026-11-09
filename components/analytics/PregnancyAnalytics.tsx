@@ -2096,7 +2096,7 @@ function MoodDetail({ moodTrend, trimester, weekNumber, accentColor, accentTint 
           <MoodBubbleCluster
             items={(Object.entries(totals) as [string, number][])
               .filter(([, c]) => c > 0)
-              .map(([mood, count]): MoodBubbleItem => ({ mood, count }))}
+              .map(([mood, count]): MoodBubbleItem => ({ mood, count, label: moodLabel(mood) }))}
           />
         ) : (
           <Body size={13} color={muted}>{t('preg_analytics_no_moods')}</Body>

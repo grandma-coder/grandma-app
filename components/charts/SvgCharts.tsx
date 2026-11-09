@@ -653,6 +653,8 @@ export function MoodStickerStrip({ days }: MoodStickerStripProps) {
 export interface MoodBubbleItem {
   mood: string
   count: number
+  /** Translated display name — required so no screen falls back to the raw English id. */
+  label: string
 }
 
 interface MoodBubbleClusterProps {
@@ -685,7 +687,7 @@ export function MoodBubbleCluster({ items }: MoodBubbleClusterProps) {
         const fill = moodFaceFill(item.mood)
         const variant = moodFaceVariant(item.mood)
         const stroke = isDark ? (fill || STICKER_INK) : STICKER_INK
-        const label = item.mood.charAt(0).toUpperCase() + item.mood.slice(1)
+        const label = item.label
         const pct = totalCount > 0 ? Math.round((item.count / totalCount) * 100) : 0
 
         return (

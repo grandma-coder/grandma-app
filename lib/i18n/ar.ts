@@ -6289,4 +6289,6 @@ export const ar: TranslationKeys = {
   kih_act_dropped: "{{pillar}} dropped {{delta}}% this week — worth a closer look.",
   greeting_noName: "dear",
   kidsTile_moodLogs_one: "تسجيل واحد",
+  kids_home_mood_loggedCount: "تم تسجيل {{count}} حالات مزاجية",
+  kids_home_mood_loggedCount_one: "تم تسجيل حالة مزاجية واحدة",
 }

@@ -4015,7 +4015,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
         chip={childName || undefined}
       >
         <Text style={{ fontFamily: diffuseFont.mono, fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', color: dCol.ink3, marginBottom: 16 }}>
-          {rangeLabel}{'  ·  '}{totalMoods}{' '}{totalMoods !== 1 ? 'moods' : 'mood'}{' logged'}
+          {rangeLabel}{'  ·  '}{t(totalMoods === 1 ? 'kids_home_mood_loggedCount_one' : 'kids_home_mood_loggedCount', { count: totalMoods })}
         </Text>
 
         {totalMoods > 0 ? (
@@ -4068,7 +4068,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
         <View style={[s.modalContent, { backgroundColor: colors.bg, borderRadius: radius.xl }]}>
           <DetailSheetHeader title={t('kids_home_mood_trends_title')} sticker="face3" tone={StickerPalette.yellowSoft} childName={childName} childColor={childColor} onClose={onClose} />
           <Text style={[s.modalSubtitle, { color: colors.textMuted }]}>
-            {dateRange === 'today' ? t('common_today') : dateRange === 'yesterday' ? t('common_yesterday') : dateRange === '7days' ? t('kids_home_range_past_7days') : dateRange === '30days' ? t('kids_home_range_past_30days') : `${startDate} – ${endDate}`}{' — '}{totalMoods}{' mood'}{totalMoods !== 1 ? 's' : ''}{' logged'}
+            {dateRange === 'today' ? t('common_today') : dateRange === 'yesterday' ? t('common_yesterday') : dateRange === '7days' ? t('kids_home_range_past_7days') : dateRange === '30days' ? t('kids_home_range_past_30days') : `${startDate} – ${endDate}`}{' — '}{t(totalMoods === 1 ? 'kids_home_mood_loggedCount_one' : 'kids_home_mood_loggedCount', { count: totalMoods })}
           </Text>
 
           {totalMoods > 0 ? (
@@ -4100,7 +4100,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
               <MoodBubbleCluster
                 items={(Object.entries(moodCounts) as [string, number][])
                   .filter(([, c]) => c > 0)
-                  .map(([mood, count]): MoodBubbleItem => ({ mood, count }))}
+                  .map(([mood, count]): MoodBubbleItem => ({ mood, count, label: MOOD_LABELS[mood] ?? mood }))}
               />
 
               {/* Summary */}

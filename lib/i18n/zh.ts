@@ -6289,4 +6289,6 @@ export const zh: TranslationKeys = {
   kih_act_dropped: "{{pillar}} dropped {{delta}}% this week — worth a closer look.",
   greeting_noName: "dear",
   kidsTile_moodLogs_one: "1 次心情记录",
+  kids_home_mood_loggedCount: "已记录 {{count}} 次心情",
+  kids_home_mood_loggedCount_one: "已记录 1 次心情",
 }

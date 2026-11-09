@@ -1116,6 +1116,8 @@ export interface TranslationKeys {
   kidsTile_activeDays: string
   kidsTile_moodLogs: string
   kidsTile_moodLogs_one: string
+  kids_home_mood_loggedCount: string
+  kids_home_mood_loggedCount_one: string
   kids_home_mood_mostly: string
   kids_home_mood_tap_details: string
   kids_home_mood_empty_title: string

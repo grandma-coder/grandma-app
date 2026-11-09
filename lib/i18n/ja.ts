@@ -6289,4 +6289,6 @@ export const ja: TranslationKeys = {
   kih_act_dropped: "{{pillar}} dropped {{delta}}% this week — worth a closer look.",
   greeting_noName: "dear",
   kidsTile_moodLogs_one: "1回のチェックイン",
+  kids_home_mood_loggedCount: "{{count}}件の気分を記録",
+  kids_home_mood_loggedCount_one: "1件の気分を記録",
 }
