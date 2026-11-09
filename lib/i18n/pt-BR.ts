@@ -3200,7 +3200,7 @@ export const ptBR: TranslationKeys = {
   profPreg_openBirthPlan: "Abrir plano de parto",
   profPreg_birthPlanSubLabel: "Tipos · plano · checklist",
   profPreg_manageBirthTeam: "Gerenciar equipe de parto",
-  profPreg_careCircle: "Círculo de apoio",
+  profPreg_careCircle: "Círculo de Cuidados",
   profPreg_emergencyCard: "Cartão de emergência",
   profPreg_manageArrow: "Gerenciar →",
   profPreg_pickOneThatFits: "escolha o que se adequa",
