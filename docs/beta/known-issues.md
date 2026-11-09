@@ -26,10 +26,15 @@ abrir de novo. Atualizar a cada build.
 | Onboarding (nome) | No campo de nome vazio, o texto de exemplo aparece mais baixo que o cursor (iOS). O texto digitado fica no lugar certo | Cosmético; 3 hipóteses testadas (altura fixa, autoFocus, letterSpacing) sem sucesso |
 | Sem internet | Registro sem conexão mostra erro e não fica pendente para reenviar | Sem fila offline |
 | Vila (marketplace) | Anúncio "CRIB" de teste do Igor, com imagem em inglês, aparece para todos | Apagar anúncios de teste antes do beta |
-| Círculo de Cuidados | Convite falha com "Seu círculo de cuidado está cheio" mesmo sem ninguém no círculo | Migração `20261102200000_paywall_flag` faltando em produção (T15) |
+| Gravidez | Registros "Ninho", "Preparação para o parto" e "Resultado de exame" falham ao salvar | Corrigido na migração `20261109120000_pregnancy_log_types_nesting_birth_prep_exam` — falta aplicar em produção (`npx supabase db push`) |
+| Onboarding da menopausa | Perguntas de sintomas e terapia hormonal (TRH) não são salvas nem usadas, embora a tela diga que "ajuda a personalizar" | Decisão: salvar (sintomas como primeiros registros) ou remover as 2 telas |
+| Onboarding da gravidez | Humor do primeiro dia "calma", "cansada" ou "enjoada" não aparece selecionado ao editar o registro (o formulário só tem 5 humores) | Cosmético; calendário já mostra certo |
+| Onboarding do ciclo | O registro de menstruação criado no onboarding guarda a duração no campo de fluxo; ao editar, nenhum fluxo aparece selecionado | Cosmético |
 
 ## Corrigido recentemente (se aparecer de novo, é regressão — prioridade alta)
 
+- Convite do Círculo de Cuidados falhava com "círculo cheio" (migrações aplicadas em produção).
+- Onboarding só de menopausa não gravava o consentimento no servidor.
 - Calendário travava ao escolher um tipo de registro (iOS presenting dois modais).
 - Anel do ciclo andava ao contrário da faixa da semana; anel girava ao rolar a tela.
 - Natação com o ícone da menstruação; remédios com a gota vermelha.
