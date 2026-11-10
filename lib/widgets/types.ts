@@ -30,9 +30,24 @@ export interface WidgetHero { eyebrow: string; big: string; unit: string; captio
 export interface WidgetStat { label: string; value: string; daily: boolean }
 
 /** 7 values, oldest first, ending on todayFor. moods: 0 = none, 1..5. */
-export interface WidgetSeries { label: string; kind: 'bars' | 'moods'; values: number[] }
+export interface WidgetSeries {
+  label: string
+  kind: 'bars' | 'moods'
+  values: number[]
+  /** One-line reading of the week, e.g. "avg 4/day". */
+  summary?: string
+  /** Fixed top of the scale (hot-flash severity is 1–5); otherwise the week's max. */
+  scaleMax?: number
+}
 
-export interface WidgetButton { label: string; url: string }
+export interface WidgetButton {
+  /** Log type, e.g. "feeding" — what "Edit Widget" stores when the person picks this button. */
+  type: string
+  label: string
+  /** Name in assets/stickers-site (lib/logStickers). */
+  sticker: string
+  url: string
+}
 
 export interface WidgetEntry {
   /** 'cycle' | 'pregnancy' | 'menopause' | `kids:<childId>` */
@@ -50,6 +65,10 @@ export interface WidgetEntry {
   stats: WidgetStat[]
   series?: WidgetSeries
   buttons: WidgetButton[]
+  /** Every log the person can put on a button in "Edit Widget". */
+  choices: WidgetButton[]
+  /** Pregnancy progress bar end labels ("wk 1", "wk 40"). */
+  progressEnds?: [string, string]
   openUrl: string
   /** Base64 PNG (pregnancy fruit). */
   image?: string
@@ -62,5 +81,16 @@ export interface WidgetSnapshot {
   /** Entry shown by widgets the person hasn't configured — follows the app's active journey/child. */
   activeKey: string | null
   entries: WidgetEntry[]
-  strings: { signIn: string; pickChild: string; refresh: string; start: Record<WidgetJourney, string> }
+  /** App language (BCP 47), for weekday letters under the charts. */
+  lang: string
+  strings: {
+    signIn: string
+    pickChild: string
+    refresh: string
+    start: Record<WidgetJourney, string>
+    /** Cycle strip legend, by phase code. */
+    phases: Record<'m' | 'f' | 'o' | 'l', string>
+    /** "Edit Widget" style picker. */
+    styles: { journey: string; cream: string; dark: string }
+  }
 }

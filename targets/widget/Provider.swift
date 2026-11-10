@@ -1,7 +1,7 @@
 import AppIntents
 import WidgetKit
 
-// ─── Configuration: which journey / child this widget shows ────────────────
+// ─── Configuration: which journey / child, which style, which log buttons ───
 
 struct EntryEntity: AppEntity {
   static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Journey")
@@ -25,12 +25,94 @@ struct EntryQuery: EntityQuery {
   }
 }
 
+/// Card look. Names come from the snapshot so they follow the app language.
+struct StyleEntity: AppEntity {
+  static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Style")
+  static let defaultQuery = StyleQuery()
+
+  let id: String
+  let name: String
+
+  var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(name)") }
+}
+
+struct StyleQuery: EntityQuery {
+  static let ids = ["journey", "cream", "dark"]
+  static let fallback = ["journey": "Journey color", "cream": "Cream", "dark": "Dark"]
+
+  func entities(for identifiers: [String]) async throws -> [StyleEntity] {
+    all().filter { identifiers.contains($0.id) }
+  }
+
+  func suggestedEntities() async throws -> [StyleEntity] { all() }
+
+  private func all() -> [StyleEntity] {
+    let names = Snapshot.current?.strings.styles ?? [:]
+    return Self.ids.map { StyleEntity(id: $0, name: names[$0] ?? Self.fallback[$0] ?? $0) }
+  }
+}
+
+/// A log the person can put on a button. id = log type ("feeding").
+struct ButtonEntity: AppEntity {
+  static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "Log")
+  static let defaultQuery = ButtonQuery()
+
+  let id: String
+  let name: String
+
+  var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(name)") }
+}
+
+struct ButtonQuery: EntityQuery {
+  @IntentParameterDependency<SelectEntryIntent>(\.$entry)
+  var config
+
+  func entities(for identifiers: [String]) async throws -> [ButtonEntity] {
+    // Any journey's choices, so a pick still resolves after the journey changes.
+    var seen = Set<String>()
+    var out: [ButtonEntity] = []
+    for e in Snapshot.entriesForPicker {
+      for c in e.choices ?? [] {
+        if let type = c.type, identifiers.contains(type), !seen.contains(type) {
+          seen.insert(type)
+          out.append(ButtonEntity(id: type, name: c.label))
+        }
+      }
+    }
+    return out
+  }
+
+  func suggestedEntities() async throws -> [ButtonEntity] {
+    guard let s = Snapshot.current else { return [] }
+    let key = config?.entry.id ?? s.activeKey
+    let entry = s.entries.first(where: { $0.key == key }) ?? s.entries.first
+    return (entry?.choices ?? []).compactMap { c in c.type.map { ButtonEntity(id: $0, name: c.label) } }
+  }
+}
+
 struct SelectEntryIntent: WidgetConfigurationIntent {
   static let title: LocalizedStringResource = "Choose what to show"
-  static let description = IntentDescription("Pick a journey or a child.")
+  static let description = IntentDescription("Pick a journey or a child, a style and your log buttons.")
 
   @Parameter(title: "Show")
   var entry: EntryEntity?
+
+  @Parameter(title: "Style")
+  var style: StyleEntity?
+
+  @Parameter(title: "Button 1")
+  var button1: ButtonEntity?
+
+  @Parameter(title: "Button 2")
+  var button2: ButtonEntity?
+
+  @Parameter(title: "Button 3")
+  var button3: ButtonEntity?
+
+  @Parameter(title: "Button 4")
+  var button4: ButtonEntity?
+
+  var pickedButtons: [String?] { [button1?.id, button2?.id, button3?.id, button4?.id] }
 }
 
 // ─── Timeline ──────────────────────────────────────────────────────────────
@@ -47,6 +129,10 @@ enum WidgetState {
 struct GrandmaEntry: TimelineEntry {
   let date: Date
   let state: WidgetState
+  var style: String = "journey"
+  var picked: [String?] = []
+  var lang: String = "en"
+  var phases: [String: String] = [:]
 }
 
 func resolveState(chosenKey: String?, at date: Date = .now) -> WidgetState {
@@ -72,13 +158,25 @@ func okOrRefresh(_ entry: WEntry, _ s: Snapshot, _ date: Date) -> WidgetState {
   return .ok(entry)
 }
 
+func makeEntry(_ configuration: SelectEntryIntent, at date: Date) -> GrandmaEntry {
+  let s = Snapshot.current
+  return GrandmaEntry(
+    date: date,
+    state: resolveState(chosenKey: configuration.entry?.id, at: date),
+    style: configuration.style?.id ?? "journey",
+    picked: configuration.pickedButtons,
+    lang: s?.lang ?? "en",
+    phases: s?.strings.phases ?? [:]
+  )
+}
+
 struct Provider: AppIntentTimelineProvider {
   func placeholder(in context: Context) -> GrandmaEntry {
     GrandmaEntry(date: .now, state: .signedOut("Grandma"))
   }
 
   func snapshot(for configuration: SelectEntryIntent, in context: Context) async -> GrandmaEntry {
-    GrandmaEntry(date: .now, state: resolveState(chosenKey: configuration.entry?.id))
+    makeEntry(configuration, at: .now)
   }
 
   func timeline(for configuration: SelectEntryIntent, in context: Context) async -> Timeline<GrandmaEntry> {
@@ -93,6 +191,6 @@ struct Provider: AppIntentTimelineProvider {
       dates.append(next.addingTimeInterval(1))
     }
     dates.sort()
-    return Timeline(entries: dates.map { GrandmaEntry(date: $0, state: resolveState(chosenKey: configuration.entry?.id, at: $0)) }, policy: .atEnd)
+    return Timeline(entries: dates.map { makeEntry(configuration, at: $0) }, policy: .atEnd)
   }
 }

@@ -6657,4 +6657,9 @@ export interface TranslationKeys {
   widget_unit_months_one: string
   widget_sinceLastPeriod: string
   widget_sizeOf: string
+  widget_avgPerDay: string
+  widget_daysOf7: string
+  widget_style_journey: string
+  widget_style_cream: string
+  widget_style_dark: string
 }

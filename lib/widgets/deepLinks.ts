@@ -85,6 +85,9 @@ export const WIDGET_BUTTONS: Record<WidgetJourney, WidgetButtonDef[]> = {
   ],
 }
 
+/** Every log type a widget button may open for this journey (the deep-link allow-list). */
+export const widgetLogTypes = (j: WidgetJourney): readonly string[] => ALLOWED[j]
+
 export const journeyToMode = (j: WidgetJourney): JourneyMode => MODE[j]
 export const modeToJourney = (m: JourneyMode): WidgetJourney => (m === 'pre-pregnancy' ? 'cycle' : m)
 

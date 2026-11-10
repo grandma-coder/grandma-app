@@ -6336,7 +6336,7 @@ export const tr: TranslationKeys = {
   widget_menoMonthsZero: "Period this month",
   widget_menoHotToday: "Hot flashes today · {{n}}/5",
   widget_menoNoHotToday: "No hot flashes logged today",
-  widget_series_hotFlashes: "Hot flashes, last 7 days",
+  widget_series_hotFlashes: "Hot flashes · intensity 1–5",
   widget_stat_sleepTrouble: "Sleep trouble today",
   widget_stat_topSymptom: "Most frequent (30 days)",
   widget_empty_menopause: "Log a symptom or your last period to see your patterns",
@@ -6355,4 +6355,9 @@ export const tr: TranslationKeys = {
   widget_unit_months_one: "month",
   widget_sinceLastPeriod: "since last period",
   widget_sizeOf: "size of {{fruit}}",
+  widget_avgPerDay: "avg {{n}}/day",
+  widget_daysOf7: "{{n}} of 7 days",
+  widget_style_journey: "Journey color",
+  widget_style_cream: "Cream",
+  widget_style_dark: "Dark",
 }

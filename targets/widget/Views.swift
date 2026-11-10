@@ -1,7 +1,7 @@
 import SwiftUI
 import WidgetKit
 
-// Site look (constants/theme.ts + the approved widget mockup): journey-tinted card, ink outline,
+// Site look (constants/theme.ts + the approved widget mockup): tinted card, ink outline,
 // Architects Daughter for the hand-lettered words, Hanken Grotesk for numbers and UI, sticker icons.
 extension Color {
   init(hex: UInt32) {
@@ -13,8 +13,6 @@ extension Color {
   }
   static let cream = Color(hex: 0xFBF6EA)
   static let ink = Color(hex: 0x161513)
-  static let inkSoft = Color(hex: 0x4F4B43)
-  static let inkMuted = Color(hex: 0x8C877C)
 }
 
 enum Typeface {
@@ -24,12 +22,10 @@ enum Typeface {
   static func heavy(_ size: CGFloat) -> Font { .custom("HankenGrotesk-ExtraBold", size: size) }
 }
 
+/// Journey colours: `bg` card fill (journey style), `strong` bars and progress, `icon` corner sticker.
 struct Accent {
-  /// Card and tile fill.
   let bg: Color
-  /// Bars, progress fill.
   let strong: Color
-  /// Journey sticker in the corner.
   let icon: String
 
   static func of(_ journey: String) -> Accent {
@@ -42,21 +38,35 @@ struct Accent {
   }
 }
 
-/// Log button sticker by log type (the last path component of the button URL).
-func buttonSticker(_ url: String) -> String {
-  let type = URL(string: url)?.lastPathComponent ?? ""
-  switch type {
-  case "period_start", "night_sweat": return "st_drop"
-  case "symptom": return "st_headache"
-  case "mood", "low_mood": return "st_face3"
-  case "basal_temp": return "st_thermo"
-  case "kick_count": return "st_foot"
-  case "water": return "st_glass"
-  case "feeding": return "st_bottle"
-  case "sleep": return "st_moon"
-  case "diaper": return "st_diaper"
-  case "hot_flash": return "st_flame"
-  default: return "st_face3"
+/// Everything a view needs to colour itself, for one style × rendering mode.
+struct Palette {
+  let card: Color
+  let tile: Color
+  let ink: Color
+  let soft: Color
+  let line: Color
+  let strong: Color
+  let empty: Color
+  /// Tinted / clear home screens: no fills, the system colours everything.
+  let plain: Bool
+
+  static func make(style: String, journey: String, mode: WidgetRenderingMode) -> Palette {
+    let a = Accent.of(journey)
+    if mode != .fullColor {
+      return Palette(card: .clear, tile: .white.opacity(0.12), ink: .primary, soft: .primary.opacity(0.7), line: .primary.opacity(0.6),
+                     strong: .primary.opacity(0.55), empty: .primary.opacity(0.15), plain: true)
+    }
+    switch style {
+    case "cream":
+      return Palette(card: .cream, tile: Color(hex: 0xFFFDF8), ink: .ink, soft: Color(hex: 0x4F4B43), line: .ink,
+                     strong: a.strong, empty: Color.ink.opacity(0.08), plain: false)
+    case "dark":
+      return Palette(card: Color(hex: 0x1F1D1A), tile: Color(hex: 0x2B2824), ink: .cream, soft: Color.cream.opacity(0.7), line: Color.cream.opacity(0.85),
+                     strong: a.strong, empty: Color.cream.opacity(0.12), plain: false)
+    default:
+      return Palette(card: a.bg, tile: a.bg, ink: .ink, soft: Color(hex: 0x4F4B43), line: .ink,
+                     strong: a.strong, empty: Color.ink.opacity(0.08), plain: false)
+    }
   }
 }
 
@@ -87,10 +97,38 @@ func compactSince(_ at: Date, now: Date) -> String {
   return hours % 24 == 0 ? "\(hours / 24)d" : "\(hours / 24)d \(hours % 24)h"
 }
 
+/// Narrow weekday letters for the 7 days ending on `now`, in the app language ("S T Q Q S S D").
+func weekdayLetters(endingOn now: Date, lang: String) -> [String] {
+  let f = DateFormatter()
+  f.locale = Locale(identifier: lang)
+  f.dateFormat = "EEEEE"
+  return (0..<7).map { i in f.string(from: now.addingTimeInterval(Double(i - 6) * 86400)).uppercased() }
+}
+
+func formatValue(_ v: Double) -> String {
+  v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v)
+}
+
+extension Image {
+  /// Stickers keep their colours on tinted home screens (iOS 18+) instead of turning into flat blobs.
+  @ViewBuilder func stickerRendering() -> some View {
+    if #available(iOS 18.0, *) {
+      self.resizable().widgetAccentedRenderingMode(.fullColor).scaledToFit()
+    } else {
+      self.resizable().scaledToFit()
+    }
+  }
+}
+
+func sticker(_ name: String, _ size: CGFloat) -> some View {
+  Image(name).stickerRendering().frame(width: size, height: size)
+}
+
 struct Dashed: View {
+  let color: Color
   var body: some View {
     Line()
-      .stroke(Color.ink.opacity(0.35), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+      .stroke(color.opacity(0.45), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
       .frame(height: 1)
   }
   struct Line: Shape {
@@ -104,11 +142,11 @@ struct Dashed: View {
 }
 
 struct CardBackground: View {
-  let fill: Color
+  let palette: Palette
   var body: some View {
     ZStack {
-      fill
-      ContainerRelativeShape().strokeBorder(Color.ink, lineWidth: 2.5)
+      palette.card
+      if !palette.plain { ContainerRelativeShape().strokeBorder(palette.line, lineWidth: 2.5) }
     }
   }
 }
@@ -116,12 +154,14 @@ struct CardBackground: View {
 struct WidgetView: View {
   let entry: GrandmaEntry
   @Environment(\.widgetFamily) var family
+  @Environment(\.widgetRenderingMode) var mode
 
   var body: some View {
     switch entry.state {
     case .ok(let e):
-      JourneyView(entry: e, today: isoDay(entry.date), now: entry.date, family: family)
-        .containerBackground(for: .widget) { CardBackground(fill: Accent.of(e.journey).bg) }
+      let palette = Palette.make(style: entry.style, journey: e.journey, mode: mode)
+      JourneyView(entry: e, config: entry, palette: palette, family: family)
+        .containerBackground(for: .widget) { CardBackground(palette: palette) }
     case .signedOut(let text), .outdated(let text):
       message(text, "grandma-app://")
     case .pickChild(let text):
@@ -132,20 +172,22 @@ struct WidgetView: View {
   }
 
   func message(_ text: String, _ url: String) -> some View {
-    MessageView(text: text, url: url)
-      .containerBackground(for: .widget) { CardBackground(fill: Color.cream) }
+    let palette = Palette.make(style: entry.style == "dark" ? "dark" : "cream", journey: "", mode: mode)
+    return MessageView(text: text, url: url, palette: palette)
+      .containerBackground(for: .widget) { CardBackground(palette: palette) }
   }
 }
 
 struct MessageView: View {
   let text: String
   let url: String
+  let palette: Palette
   var body: some View {
     VStack(spacing: 8) {
-      Image("st_heart").resizable().scaledToFit().frame(width: 30, height: 30)
+      sticker("st_heart", 30)
       Text(text)
         .font(Typeface.hand(17))
-        .foregroundStyle(Color.ink)
+        .foregroundStyle(palette.ink)
         .multilineTextAlignment(.center)
         .minimumScaleFactor(0.7)
     }
@@ -156,13 +198,15 @@ struct MessageView: View {
 
 struct JourneyView: View {
   let entry: WEntry
-  let today: String
-  let now: Date
+  let config: GrandmaEntry
+  let palette: Palette
   let family: WidgetFamily
 
   var accent: Accent { Accent.of(entry.journey) }
+  var today: String { isoDay(config.date) }
   var day: WDay? { entry.day(for: today) }
   var small: Bool { family == .systemSmall }
+  var buttons: [WButton] { entry.buttons(picked: config.picked) }
 
   var body: some View {
     Group {
@@ -200,16 +244,16 @@ struct JourneyView: View {
   var cornerIcon: some View {
     Group {
       if let b64 = entry.image, let data = Data(base64Encoded: b64), let img = UIImage(data: data) {
-        Image(uiImage: img).resizable().scaledToFit().frame(width: small ? 34 : 40, height: small ? 34 : 40)
+        Image(uiImage: img).stickerRendering().frame(width: small ? 34 : 40, height: small ? 34 : 40)
       } else {
-        Image(accent.icon).resizable().scaledToFit().frame(width: 26, height: 26)
+        sticker(accent.icon, 26)
       }
     }
   }
 
   var bigText: String {
     guard let hero = day?.hero else { return "" }
-    if hero.live == true, let since = entry.sinceLast, let at = parseISODate(since.at) { return compactSince(at, now: now) }
+    if hero.live == true, let since = entry.sinceLast, let at = parseISODate(since.at) { return compactSince(at, now: config.date) }
     return hero.big
   }
 
@@ -220,7 +264,7 @@ struct JourneyView: View {
           eyebrow(entry.name)
           Text(entry.emptyText ?? "")
             .font(Typeface.hand(small ? 15 : 17))
-            .foregroundStyle(Color.ink)
+            .foregroundStyle(palette.ink)
             .lineLimit(4)
             .minimumScaleFactor(0.7)
             .padding(.top, 4)
@@ -228,8 +272,8 @@ struct JourneyView: View {
           eyebrow(hero.eyebrow)
           if !bigText.isEmpty {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-              Text(bigText).font(Typeface.heavy(small ? 40 : 44)).foregroundStyle(Color.ink)
-              if !hero.unit.isEmpty { Text(hero.unit).font(Typeface.bold(small ? 15 : 17)).foregroundStyle(Color.ink) }
+              Text(bigText).font(Typeface.heavy(small ? 40 : 44)).foregroundStyle(palette.ink).widgetAccentable()
+              if !hero.unit.isEmpty { Text(hero.unit).font(Typeface.bold(small ? 15 : 17)).foregroundStyle(palette.ink) }
             }
             .lineLimit(1)
             .minimumScaleFactor(0.5)
@@ -237,13 +281,13 @@ struct JourneyView: View {
           if !hero.caption.isEmpty {
             Text(hero.caption)
               .font(Typeface.hand(bigText.isEmpty ? 18 : 15))
-              .foregroundStyle(Color.ink)
+              .foregroundStyle(palette.ink)
               .lineLimit(2)
               .minimumScaleFactor(0.7)
           }
         } else if let day {
           eyebrow(entry.name)
-          Text(day.title).font(Typeface.hand(17)).foregroundStyle(Color.ink).lineLimit(2).minimumScaleFactor(0.7)
+          Text(day.title).font(Typeface.hand(17)).foregroundStyle(palette.ink).lineLimit(2).minimumScaleFactor(0.7)
         }
       }
       Spacer(minLength: 0)
@@ -254,7 +298,7 @@ struct JourneyView: View {
   func eyebrow(_ text: String) -> some View {
     Text(text.uppercased())
       .font(Typeface.hand(11))
-      .foregroundStyle(Color.inkSoft)
+      .foregroundStyle(palette.soft)
       .lineLimit(small ? 2 : 1)
       .minimumScaleFactor(0.7)
   }
@@ -262,8 +306,8 @@ struct JourneyView: View {
   @ViewBuilder var footerBlock: some View {
     if let footer = day?.hero?.footer, !footer.isEmpty {
       VStack(alignment: .leading, spacing: 6) {
-        Dashed()
-        Text(footer).font(Typeface.bold(12)).foregroundStyle(Color.ink).lineLimit(2).minimumScaleFactor(0.7)
+        Dashed(color: palette.line)
+        Text(footer).font(Typeface.bold(12)).foregroundStyle(palette.ink).lineLimit(2).minimumScaleFactor(0.7)
       }
     }
   }
@@ -273,22 +317,23 @@ struct JourneyView: View {
   func tile(_ b: WButton, height: CGFloat) -> some View {
     Link(destination: URL(string: b.url) ?? URL(string: entry.openUrl)!) {
       VStack(spacing: 3) {
-        Image(buttonSticker(b.url)).resizable().scaledToFit().frame(width: 22, height: 22)
+        sticker("st_\(b.sticker ?? "star")", 22)
         Text(b.label.uppercased())
           .font(Typeface.hand(10))
-          .foregroundStyle(Color.ink)
+          .foregroundStyle(palette.ink)
           .lineLimit(1)
-          .minimumScaleFactor(0.6)
+          .minimumScaleFactor(0.55)
       }
       .padding(.horizontal, 3)
       .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
-      .background(accent.bg, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-      .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.ink, lineWidth: 2))
+      .background(palette.tile, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+      .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.line, lineWidth: palette.plain ? 1 : 2))
     }
   }
 
   var buttonGrid: some View {
-    let rows = stride(from: 0, to: entry.buttons.count, by: 2).map { Array(entry.buttons[$0..<min($0 + 2, entry.buttons.count)]) }
+    let all = buttons
+    let rows = stride(from: 0, to: all.count, by: 2).map { Array(all[$0..<min($0 + 2, all.count)]) }
     return VStack(spacing: 6) {
       ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
         HStack(spacing: 6) {
@@ -300,77 +345,166 @@ struct JourneyView: View {
 
   var buttonRow: some View {
     HStack(spacing: 8) {
-      ForEach(Array(entry.buttons.enumerated()), id: \.offset) { _, b in tile(b, height: 60) }
+      ForEach(Array(buttons.enumerated()), id: \.offset) { _, b in tile(b, height: 60) }
     }
   }
 
-  // ─── Large: strip / progress / bars, then stat rows ────────────────────────
+  // ─── Large: chart, then stat rows ──────────────────────────────────────────
+
+  var letters: [String] { weekdayLetters(endingOn: config.date, lang: config.lang) }
 
   @ViewBuilder var details: some View {
-    if let strip = day?.strip {
+    if let strip = day?.strip { stripChart(strip) }
+    if let p = day?.progress { progressChart(p) }
+    if let series = entry.series, series.kind == "bars" { barChart(series) }
+    statRows
+    if entry.journey == "kids", let footer = day?.hero?.footer, !footer.isEmpty {
+      Text(footer).font(Typeface.bold(12)).foregroundStyle(palette.ink).lineLimit(1).minimumScaleFactor(0.7)
+    }
+    if let series = entry.series, series.kind == "moods" { moodChart(series) }
+  }
+
+  var statRows: some View {
+    VStack(spacing: 0) {
+      ForEach(Array(entry.stats.enumerated()), id: \.offset) { _, s in
+        VStack(spacing: 4) {
+          HStack(spacing: 8) {
+            Text(s.label).font(Typeface.medium(12)).foregroundStyle(palette.ink)
+            Spacer(minLength: 4)
+            Text(entry.statValue(s, today: today)).font(Typeface.bold(12)).foregroundStyle(palette.ink)
+          }
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+          Dashed(color: palette.line)
+        }
+        .padding(.top, 4)
+      }
+    }
+  }
+
+  func chartTitle(_ label: String, _ summary: String?) -> some View {
+    HStack(alignment: .firstTextBaseline) {
+      Text(label).font(Typeface.hand(12)).foregroundStyle(palette.soft).lineLimit(1)
+      Spacer(minLength: 6)
+      if let summary { Text(summary).font(Typeface.bold(11)).foregroundStyle(palette.ink).lineLimit(1) }
+    }
+    .minimumScaleFactor(0.7)
+  }
+
+  func dayLetter(_ i: Int) -> some View {
+    // Today: the letter in a filled ink dot (on tinted screens just heavier, since there is no fill).
+    let ringed = i == 6 && !palette.plain
+    return Text(i < letters.count ? letters[i] : "")
+      .font(i == 6 ? Typeface.heavy(10) : Typeface.medium(10))
+      .foregroundStyle(ringed ? palette.card : (i == 6 ? palette.ink : palette.soft))
+      .frame(width: 16, height: 16)
+      .background(Circle().fill(ringed ? palette.ink : .clear))
+      .frame(maxWidth: .infinity)
+  }
+
+  /// Seven labelled columns: value on top, weekday under, today ringed.
+  func barChart(_ series: WSeries) -> some View {
+    let values = entry.seriesValues(today: today)
+    let top = max(series.scaleMax ?? 0, values.max() ?? 0, 1)
+    let barMax: CGFloat = 34
+    return VStack(spacing: 4) {
+      chartTitle(series.label, series.summary)
+      HStack(alignment: .bottom, spacing: 6) {
+        ForEach(Array(values.enumerated()), id: \.offset) { i, v in
+          VStack(spacing: 2) {
+            Text(v > 0 ? formatValue(v) : "–")
+              .font(Typeface.bold(10))
+              .foregroundStyle(v > 0 ? palette.ink : palette.soft)
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+              .fill(v > 0 ? palette.strong : palette.empty)
+              .overlay(
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                  .strokeBorder(palette.line, lineWidth: v > 0 ? (i == 6 ? 2.5 : 1.5) : 0)
+              )
+              .frame(height: v > 0 ? max(6, barMax * CGFloat(v / top)) : 3)
+          }
+          .frame(maxWidth: .infinity)
+        }
+      }
+      .frame(height: barMax + 14, alignment: .bottom)
+      HStack(spacing: 6) { ForEach(0..<7, id: \.self) { dayLetter($0) } }
+    }
+  }
+
+  /// Seven mood faces with their weekday; empty days are a dashed ring.
+  func moodChart(_ series: WSeries) -> some View {
+    let values = entry.seriesValues(today: today)
+    return VStack(spacing: 3) {
+      chartTitle(series.label, nil)
+      HStack(spacing: 6) {
+        ForEach(Array(values.enumerated()), id: \.offset) { _, v in
+          Group {
+            if v > 0 {
+              sticker(moodSticker(v), 20)
+            } else {
+              Circle().strokeBorder(palette.line.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [2, 2])).frame(width: 20, height: 20)
+            }
+          }
+          .frame(maxWidth: .infinity)
+        }
+      }
+      HStack(spacing: 6) { ForEach(0..<7, id: \.self) { dayLetter($0) } }
+    }
+  }
+
+  /// One dot per cycle day, today big and ringed, plus a phase legend.
+  func stripChart(_ strip: WStrip) -> some View {
+    VStack(alignment: .leading, spacing: 5) {
       HStack(spacing: 2) {
         ForEach(Array(strip.phases.enumerated()), id: \.offset) { i, code in
           let isToday = i + 1 == strip.today
           Circle()
-            .fill(phaseColor(code).opacity(isToday ? 1 : 0.7))
-            .overlay(Circle().strokeBorder(Color.ink, lineWidth: isToday ? 2 : 0.75))
-            .frame(maxWidth: isToday ? 13 : 9, maxHeight: isToday ? 13 : 9)
+            .fill(phaseColor(code).opacity(isToday ? 1 : 0.75))
+            .overlay(Circle().strokeBorder(palette.line, lineWidth: isToday ? 2 : 0.75))
+            .frame(maxWidth: isToday ? 14 : 9, maxHeight: isToday ? 14 : 9)
         }
       }
       .frame(maxWidth: .infinity)
+      HStack(spacing: 10) {
+        ForEach(["m", "f", "o", "l"], id: \.self) { code in
+          HStack(spacing: 4) {
+            Circle().fill(phaseColor(code)).overlay(Circle().strokeBorder(palette.line, lineWidth: 0.75)).frame(width: 8, height: 8)
+            Text(config.phases[code] ?? "").font(Typeface.medium(10)).foregroundStyle(palette.soft).lineLimit(1)
+          }
+        }
+      }
+      .minimumScaleFactor(0.7)
     }
-    if let p = day?.progress {
+  }
+
+  /// Weeks 1–40 with the baby-size sticker riding on today's week.
+  func progressChart(_ p: Double) -> some View {
+    VStack(spacing: 3) {
       GeometryReader { geo in
+        let w = geo.size.width
         ZStack(alignment: .leading) {
-          Capsule().fill(Color.white.opacity(0.6))
-          Capsule().fill(accent.strong).frame(width: max(10, geo.size.width * p))
-          Capsule().strokeBorder(Color.ink, lineWidth: 2)
+          Capsule().fill(palette.empty).frame(height: 12)
+          Capsule().fill(palette.strong).frame(width: max(12, w * p), height: 12)
+          Capsule().strokeBorder(palette.line, lineWidth: 2).frame(height: 12)
+          cornerMarker.offset(x: min(max(0, w * p - 13), w - 26))
         }
+        .frame(height: 28)
       }
-      .frame(height: 12)
-    }
-    if let series = entry.series, series.kind == "bars" {
-      let values = entry.seriesValues(today: today)
-      let top = max(values.max() ?? 1, 1)
-      HStack(alignment: .bottom, spacing: 6) {
-        ForEach(Array(values.enumerated()), id: \.offset) { _, v in
-          RoundedRectangle(cornerRadius: 4, style: .continuous)
-            .fill(v > 0 ? accent.strong : Color.ink.opacity(0.08))
-            .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).strokeBorder(Color.ink, lineWidth: v > 0 ? 1.5 : 0))
-            .frame(height: v > 0 ? max(8, 34 * v / top) : 4)
-            .frame(maxWidth: .infinity)
-        }
-      }
-      .frame(height: 34, alignment: .bottom)
-    }
-    VStack(spacing: 0) {
-      ForEach(Array(entry.stats.enumerated()), id: \.offset) { _, s in
-        VStack(spacing: 5) {
-          HStack(spacing: 8) {
-            Text(s.label).font(Typeface.medium(12)).foregroundStyle(Color.ink)
-            Spacer(minLength: 4)
-            Text(entry.statValue(s, today: today)).font(Typeface.bold(12)).foregroundStyle(Color.ink)
-          }
-          .lineLimit(1)
-          .minimumScaleFactor(0.7)
-          Dashed()
-        }
-        .padding(.top, 5)
+      .frame(height: 28)
+      HStack {
+        Text(entry.progressEnds?.first ?? "").font(Typeface.medium(10)).foregroundStyle(palette.soft)
+        Spacer()
+        Text(entry.progressEnds?.last ?? "").font(Typeface.medium(10)).foregroundStyle(palette.soft)
       }
     }
-    if let footer = day?.hero?.footer, !footer.isEmpty {
-      Text(footer).font(Typeface.bold(12)).foregroundStyle(Color.ink).lineLimit(1).minimumScaleFactor(0.7)
-    }
-    if let series = entry.series, series.kind == "moods" {
-      let values = entry.seriesValues(today: today)
-      HStack(spacing: 8) {
-        ForEach(Array(values.enumerated()), id: \.offset) { _, v in
-          if v > 0 {
-            Image(moodSticker(v)).resizable().scaledToFit().frame(width: 18, height: 18)
-          } else {
-            Circle().strokeBorder(Color.ink.opacity(0.25), style: StrokeStyle(lineWidth: 1, dash: [2, 2])).frame(width: 18, height: 18)
-          }
-        }
+  }
+
+  var cornerMarker: some View {
+    Group {
+      if let b64 = entry.image, let data = Data(base64Encoded: b64), let img = UIImage(data: data) {
+        Image(uiImage: img).stickerRendering().frame(width: 26, height: 26)
+      } else {
+        sticker(accent.icon, 22)
       }
     }
   }

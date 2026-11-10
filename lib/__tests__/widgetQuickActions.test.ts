@@ -2,11 +2,13 @@ import { buildQuickActions } from '../widgets/quickActions'
 import type { WidgetSnapshot } from '../widgets/types'
 
 const snap = (over: Partial<WidgetSnapshot> = {}): WidgetSnapshot => ({
-  version: 1, signedIn: true, generatedAt: '', activeKey: 'kids:c1',
-  strings: { signIn: '', pickChild: '', refresh: '', start: { cycle: '', pregnancy: '', kids: '', menopause: '' } },
+  version: 1, signedIn: true, generatedAt: '', activeKey: 'kids:c1', lang: 'en',
+  strings: { signIn: '', pickChild: '', refresh: '', start: { cycle: '', pregnancy: '', kids: '', menopause: '' },
+    phases: { m: '', f: '', o: '', l: '' }, styles: { journey: '', cream: '', dark: '' } },
   entries: [{
     key: 'kids:c1', journey: 'kids', name: 'Leo', state: 'ok', days: [], todayFor: '', stats: [], openUrl: 'grandma-app://log/kids/home?child=c1',
-    buttons: ['feeding', 'sleep', 'diaper', 'mood'].map((t) => ({ label: t, url: `grandma-app://log/kids/${t}?child=c1` })),
+    buttons: ['feeding', 'sleep', 'diaper', 'mood'].map((t) => ({ type: t, label: t, sticker: 'star', url: `grandma-app://log/kids/${t}?child=c1` })),
+    choices: [],
   }],
   ...over,
 })

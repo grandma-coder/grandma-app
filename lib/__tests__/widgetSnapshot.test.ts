@@ -164,3 +164,44 @@ describe('hero layout (big number widgets)', () => {
     expect(one).toMatchObject({ big: '1', unit: 'month' })
   })
 })
+
+describe('buttons people can pick', () => {
+  it('defaults carry type and the app sticker; choices list every allowed log with a label', () => {
+    const e = buildKidsEntry({ id: 'c1', name: 'Leo', birthDate: '2026-03-01' }, [], [], ctx)
+    expect(e.buttons[0]).toMatchObject({ type: 'feeding', sticker: 'bottle', url: 'grandma-app://log/kids/feeding?child=c1' })
+    const types = e.choices.map((c) => c.type)
+    expect(types).toEqual(expect.arrayContaining(['feeding', 'sleep', 'diaper', 'mood', 'activity', 'health', 'memory']))
+    expect(e.choices.every((c) => c.label && c.url.endsWith('?child=c1'))).toBe(true)
+  })
+  it('cycle choices never include intimate logs', () => {
+    const e = buildCycleEntry({ config: cfg, logs: [] }, ctx)
+    const types = e.choices.map((c) => c.type)
+    expect(types).toEqual(expect.arrayContaining(['period_start', 'lh', 'cm', 'basal_temp']))
+    expect(types).not.toContain('intercourse')
+    expect(types).not.toContain('sex_drive')
+  })
+  it('menopause choices use the symptom labels and stickers', () => {
+    const e = buildMenopauseEntry({ stage: 'peri', lastPeriodDate: '2026-09-05', logs: [] }, ctx)
+    expect(e.choices.find((c) => c.type === 'brain_fog')).toMatchObject({ sticker: 'brain' })
+    expect(e.choices.find((c) => c.type === 'night_sweat')?.label).toBeTruthy()
+  })
+})
+
+describe('chart readings', () => {
+  it('kids feeds: weekly average; menopause: fixed 1–5 scale and days with hot flashes', () => {
+    const logs = [
+      { date: '2026-11-09', type: 'feeding', value: null, created_at: '2026-11-09T08:00:00' },
+      { date: '2026-11-08', type: 'feeding', value: null, created_at: '2026-11-08T08:00:00' },
+    ]
+    const k = buildKidsEntry({ id: 'c1', name: 'Leo', birthDate: '2026-03-01' }, logs, [], ctx)
+    expect(k.series!.summary).toBe('avg 0.3/day')
+    const m = buildMenopauseEntry({ stage: 'peri', lastPeriodDate: null, logs: [{ date: '2026-11-09', type: 'hot_flash', value: null, severity: 3 }] }, ctx)
+    expect(m.series).toMatchObject({ scaleMax: 5, summary: '1 of 7 days' })
+  })
+  it('snapshot carries the app language and legend strings', () => {
+    const s = buildSnapshot({ now, isMinor: false, enrolled: ['pre-pregnancy'], activeMode: 'pre-pregnancy', activeChildId: null, cycle: { config: cfg, logs: [] } })
+    expect(s.lang).toBe('en')
+    expect(Object.values(s.strings.phases).every(Boolean)).toBe(true)
+    expect(s.strings.styles.cream).toBe('Cream')
+  })
+})

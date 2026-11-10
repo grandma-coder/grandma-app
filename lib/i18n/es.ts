@@ -6339,7 +6339,7 @@ export const es: TranslationKeys = {
   widget_menoMonthsZero: "Regla este mes",
   widget_menoHotToday: "Sofocos hoy · {{n}}/5",
   widget_menoNoHotToday: "Ningún sofoco registrado hoy",
-  widget_series_hotFlashes: "Sofocos, últimos 7 días",
+  widget_series_hotFlashes: "Sofocos · intensidad 1–5",
   widget_stat_sleepTrouble: "Mal sueño hoy",
   widget_stat_topSymptom: "Más frecuente (30 días)",
   widget_empty_menopause: "Registra un síntoma o tu última regla para ver tus patrones",
@@ -6358,4 +6358,9 @@ export const es: TranslationKeys = {
   widget_unit_months_one: "mes",
   widget_sinceLastPeriod: "desde la última regla",
   widget_sizeOf: "tamaño de {{fruit}}",
+  widget_avgPerDay: "media {{n}}/día",
+  widget_daysOf7: "{{n}} de 7 días",
+  widget_style_journey: "Color de la etapa",
+  widget_style_cream: "Crema",
+  widget_style_dark: "Oscuro",
 }

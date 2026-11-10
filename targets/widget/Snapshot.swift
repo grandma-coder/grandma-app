@@ -40,10 +40,14 @@ struct WSeries: Decodable {
   let label: String
   let kind: String
   let values: [Double]
+  let summary: String?
+  let scaleMax: Double?
 }
 
 struct WButton: Decodable {
+  let type: String?
   let label: String
+  let sticker: String?
   let url: String
 }
 
@@ -64,6 +68,8 @@ struct WEntry: Decodable {
   let stats: [WStat]
   let series: WSeries?
   let buttons: [WButton]
+  let choices: [WButton]?
+  let progressEnds: [String]?
   let openUrl: String
   let image: String?
 }
@@ -73,6 +79,8 @@ struct WStrings: Decodable {
   let pickChild: String
   let refresh: String
   let start: [String: String]
+  let phases: [String: String]?
+  let styles: [String: String]?
 }
 
 struct Snapshot: Decodable {
@@ -81,6 +89,7 @@ struct Snapshot: Decodable {
   let generatedAt: String
   let activeKey: String?
   let entries: [WEntry]
+  let lang: String?
   let strings: WStrings
 
   enum Loaded {
@@ -103,6 +112,11 @@ struct Snapshot: Decodable {
   static var entriesForPicker: [WEntry] {
     if case .ok(let s) = load(), s.signedIn { return s.entries }
     return []
+  }
+
+  static var current: Snapshot? {
+    if case .ok(let s) = load(), s.signedIn { return s }
+    return nil
   }
 }
 
@@ -127,6 +141,14 @@ func daysBetween(_ a: String, _ b: String) -> Int {
 }
 
 extension WEntry {
+  /// The buttons to draw: the person's picks from "Edit Widget" (by log type), else the defaults.
+  func buttons(picked: [String?]) -> [WButton] {
+    (0..<buttons.count).map { i in
+      if i < picked.count, let type = picked[i], let hit = choices?.first(where: { $0.type == type }) { return hit }
+      return buttons[i]
+    }
+  }
+
   func day(for today: String) -> WDay? {
     guard let first = days.first, let last = days.last else { return nil }
     if let hit = days.first(where: { $0.date == today }) { return hit }

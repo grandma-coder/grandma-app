@@ -6339,7 +6339,7 @@ export const ptBR: TranslationKeys = {
   widget_menoMonthsZero: "Menstruação este mês",
   widget_menoHotToday: "Calorões hoje · {{n}}/5",
   widget_menoNoHotToday: "Nenhum calorão registrado hoje",
-  widget_series_hotFlashes: "Calorões, últimos 7 dias",
+  widget_series_hotFlashes: "Fogachos · intensidade 1–5",
   widget_stat_sleepTrouble: "Sono ruim hoje",
   widget_stat_topSymptom: "Mais frequente (30 dias)",
   widget_empty_menopause: "Registre um sintoma ou sua última menstruação para ver seus padrões",
@@ -6358,4 +6358,9 @@ export const ptBR: TranslationKeys = {
   widget_unit_months_one: "mês",
   widget_sinceLastPeriod: "desde a última menstruação",
   widget_sizeOf: "tamanho de {{fruit}}",
+  widget_avgPerDay: "média {{n}}/dia",
+  widget_daysOf7: "{{n}} de 7 dias",
+  widget_style_journey: "Cor da jornada",
+  widget_style_cream: "Creme",
+  widget_style_dark: "Escuro",
 }

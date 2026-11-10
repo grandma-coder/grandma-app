@@ -2,7 +2,7 @@
  * Pure builders for the home-screen widget snapshot (see ./types.ts). Every string is rendered
  * here in the app language; widgets only pick today's precomputed line.
  */
-import { getCycleInfo, getDaysLate, toDateStr, DAILY_WATER_GOAL, type CycleConfig, type CyclePhase } from '../cycleLogic'
+import { getCycleInfo, getDaysLate, getPhaseLabel, toDateStr, DAILY_WATER_GOAL, type CycleConfig, type CyclePhase } from '../cycleLogic'
 import { getCurrentWeekFromDueDate, getDaysToGo, localizedBabySize } from '../pregnancyData'
 import { getTrimester } from '../pregnancyWeeks'
 import { getUpcomingAppointment } from '../pregnancyAppointments'
@@ -14,8 +14,10 @@ import { getNextDueVaccines, type HealthRecord } from '../vaccineSchedule'
 import { latestPeriodDate, monthsSinceDate, type MenopauseStage } from '../menopauseStage'
 import { menopauseSymptomLabel, resolveMenopauseSymptomId, type MenopauseSymptomId } from '../menopauseSymptoms'
 import type { JourneyMode } from '../../types'
-import { WIDGET_BUTTONS, buildHomeUrl, buildLogUrl, modeToJourney, type WidgetJourney } from './deepLinks'
-import { WIDGET_SNAPSHOT_VERSION, type WidgetButton, type WidgetDay, type WidgetEntry, type WidgetSnapshot, type WidgetStat } from './types'
+import { buildHomeUrl, modeToJourney, type WidgetJourney } from './deepLinks'
+import { buttonsFor, choicesFor } from './buttons'
+export { buttonsFor } from './buttons'
+import { WIDGET_SNAPSHOT_VERSION, type WidgetDay, type WidgetEntry, type WidgetSnapshot, type WidgetStat } from './types'
 
 /** Today plus the next 7 days — a widget stays right for a week without the app opening. */
 export const WIDGET_DAYS = 8
@@ -61,9 +63,6 @@ export function capitalize(s: string): string {
   return s ? s[0].toLocaleUpperCase() + s.slice(1) : s
 }
 
-export function buttonsFor(journey: WidgetJourney, childId?: string): WidgetButton[] {
-  return WIDGET_BUTTONS[journey].map((b) => ({ label: t(b.labelKey), url: buildLogUrl(journey, b.type, childId) }))
-}
 
 function baseEntry(journey: WidgetJourney, key: string, name: string, now: Date, childId?: string): WidgetEntry {
   return {
@@ -75,6 +74,7 @@ function baseEntry(journey: WidgetJourney, key: string, name: string, now: Date,
     todayFor: toDateStr(now),
     stats: [],
     buttons: buttonsFor(journey, childId),
+    choices: choicesFor(journey, childId),
     openUrl: buildHomeUrl(journey, childId),
   }
 }
@@ -192,6 +192,7 @@ export function buildPregnancyEntry(input: PregnancyInput, ctx: Ctx): WidgetEntr
   if (appt) stats.push({ label: t('widget_stat_nextAppointment'), value: `${appt.name} · ${t('widget_weekShort', { n: appt.week })}`, daily: false })
   e.stats = stats
   if (input.fruitPng) e.image = input.fruitPng
+  e.progressEnds = [t('widget_weekShort', { n: 1 }), t('widget_weekShort', { n: 40 })]
   return e
 }
 
@@ -239,7 +240,9 @@ export function buildKidsEntry(child: KidInput, logs: KidLog[], given: HealthRec
   if (lastFeed) e.sinceLast = { label: t('widget_sinceLastFeed'), at: new Date(lastFeed.created_at).toISOString() }
 
   const feedsOn = (date: string) => logs.filter((l) => l.date === date && FEED_TYPES.has(l.type)).length
-  e.series = { label: t('widget_series_feeds'), kind: 'bars', values: last7(now).map(feedsOn) }
+  const feeds = last7(now).map(feedsOn)
+  const avg = Math.round((feeds.reduce((a, b) => a + b, 0) / 7) * 10) / 10
+  e.series = { label: t('widget_series_feeds'), kind: 'bars', values: feeds, summary: t('widget_avgPerDay', { n: avg.toLocaleString(useLanguageStore.getState().language) }) }
   e.stats = [
     { label: t('widget_stat_feedsToday'), value: String(feedsOn(today)), daily: true },
     { label: t('widget_stat_diapersToday'), value: String(logs.filter((l) => l.date === today && l.type === 'diaper').length), daily: true },
@@ -292,7 +295,14 @@ export function buildMenopauseEntry(input: MenopauseInput, ctx: Ctx): WidgetEntr
   }
 
   const today = toDateStr(now)
-  e.series = { label: t('widget_series_hotFlashes'), kind: 'bars', values: last7(now).map((d) => severityOn(d, 'hot_flash')) }
+  const hot7 = last7(now).map((d) => severityOn(d, 'hot_flash'))
+  e.series = {
+    label: t('widget_series_hotFlashes'),
+    kind: 'bars',
+    values: hot7,
+    scaleMax: 5,
+    summary: t('widget_daysOf7', { n: hot7.filter((v) => v > 0).length }),
+  }
   const sleep = severityOn(today, 'sleep')
   e.stats = [{ label: t('widget_stat_sleepTrouble'), value: sleep > 0 ? `${sleep}/5` : '0', daily: true }]
 
@@ -323,6 +333,13 @@ export interface SnapshotInput {
 
 function snapshotStrings(): WidgetSnapshot['strings'] {
   return {
+    phases: {
+      m: getPhaseLabel('menstruation'),
+      f: getPhaseLabel('follicular'),
+      o: getPhaseLabel('ovulation'),
+      l: getPhaseLabel('luteal'),
+    },
+    styles: { journey: t('widget_style_journey'), cream: t('widget_style_cream'), dark: t('widget_style_dark') },
     signIn: t('widget_signIn'),
     pickChild: t('widget_pickChild'),
     refresh: t('widget_refresh'),
@@ -361,6 +378,7 @@ export function buildSnapshot(input: SnapshotInput): WidgetSnapshot {
     generatedAt: input.now.toISOString(),
     activeKey,
     entries,
+    lang: useLanguageStore.getState().language,
     strings: snapshotStrings(),
   }
 }
@@ -373,6 +391,7 @@ export function emptySnapshot(now: Date): WidgetSnapshot {
     generatedAt: now.toISOString(),
     activeKey: null,
     entries: [],
+    lang: useLanguageStore.getState().language,
     strings: snapshotStrings(),
   }
 }
