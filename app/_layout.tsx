@@ -62,6 +62,7 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { restoreJourneys } from '../lib/restoreJourneys'
 import { useWidgetPublisher } from '../hooks/useWidgetPublisher'
+import { useQuickActionRouting } from 'expo-quick-actions/router'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
 import { useConsentStore } from '../store/useConsentStore'
@@ -145,6 +146,8 @@ export default function RootLayout() {
   const [hasChildren, setHasChildren] = useState(false)
   // Home-screen widgets + icon shortcuts follow the signed-in account's data.
   useWidgetPublisher(!!session && !loading)
+  // App-icon shortcuts carry a grandma-app://log/... path (see lib/widgets/quickActions).
+  useQuickActionRouting()
   const setAccountRole = useCaregiverStore((s) => s.setAccountRole)
   const clearCaregiver = useCaregiverStore((s) => s.clear)
   // True when EVERY data query for the current session either timed out or
