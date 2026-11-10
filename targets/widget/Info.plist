@@ -7,5 +7,12 @@
       <key>NSExtensionPointIdentifier</key>
       <string>com.apple.widgetkit-extension</string>
     </dict>
+    <key>UIAppFonts</key>
+    <array>
+      <string>ArchitectsDaughter-Regular.ttf</string>
+      <string>HankenGrotesk-Medium.ttf</string>
+      <string>HankenGrotesk-Bold.ttf</string>
+      <string>HankenGrotesk-ExtraBold.ttf</string>
+    </array>
   </dict>
 </plist>

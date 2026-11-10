@@ -15,6 +15,7 @@
       "icon": "./assets/icon.png",
       "usesAppleSignIn": true,
       "infoPlist": {
+        "CFBundleDisplayName": "Grandma",
         "NSPhotoLibraryAddUsageDescription": "Save your daily affirmation as an image to share anywhere.",
         "ITSAppUsesNonExemptEncryption": false
       },

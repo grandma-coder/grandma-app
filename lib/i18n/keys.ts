@@ -6649,4 +6649,12 @@ export interface TranslationKeys {
   widget_start_pregnancy: string
   widget_start_kids: string
   widget_start_menopause: string
+  widget_eb_cycleDay: string
+  widget_ofLen: string
+  widget_eb_week: string
+  widget_unit_wks: string
+  widget_unit_months: string
+  widget_unit_months_one: string
+  widget_sinceLastPeriod: string
+  widget_sizeOf: string
 }

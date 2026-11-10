@@ -12,6 +12,16 @@ struct WDay: Decodable {
   let subtitle: String
   let progress: Double?
   let strip: WStrip?
+  let hero: WHero?
+}
+
+struct WHero: Decodable {
+  let eyebrow: String
+  let big: String
+  let unit: String
+  let caption: String
+  let footer: String
+  let live: Bool?
 }
 
 struct WStrip: Decodable {

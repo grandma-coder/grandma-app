@@ -4,6 +4,7 @@
  */
 import { getCycleInfo, getDaysLate, toDateStr, DAILY_WATER_GOAL, type CycleConfig, type CyclePhase } from '../cycleLogic'
 import { getCurrentWeekFromDueDate, getDaysToGo, localizedBabySize } from '../pregnancyData'
+import { getTrimester } from '../pregnancyWeeks'
 import { getUpcomingAppointment } from '../pregnancyAppointments'
 import { MINOR_HIDDEN_CYCLE_LOGS } from '../ageRules'
 import { t } from '../i18n'
@@ -54,6 +55,10 @@ export function shortDate(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number)
   const lang = useLanguageStore.getState().language
   return new Date(y, m - 1, d).toLocaleDateString(lang, { month: 'short', day: 'numeric' })
+}
+
+export function capitalize(s: string): string {
+  return s ? s[0].toLocaleUpperCase() + s.slice(1) : s
 }
 
 export function buttonsFor(journey: WidgetJourney, childId?: string): WidgetButton[] {
@@ -108,11 +113,19 @@ export function buildCycleEntry(input: CycleInput, ctx: Ctx): WidgetEntry {
           date,
           title: t('widget_cycleDayOnly', { day: info.cycleLength + late }),
           subtitle: plural('widget_periodLate', late),
+          hero: { eyebrow: t('widget_eb_cycleDay'), big: String(info.cycleLength + late), unit: '', caption: plural('widget_periodLate', late), footer: '' },
         }
       : {
           date,
           title: t('widget_cycleDay', { day: info.cycleDay, len: info.cycleLength }),
           subtitle: `${info.phaseLabel} · ${plural('widget_periodIn', info.daysUntilPeriod)}`,
+          hero: {
+            eyebrow: t('widget_eb_cycleDay'),
+            big: String(info.cycleDay),
+            unit: t('widget_ofLen', { len: info.cycleLength }),
+            caption: info.phaseLabel,
+            footer: capitalize(plural('widget_periodIn', info.daysUntilPeriod)),
+          },
         }
     // Phase strip over this cycle: day k of the cycle is (date − (cycleDay − 1) + k).
     const start = dayAt(dayAt(now, i), -(info.cycleDay - 1))
@@ -157,11 +170,14 @@ export function buildPregnancyEntry(input: PregnancyInput, ctx: Ctx): WidgetEntr
     const d = dayAt(now, i)
     const week = getCurrentWeekFromDueDate(dueDate, d)
     const toGo = getDaysToGo(dueDate, d)
+    const fruit = localizedBabySize(week).toLowerCase()
+    const footer = toGo > 0 ? plural('widget_daysToGo', toGo) : t('widget_dueNow')
     e.days.push({
       date: toDateStr(d),
-      title: t('widget_pregWeeks', { n: week, fruit: localizedBabySize(week).toLowerCase() }),
-      subtitle: toGo > 0 ? plural('widget_daysToGo', toGo) : t('widget_dueNow'),
+      title: t('widget_pregWeeks', { n: week, fruit }),
+      subtitle: footer,
       progress: Math.min(1, week / 40),
+      hero: { eyebrow: t('widget_eb_week', { n: week, tri: getTrimester(week) }), big: String(week), unit: t('widget_unit_wks'), caption: t('widget_sizeOf', { fruit }), footer },
     })
   }
 
@@ -207,10 +223,16 @@ export function buildKidsEntry(child: KidInput, logs: KidLog[], given: HealthRec
 
   for (let i = 0; i < WIDGET_DAYS; i++) {
     const d = dayAt(now, i)
+    const age = formatChildAge(child.birthDate, d)
+    const footer = slept ? capitalize(t('widget_kidsSlept', { d: slept })) : ''
     e.days.push({
       date: toDateStr(d),
-      title: `${child.name} · ${formatChildAge(child.birthDate, d)}`,
+      title: `${child.name} · ${age}`,
       subtitle: slept ? t('widget_kidsSlept', { d: slept }) : '',
+      // With a feed logged the hero is the live "2h since last feed"; without one, the child's age.
+      hero: lastFeed
+        ? { eyebrow: `${child.name} · ${age}`, big: '', unit: '', caption: t('widget_sinceLastFeed'), footer, live: true }
+        : { eyebrow: child.name, big: age, unit: '', caption: '', footer },
     })
   }
   // Normalised to ms + Z: Supabase sends microseconds and an offset, which iOS parsing doesn't reliably accept.
@@ -257,10 +279,15 @@ export function buildMenopauseEntry(input: MenopauseInput, ctx: Ctx): WidgetEntr
     if (months != null) parts.push(months === 0 ? t('widget_menoMonthsZero') : plural('widget_menoMonths', months))
     if (input.stage) parts.push(t(STAGE_KEY[input.stage]))
     const hot = severityOn(date, 'hot_flash')
+    const footer = hot > 0 ? t('widget_menoHotToday', { n: hot }) : t('widget_menoNoHotToday')
+    const eyebrow = input.stage ? t(STAGE_KEY[input.stage]) : t('widget_name_menopause')
     e.days.push({
       date,
       title: parts.join(' · '),
-      subtitle: hot > 0 ? t('widget_menoHotToday', { n: hot }) : t('widget_menoNoHotToday'),
+      subtitle: footer,
+      hero: months != null && months > 0
+        ? { eyebrow, big: String(months), unit: plural('widget_unit_months', months), caption: t('widget_sinceLastPeriod'), footer }
+        : { eyebrow, big: '', unit: '', caption: months === 0 ? t('widget_menoMonthsZero') : '', footer },
     })
   }
 

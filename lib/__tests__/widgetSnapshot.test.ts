@@ -125,3 +125,42 @@ describe('full snapshot', () => {
     expect(emptySnapshot(now)).toMatchObject({ signedIn: false, entries: [] })
   })
 })
+
+describe('hero layout (big number widgets)', () => {
+  it('cycle: day number of length, phase caption, capitalised footer', () => {
+    const h = buildCycleEntry({ config: cfg, logs: [] }, ctx).days[0].hero!
+    expect(h).toMatchObject({ eyebrow: 'Cycle day', big: '10', unit: 'of 28', caption: expect.stringMatching(/follicular/i) })
+    expect(h.footer).toMatch(/^Period in 19 days$/)
+  })
+  it('cycle late: day count keeps going, caption says late', () => {
+    const h = buildCycleEntry({ config: { ...cfg, lastPeriodStart: '2026-10-08' }, logs: [] }, ctx).days[0].hero!
+    expect(h).toMatchObject({ big: '32', unit: '' })
+    expect(h.caption).toMatch(/4 days late/)
+  })
+  it('pregnancy: week, trimester eyebrow, fruit caption, days to go footer', () => {
+    const h = buildPregnancyEntry({ dueDate: '2027-03-02', todayLogs: {} }, ctx).days[0].hero!
+    expect(h).toMatchObject({ eyebrow: 'Week 23 · trimester 2', big: '23', unit: 'wks', footer: '113 days to go' })
+    expect(h.caption).toMatch(/^size of \S/)
+  })
+  it('kids with a feed: live hero since last feed, name and age eyebrow, sleep footer', () => {
+    const logs = [
+      { date: '2026-11-09', type: 'feeding', value: null, created_at: '2026-11-09T08:00:00' },
+      { date: '2026-11-08', type: 'sleep', value: JSON.stringify({ duration: '7h 30m' }), created_at: '2026-11-08T21:00:00' },
+    ]
+    const h = buildKidsEntry({ id: 'c1', name: 'Leo', birthDate: '2026-03-01' }, logs, [], ctx).days[0].hero!
+    expect(h).toMatchObject({ big: '', live: true, caption: 'since last feed', footer: 'Slept 7h 30m' })
+    expect(h.eyebrow).toMatch(/^Leo · 8\s?mo/)
+  })
+  it('kids without a feed: age is the hero', () => {
+    const h = buildKidsEntry({ id: 'c1', name: 'Leo', birthDate: '2026-03-01' }, [], [], ctx).days[0].hero!
+    expect(h.live).toBeUndefined()
+    expect(h).toMatchObject({ eyebrow: 'Leo', big: expect.stringMatching(/8\s?mo/) })
+  })
+  it('menopause: months since last period, stage eyebrow, singular unit', () => {
+    const h = buildMenopauseEntry({ stage: 'peri', lastPeriodDate: '2026-09-05', logs: [] }, ctx).days[0].hero!
+    expect(h).toMatchObject({ big: '2', unit: 'months', caption: 'since last period' })
+    expect(h.eyebrow).toMatch(/perimenopause/i)
+    const one = buildMenopauseEntry({ stage: 'peri', lastPeriodDate: '2026-10-05', logs: [] }, ctx).days[0].hero!
+    expect(one).toMatchObject({ big: '1', unit: 'month' })
+  })
+})

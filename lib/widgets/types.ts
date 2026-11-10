@@ -14,9 +14,17 @@ export interface WidgetDay {
   subtitle: string
   /** 0..1 — pregnancy progress to the due date. */
   progress?: number
+  /** The widget's big-number layout (eyebrow, hero number + unit, caption, footer line). */
+  hero?: WidgetHero
   /** Cycle phase strip: today = cycle day (1-based); phases[i] is day i+1. */
   strip?: { today: number; length: number; phases: ('m' | 'f' | 'o' | 'l')[] }
 }
+
+/**
+ * `big` empty + `live` = the widget renders the hero number itself from `sinceLast.at`
+ * (kids: "2h" since last feed), so it stays right between app opens.
+ */
+export interface WidgetHero { eyebrow: string; big: string; unit: string; caption: string; footer: string; live?: boolean }
 
 /** daily = the value counts today only; widgets show "0" once the snapshot is from an earlier day. */
 export interface WidgetStat { label: string; value: string; daily: boolean }

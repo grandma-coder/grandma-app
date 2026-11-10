@@ -82,14 +82,17 @@ struct Provider: AppIntentTimelineProvider {
   }
 
   func timeline(for configuration: SelectEntryIntent, in context: Context) async -> Timeline<GrandmaEntry> {
-    // Now, then every midnight for a week — the snapshot already holds each day's lines.
+    // Now, hourly for a day (the kids "2h since last feed" hero), then every midnight for a week —
+    // the snapshot already holds each day's lines.
     var dates: [Date] = [.now]
     let cal = Calendar.current
+    for h in 1...24 { dates.append(Date.now.addingTimeInterval(Double(h) * 3600)) }
     var next = cal.startOfDay(for: .now)
     for _ in 0..<7 {
       next = cal.date(byAdding: .day, value: 1, to: next) ?? next.addingTimeInterval(86400)
       dates.append(next.addingTimeInterval(1))
     }
+    dates.sort()
     return Timeline(entries: dates.map { GrandmaEntry(date: $0, state: resolveState(chosenKey: configuration.entry?.id, at: $0)) }, policy: .atEnd)
   }
 }

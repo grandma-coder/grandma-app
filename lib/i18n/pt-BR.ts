@@ -6350,4 +6350,12 @@ export const ptBR: TranslationKeys = {
   widget_start_pregnancy: "Comece sua gravidez no Grandma",
   widget_start_kids: "Adicione sua criança no Grandma",
   widget_start_menopause: "Comece a menopausa no Grandma",
+  widget_eb_cycleDay: "Dia do ciclo",
+  widget_ofLen: "de {{len}}",
+  widget_eb_week: "Semana {{n}} · {{tri}}º trimestre",
+  widget_unit_wks: "sem",
+  widget_unit_months: "meses",
+  widget_unit_months_one: "mês",
+  widget_sinceLastPeriod: "desde a última menstruação",
+  widget_sizeOf: "tamanho de {{fruit}}",
 }

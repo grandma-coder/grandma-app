@@ -32,6 +32,7 @@ export async function publishNow(): Promise<void> {
     await writeSnapshot(JSON.stringify(snapshot))
     setQuickActionsFor(snapshot)
   } catch (e) {
+    if (__DEV__) console.warn('[widgets] publish failed', e)
     reportError(e, { area: 'widgets' })
   }
 }

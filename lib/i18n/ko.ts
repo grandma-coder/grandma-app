@@ -6347,4 +6347,12 @@ export const ko: TranslationKeys = {
   widget_start_pregnancy: "Start your pregnancy in Grandma",
   widget_start_kids: "Add your child in Grandma",
   widget_start_menopause: "Start menopause in Grandma",
+  widget_eb_cycleDay: "Cycle day",
+  widget_ofLen: "of {{len}}",
+  widget_eb_week: "Week {{n}} · trimester {{tri}}",
+  widget_unit_wks: "wks",
+  widget_unit_months: "months",
+  widget_unit_months_one: "month",
+  widget_sinceLastPeriod: "since last period",
+  widget_sizeOf: "size of {{fruit}}",
 }
