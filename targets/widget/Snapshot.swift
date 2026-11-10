@@ -120,7 +120,8 @@ extension WEntry {
   func day(for today: String) -> WDay? {
     guard let first = days.first, let last = days.last else { return nil }
     if let hit = days.first(where: { $0.date == today }) { return hit }
-    return today < first.date ? first : last
+    // Before the range: first day. After it: nil, so the widget asks for a refresh instead of freezing.
+    return today < first.date ? first : (today > last.date ? nil : last)
   }
 
   func isStale(_ today: String) -> Bool { todayFor < today }

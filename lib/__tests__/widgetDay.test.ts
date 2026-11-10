@@ -8,7 +8,7 @@ const entry = {
 
 describe('widget day picking', () => {
   it('picks the exact date', () => expect(pickDay(entry, '2026-11-10')?.title).toBe('2026-11-10'))
-  it('falls back to the last day past the range', () => expect(pickDay(entry, '2026-11-20')?.title).toBe('2026-11-11'))
+  it('has no line once today is past the range (never a frozen day)', () => expect(pickDay(entry, '2026-11-20')).toBeNull())
   it('falls back to the first day before the range', () => expect(pickDay(entry, '2026-11-01')?.title).toBe('2026-11-09'))
   it('is stale once today is after todayFor', () => {
     expect(isStale(entry, '2026-11-09')).toBe(false)

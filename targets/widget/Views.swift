@@ -47,7 +47,9 @@ struct WidgetView: View {
     Group {
       switch entry.state {
       case .ok(let e): JourneyView(entry: e, today: isoDay(entry.date), family: family)
-      case .signedOut(let text), .outdated(let text), .pickChild(let text), .start(let text): MessageView(text: text)
+      case .signedOut(let text), .outdated(let text): MessageView(text: text, url: "grandma-app://")
+      case .pickChild(let text): MessageView(text: text, url: "grandma-app://log/kids/home")
+      case .start(let text, let url), .refresh(let text, let url): MessageView(text: text, url: url)
       }
     }
     .containerBackground(Color.cream, for: .widget)
@@ -56,6 +58,7 @@ struct WidgetView: View {
 
 struct MessageView: View {
   let text: String
+  let url: String
   var body: some View {
     VStack(spacing: 8) {
       Text("Grandma").font(.system(.caption, design: .rounded).weight(.bold)).foregroundStyle(Color.inkMuted)
@@ -66,7 +69,7 @@ struct MessageView: View {
         .minimumScaleFactor(0.7)
     }
     .padding()
-    .widgetURL(URL(string: "grandma-app://"))
+    .widgetURL(URL(string: url))
   }
 }
 
@@ -94,10 +97,13 @@ struct JourneyView: View {
   var header: some View {
     HStack(alignment: .top, spacing: 10) {
       VStack(alignment: .leading, spacing: 4) {
-        Text(entry.name.uppercased())
-          .font(.system(size: 11, weight: .bold, design: .rounded))
-          .foregroundStyle(accent.ink)
-          .lineLimit(1)
+        // Kids titles already start with the child's name ("Leo · 8mo") — don't say it twice.
+        if !(day?.title.hasPrefix(entry.name) ?? false) {
+          Text(entry.name.uppercased())
+            .font(.system(size: 11, weight: .bold, design: .rounded))
+            .foregroundStyle(accent.ink)
+            .lineLimit(1)
+        }
         if entry.state == "empty" {
           Text(entry.emptyText ?? "")
             .font(.system(.subheadline, design: .rounded).weight(.semibold))
@@ -118,10 +124,7 @@ struct JourneyView: View {
               .minimumScaleFactor(0.7)
           }
           if let since = entry.sinceLast, let at = parseISODate(since.at) {
-            HStack(spacing: 4) {
-              Text(at, style: .relative).monospacedDigit()
-              Text(since.label)
-            }
+            (Text(at, style: .relative).monospacedDigit() + Text(" " + since.label))
             .font(.system(.caption, design: .rounded))
             .foregroundStyle(Color.inkSoft)
             .lineLimit(1)

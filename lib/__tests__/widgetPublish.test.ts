@@ -55,3 +55,16 @@ describe('which query refreshes trigger a publish', () => {
     expect(isWidgetRelevantQuery(['leaderboard', 'x'])).toBe(false)
   })
 })
+
+describe('sign-out while a publish is in flight', () => {
+  it('the late publish does not overwrite the wiped snapshot', async () => {
+    let release!: (v: unknown) => void
+    ;(collectSnapshotInput as jest.Mock).mockReturnValueOnce(new Promise((r) => { release = r }))
+    const running = publishNow()
+    await clearWidgets()
+    release(input)
+    await running
+    const writes = (writeSnapshot as jest.Mock).mock.calls.map((c) => JSON.parse(c[0]).signedIn)
+    expect(writes).toEqual([false])
+  })
+})

@@ -62,6 +62,7 @@ import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { restoreJourneys } from '../lib/restoreJourneys'
 import { useWidgetPublisher } from '../hooks/useWidgetPublisher'
+import { clearWidgets } from '../lib/widgets/publish'
 import { useQuickActionRouting } from 'expo-quick-actions/router'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
@@ -546,6 +547,9 @@ export default function RootLayout() {
           clearCaregiver()
           setLoadFailed(false)
           setLoading(false)
+          // Session gone without signOut() (expired/revoked token, global sign-out elsewhere):
+          // the home-screen widgets and shortcuts must not keep this account's data.
+          void clearWidgets()
           return
         }
 

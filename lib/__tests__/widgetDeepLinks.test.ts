@@ -16,6 +16,10 @@ describe('widget deep links', () => {
     expect(parseWidgetLink('garage', 'mood')).toBeNull()
     expect(parseWidgetLink('cycle', 'drop table')).toBeNull()
   })
+  it('never opens intercourse or sex-drive sheets (minors can be sent any link)', () => {
+    expect(parseWidgetLink('cycle', 'intercourse')).toBeNull()
+    expect(parseWidgetLink('cycle', 'sex_drive')).toBeNull()
+  })
   it('buttons match the spec', () => {
     expect(WIDGET_BUTTONS.cycle.map((b) => b.type)).toEqual(['period_start', 'symptom', 'mood', 'basal_temp'])
     expect(WIDGET_BUTTONS.pregnancy.map((b) => b.type)).toEqual(['mood', 'symptom', 'kick_count', 'water'])

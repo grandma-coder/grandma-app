@@ -4,9 +4,10 @@
  */
 import { WIDGET_SNAPSHOT_VERSION, type WidgetDay, type WidgetEntry, type WidgetSnapshot } from '../../lib/widgets/types'
 import { isStale, pickDay, shiftSeries, daysBetweenISO } from '../../lib/widgets/day'
+import { buildHomeUrl, type WidgetJourney } from '../../lib/widgets/deepLinks'
 
 export type Resolved =
-  | { kind: 'message'; text: string }
+  | { kind: 'message'; text: string; url?: string }
   | { kind: 'ok'; entry: WidgetEntry; day: WidgetDay | null; stats: { label: string; value: string }[]; series: number[] | null }
 
 const FALLBACK_SIGN_IN = 'Sign in to Grandma'
@@ -32,16 +33,20 @@ export function resolveEntry(json: string | null, chosenKey: string | null, toda
   const key = chosenKey ?? s.activeKey
   const entry = key ? s.entries.find((e) => e.key === key) : s.entries[0]
   if (!entry) {
-    if (key?.startsWith('kids:')) return { kind: 'message', text: s.strings.pickChild }
+    if (key?.startsWith('kids:')) return { kind: 'message', text: s.strings.pickChild, url: buildHomeUrl('kids') }
     const start = key ? (s.strings.start as Record<string, string>)[key] : undefined
-    return { kind: 'message', text: start ?? s.strings.start.cycle }
+    if (start) return { kind: 'message', text: start, url: buildHomeUrl(key as WidgetJourney) }
+    return { kind: 'message', text: s.strings.start.cycle }
   }
 
+  const day = pickDay(entry, todayISO)
+  // Past the precomputed week (app not opened for days): ask for a refresh rather than freeze.
+  if (!day && entry.days.length > 0) return { kind: 'message', text: s.strings.refresh, url: entry.openUrl }
   const stale = isStale(entry, todayISO)
   return {
     kind: 'ok',
     entry,
-    day: pickDay(entry, todayISO),
+    day,
     stats: entry.stats.map((st) => ({ label: st.label, value: st.daily && stale ? '0' : st.value })),
     series: entry.series ? shiftSeries(entry.series.values, stale ? daysBetweenISO(entry.todayFor, todayISO) : 0) : null,
   }

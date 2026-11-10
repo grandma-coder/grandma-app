@@ -11,6 +11,8 @@ import { useWidgetAssetStore } from '../../store/useWidgetAssetStore'
 
 const DEBOUNCE_MS = 1500
 let timer: ReturnType<typeof setTimeout> | null = null
+/** Bumped on sign-out so a publish already collecting can't write the old account back. */
+let epoch = 0
 
 /** Publish soon; bursts (a save that invalidates several queries) collapse into one write. */
 export function publishWidgets(_reason: string): void {
@@ -22,8 +24,10 @@ export function publishWidgets(_reason: string): void {
 }
 
 export async function publishNow(): Promise<void> {
+  const started = epoch
   try {
     const input = await collectSnapshotInput()
+    if (started !== epoch) return
     const snapshot = input ? buildSnapshot(input) : emptySnapshot(new Date())
     await writeSnapshot(JSON.stringify(snapshot))
     setQuickActionsFor(snapshot)
@@ -34,6 +38,7 @@ export async function publishNow(): Promise<void> {
 
 /** Sign-out: widgets show "Sign in to Grandma" and nothing from the account stays on the home screen. */
 export async function clearWidgets(): Promise<void> {
+  epoch++
   if (timer) {
     clearTimeout(timer)
     timer = null

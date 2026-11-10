@@ -213,7 +213,8 @@ export function buildKidsEntry(child: KidInput, logs: KidLog[], given: HealthRec
       subtitle: slept ? t('widget_kidsSlept', { d: slept }) : '',
     })
   }
-  if (lastFeed) e.sinceLast = { label: t('widget_sinceLastFeed'), at: lastFeed.created_at }
+  // Normalised to ms + Z: Supabase sends microseconds and an offset, which iOS parsing doesn't reliably accept.
+  if (lastFeed) e.sinceLast = { label: t('widget_sinceLastFeed'), at: new Date(lastFeed.created_at).toISOString() }
 
   const feedsOn = (date: string) => logs.filter((l) => l.date === date && FEED_TYPES.has(l.type)).length
   e.series = { label: t('widget_series_feeds'), kind: 'bars', values: last7(now).map(feedsOn) }

@@ -23,10 +23,13 @@ describe('resolveEntry (Android widget)', () => {
   })
   it('garbage is signed out, not a crash', () => expect(resolveEntry('{nope', null, '2026-11-09').kind).toBe('message'))
   it('a removed child asks to pick a child', () => {
-    expect(resolveEntry(json(), 'kids:gone', '2026-11-09')).toEqual({ kind: 'message', text: 'Pick a child' })
+    expect(resolveEntry(json(), 'kids:gone', '2026-11-09')).toEqual({ kind: 'message', text: 'Pick a child', url: 'grandma-app://log/kids/home' })
   })
   it('a journey no longer enrolled asks to start it', () => {
-    expect(resolveEntry(json(), 'menopause', '2026-11-09')).toEqual({ kind: 'message', text: 's-m' })
+    expect(resolveEntry(json(), 'menopause', '2026-11-09')).toEqual({ kind: 'message', text: 's-m', url: 'grandma-app://log/menopause/home' })
+  })
+  it('past the precomputed days it asks to open the app instead of freezing', () => {
+    expect(resolveEntry(json(), 'cycle', '2026-11-30')).toMatchObject({ kind: 'message', text: 'Open Grandma to refresh' })
   })
   it('no choice follows activeKey', () => {
     const r = resolveEntry(json(), null, '2026-11-09')

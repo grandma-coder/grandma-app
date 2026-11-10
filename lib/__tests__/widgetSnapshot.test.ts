@@ -75,7 +75,7 @@ describe('kids entry', () => {
     expect(e.name).toBe('Leo')
     expect(e.days[0].title).toMatch(/^Leo · 8\s?mo/)
     expect(e.days[0].subtitle).toMatch(/7h 30m/)
-    expect(e.sinceLast).toEqual({ label: expect.any(String), at: '2026-11-09T08:00:00' })
+    expect(e.sinceLast).toEqual({ label: expect.any(String), at: new Date('2026-11-09T08:00:00').toISOString() })
     expect(e.buttons[0].url).toBe('grandma-app://log/kids/feeding?child=c1')
     expect(e.openUrl).toBe('grandma-app://log/kids/home?child=c1')
     expect(e.series).toMatchObject({ kind: 'bars' })

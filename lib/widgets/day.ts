@@ -1,12 +1,12 @@
 import type { WidgetDay, WidgetEntry } from './types'
 
-/** The precomputed line for `todayISO`; clamps to the first/last day outside the range. */
+/** The precomputed line for `todayISO`; the first day before the range, null after it (never a frozen day). */
 export function pickDay(entry: Pick<WidgetEntry, 'days'>, todayISO: string): WidgetDay | null {
   const { days } = entry
   if (days.length === 0) return null
   const hit = days.find((d) => d.date === todayISO)
   if (hit) return hit
-  return todayISO < days[0].date ? days[0] : days[days.length - 1]
+  return todayISO < days[0].date ? days[0] : null
 }
 
 /** True once the daily stats/series were computed for an earlier day than `todayISO`. */

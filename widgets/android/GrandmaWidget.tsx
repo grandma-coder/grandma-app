@@ -37,7 +37,8 @@ export function GrandmaWidget({ resolved, size }: { resolved: Resolved; size: Si
   if (resolved.kind === 'message') {
     return (
       <FlexWidget
-        clickAction="OPEN_APP"
+        clickAction={resolved.url ? 'OPEN_URI' : 'OPEN_APP'}
+        clickActionData={resolved.url ? { uri: resolved.url } : undefined}
         style={{ height: 'match_parent', width: 'match_parent', backgroundColor: CREAM, borderRadius: 22, padding: 14, justifyContent: 'center', alignItems: 'center' }}
       >
         <TextWidget text="Grandma" style={{ fontSize: 12, color: INK_MUTED, fontWeight: '700' }} />
@@ -58,7 +59,9 @@ export function GrandmaWidget({ resolved, size }: { resolved: Resolved; size: Si
     >
       <FlexWidget style={{ flexDirection: 'row', width: 'match_parent' }}>
         <FlexWidget style={{ flex: 1, flexDirection: 'column' }}>
-          <TextWidget text={entry.name.toUpperCase()} maxLines={1} style={{ fontSize: 11, color: accent.ink, fontWeight: '700' }} />
+          {day?.title.startsWith(entry.name) ? null : (
+            <TextWidget text={entry.name.toUpperCase()} maxLines={1} style={{ fontSize: 11, color: accent.ink, fontWeight: '700' }} />
+          )}
           {empty ? (
             <TextWidget text={entry.emptyText ?? ''} maxLines={4} style={{ fontSize: 14, color: INK, fontWeight: '600', marginTop: 4 }} />
           ) : (

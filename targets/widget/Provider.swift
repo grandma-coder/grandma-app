@@ -39,7 +39,8 @@ enum WidgetState {
   case signedOut(String)
   case outdated(String)
   case pickChild(String)
-  case start(String)
+  case start(String, String)
+  case refresh(String, String)
   case ok(WEntry)
 }
 
@@ -48,7 +49,7 @@ struct GrandmaEntry: TimelineEntry {
   let state: WidgetState
 }
 
-func resolveState(chosenKey: String?) -> WidgetState {
+func resolveState(chosenKey: String?, at date: Date = .now) -> WidgetState {
   switch Snapshot.load() {
   case .missing:
     return .signedOut("Sign in to Grandma")
@@ -57,12 +58,18 @@ func resolveState(chosenKey: String?) -> WidgetState {
   case .ok(let s):
     guard s.signedIn else { return .signedOut(s.strings.signIn) }
     let key = chosenKey ?? s.activeKey
-    if let key, let entry = s.entries.first(where: { $0.key == key }) { return .ok(entry) }
+    if let key, let entry = s.entries.first(where: { $0.key == key }) { return okOrRefresh(entry, s, date) }
     if let key, key.hasPrefix("kids:") { return .pickChild(s.strings.pickChild) }
-    if let key, let text = s.strings.start[key] { return .start(text) }
-    if let first = s.entries.first { return .ok(first) }
-    return .start(s.strings.start["cycle"] ?? "Open Grandma")
+    if let key, let text = s.strings.start[key] { return .start(text, "grandma-app://log/\(key)/home") }
+    if let first = s.entries.first { return okOrRefresh(first, s, date) }
+    return .start(s.strings.start["cycle"] ?? "Open Grandma", "grandma-app://")
   }
+}
+
+/** Past the snapshot's precomputed days (app not opened for a week): ask for a refresh, never freeze. */
+func okOrRefresh(_ entry: WEntry, _ s: Snapshot, _ date: Date) -> WidgetState {
+  if !entry.days.isEmpty && entry.day(for: isoDay(date)) == nil { return .refresh(s.strings.refresh, entry.openUrl) }
+  return .ok(entry)
 }
 
 struct Provider: AppIntentTimelineProvider {
@@ -75,7 +82,6 @@ struct Provider: AppIntentTimelineProvider {
   }
 
   func timeline(for configuration: SelectEntryIntent, in context: Context) async -> Timeline<GrandmaEntry> {
-    let state = resolveState(chosenKey: configuration.entry?.id)
     // Now, then every midnight for a week — the snapshot already holds each day's lines.
     var dates: [Date] = [.now]
     let cal = Calendar.current
@@ -84,6 +90,6 @@ struct Provider: AppIntentTimelineProvider {
       next = cal.date(byAdding: .day, value: 1, to: next) ?? next.addingTimeInterval(86400)
       dates.append(next.addingTimeInterval(1))
     }
-    return Timeline(entries: dates.map { GrandmaEntry(date: $0, state: state) }, policy: .atEnd)
+    return Timeline(entries: dates.map { GrandmaEntry(date: $0, state: resolveState(chosenKey: configuration.entry?.id, at: $0)) }, policy: .atEnd)
   }
 }

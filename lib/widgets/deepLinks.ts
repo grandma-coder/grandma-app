@@ -29,8 +29,9 @@ const MODE: Record<WidgetJourney, JourneyMode> = {
 }
 
 const CYCLE_TYPES = [
-  'period_start', 'period_end', 'symptom', 'mood', 'basal_temp', 'intercourse', 'exam', 'pregnancy_test',
-  'sex_drive', 'clots', 'weight', 'water', 'activity', 'lh', 'cm',
+  // No intercourse / sex_drive: any web page can send a link, and minors must never get those sheets.
+  'period_start', 'period_end', 'symptom', 'mood', 'basal_temp', 'exam', 'pregnancy_test',
+  'clots', 'weight', 'water', 'activity', 'lh', 'cm',
 ] as const satisfies readonly LogType[]
 const PREGNANCY_TYPES = [
   'mood', 'weight', 'symptom', 'appointment', 'exam_result', 'kick_count', 'sleep', 'exercise', 'nutrition',
