@@ -17,7 +17,8 @@
       "infoPlist": {
         "NSPhotoLibraryAddUsageDescription": "Save your daily affirmation as an image to share anywhere.",
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "appleTeamId": "C7H9AXWR6A"
     },
     "android": {
       "adaptiveIcon": {
@@ -68,7 +69,28 @@
           "project": "react-native",
           "organization": "grandmaapp"
         }
-      ]
+      ],
+      "@bacons/apple-targets",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Grandma",
+              "label": "Grandma",
+              "description": "Your journey at a glance, one tap to log",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000,
+              "widgetFeatures": "reconfigurable"
+            }
+          ]
+        }
+      ],
+      "expo-quick-actions"
     ],
     "experiments": {
       "typedRoutes": true

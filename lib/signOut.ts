@@ -7,6 +7,7 @@ import { clearPin } from './appLock'
 import { cancelAllReminderNotifications } from './reminderNotifications'
 import { cancelLocalNotification, cancelLocalSchedules } from './pushNotifications'
 import { PERIOD_REMINDER_ID } from './cycleReminders'
+import { clearWidgets } from './widgets/publish'
 
 type Scope = 'local' | 'global'
 
@@ -92,6 +93,8 @@ export async function signOut(scope: Scope = 'local'): Promise<void> {
   // would otherwise announce this account's cycle on a shared phone).
   await cancelLocalSchedules().catch(() => {})
   await cancelLocalNotification(PERIOD_REMINDER_ID).catch(() => {})
+  // Home-screen widgets and icon shortcuts: back to "Sign in to Grandma".
+  await clearWidgets()
 
   router.replace('/(auth)/welcome')
 }

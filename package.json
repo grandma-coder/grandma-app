@@ -65,6 +65,7 @@
     }
   },
   "dependencies": {
+    "@bacons/apple-targets": "^5.0.0",
     "@expo-google-fonts/abril-fatface": "^0.4.1",
     "@expo-google-fonts/archivo-black": "^0.4.1",
     "@expo-google-fonts/bebas-neue": "^0.4.1",
@@ -116,6 +117,7 @@
     "expo-media-library": "~18.2.1",
     "expo-notifications": "~0.32.17",
     "expo-print": "~15.0.8",
+    "expo-quick-actions": "^6.0.2",
     "expo-router": "~6.0.23",
     "expo-secure-store": "~15.0.8",
     "expo-sensors": "~15.0.8",
@@ -128,6 +130,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-android-widget": "^0.26.0",
     "react-native-purchases": "^9.15.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",

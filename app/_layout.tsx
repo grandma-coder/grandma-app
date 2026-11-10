@@ -61,6 +61,7 @@ import { HankenGrotesk_700Bold_Italic } from '@expo-google-fonts/hanken-grotesk/
 import { supabase } from '../lib/supabase'
 import { useChildStore } from '../store/useChildStore'
 import { restoreJourneys } from '../lib/restoreJourneys'
+import { useWidgetPublisher } from '../hooks/useWidgetPublisher'
 import { useModeStore } from '../store/useModeStore'
 import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
 import { useConsentStore } from '../store/useConsentStore'
@@ -142,6 +143,8 @@ export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [hasChildren, setHasChildren] = useState(false)
+  // Home-screen widgets + icon shortcuts follow the signed-in account's data.
+  useWidgetPublisher(!!session && !loading)
   const setAccountRole = useCaregiverStore((s) => s.setAccountRole)
   const clearCaregiver = useCaregiverStore((s) => s.clear)
   // True when EVERY data query for the current session either timed out or
