@@ -6593,4 +6593,15 @@ export interface TranslationKeys {
   meno_set_savedTitle: string
   meno_set_savedMsg: string
   meno_set_rowNotSet: string
+  widget_btn_period: string
+  widget_btn_symptoms: string
+  widget_btn_mood: string
+  widget_btn_temp: string
+  widget_btn_kicks: string
+  widget_btn_water: string
+  widget_btn_feed: string
+  widget_btn_sleep: string
+  widget_btn_diaper: string
+  widget_btn_hotFlash: string
+  widget_btn_sweats: string
 }

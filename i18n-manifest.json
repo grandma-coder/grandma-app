@@ -11167,7 +11167,18 @@
    "wallet_pickTitle": "a9d42538",
    "wallet_reminders_title": "4841b654",
    "wallet_rewards_title": "fec1caab",
-   "wallet_village_title": "4dc43303"
+   "wallet_village_title": "4dc43303",
+   "widget_btn_diaper": "856206ec",
+   "widget_btn_feed": "2b61b245",
+   "widget_btn_hotFlash": "bda4549e",
+   "widget_btn_kicks": "1c2d15a4",
+   "widget_btn_mood": "6264551e",
+   "widget_btn_period": "87248424",
+   "widget_btn_sleep": "2fa62ca8",
+   "widget_btn_sweats": "d236a3f8",
+   "widget_btn_symptoms": "87718d21",
+   "widget_btn_temp": "40480be7",
+   "widget_btn_water": "d63556b0"
   },
   "pt-BR": {
    "a11y_askGrandmaTopic": "942213e4",
@@ -17452,7 +17463,18 @@
    "wallet_pickTitle": "a9d42538",
    "wallet_reminders_title": "4841b654",
    "wallet_rewards_title": "fec1caab",
-   "wallet_village_title": "4dc43303"
+   "wallet_village_title": "4dc43303",
+   "widget_btn_diaper": "856206ec",
+   "widget_btn_feed": "2b61b245",
+   "widget_btn_hotFlash": "bda4549e",
+   "widget_btn_kicks": "1c2d15a4",
+   "widget_btn_mood": "6264551e",
+   "widget_btn_period": "87248424",
+   "widget_btn_sleep": "2fa62ca8",
+   "widget_btn_sweats": "d236a3f8",
+   "widget_btn_symptoms": "87718d21",
+   "widget_btn_temp": "40480be7",
+   "widget_btn_water": "d63556b0"
   }
  }
 }
