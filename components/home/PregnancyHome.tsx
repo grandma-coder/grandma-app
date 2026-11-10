@@ -58,6 +58,7 @@ import { getTrimester } from '../../lib/pregnancyWeeks'
 import { dateLoc } from '../../lib/kpLocale'
 
 import { useConsumeWidgetIntent } from '../../store/useWidgetIntentStore'
+import { WidgetFruitCapture } from './pregnancy/WidgetFruitCapture'
 const SCREEN_W = Dimensions.get('window').width
 
 
@@ -320,6 +321,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
       contentContainerStyle={{ paddingTop: topInset + 16, paddingBottom: bottomInset }}
       showsVerticalScrollIndicator={false}
     >
+      <WidgetFruitCapture week={weekNumber} />
       {/* Greeting — a caregiver sees a scoped identity header ("Caring for …" +
           role badge + caregiver child switcher) instead of the owner greeting. */}
       <View style={{ paddingHorizontal: 20, marginBottom: 12 }}>
