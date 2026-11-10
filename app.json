@@ -18,7 +18,12 @@
         "NSPhotoLibraryAddUsageDescription": "Save your daily affirmation as an image to share anywhere.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "appleTeamId": "C7H9AXWR6A"
+      "appleTeamId": "C7H9AXWR6A",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.co.sauceroom.grandma"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -85,12 +90,20 @@
               "targetCellHeight": 2,
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000,
-              "widgetFeatures": "reconfigurable"
+              "widgetFeatures": "reconfigurable|configuration_optional"
             }
           ]
         }
       ],
-      "expo-quick-actions"
+      "expo-quick-actions",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
