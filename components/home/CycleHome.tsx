@@ -42,6 +42,7 @@ import { appIntlLocale } from '../../lib/cycleLogForms'
 import { Skeleton, SkeletonRing } from '../ui/Skeleton'
 import { FadeIn } from '../ui/Motion'
 
+import { useConsumeWidgetIntent } from '../../store/useWidgetIntentStore'
 function getMicroLabel(): string {
   const d = new Date()
   const loc = appIntlLocale()
@@ -136,6 +137,7 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
   // date → save → confirm overlay → glide back to today.
   const [launcherOpen, setLauncherOpen] = useState(false)
   const [logSheetType, setLogSheetType] = useState<LogType | null>(null)
+  useConsumeWidgetIntent('cycle', (t) => setLogSheetType(t as LogType))
   const [logConfirmVisible, setLogConfirmVisible] = useState(false)
 
   const handleDatePress = useCallback((date: string) => {

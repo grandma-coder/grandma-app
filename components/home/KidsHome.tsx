@@ -231,6 +231,7 @@ import { CenterModal } from '../ui/CenterModal'
 import { RemindersPanel, type PanelDraft } from './reminders/RemindersPanel'
 import { syncReminderNotifications } from '../../lib/reminderNotifications'
 import { cleanDraft } from '../../lib/reminders'
+import { useConsumeWidgetIntent } from '../../store/useWidgetIntentStore'
 
 const MOOD_COLORS: Record<string, string> = {
   happy: stickers.yellow, calm: stickers.green, energetic: brand.kids, fussy: stickers.peach, cranky: stickers.coral,
@@ -519,6 +520,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
   const [diaperModalVisible, setDiaperModalVisible] = useState(false)
   const [goalsModalVisible, setGoalsModalVisible] = useState(false)
   const [logSheetType, setLogSheetType] = useState<KidsLogType | null>(null)
+  useConsumeWidgetIntent('kids', (t) => setLogSheetType(t as KidsLogType))
   // Handoff — share a "since …" summary with whoever takes the child next (light look only).
   const [handoffVisible, setHandoffVisible] = useState(false)
 

@@ -57,6 +57,7 @@ import type { StandardAppointment } from '../../lib/pregnancyAppointments'
 import { getTrimester } from '../../lib/pregnancyWeeks'
 import { dateLoc } from '../../lib/kpLocale'
 
+import { useConsumeWidgetIntent } from '../../store/useWidgetIntentStore'
 const SCREEN_W = Dimensions.get('window').width
 
 
@@ -226,6 +227,7 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
   const displayName = profile?.name ?? parentName
 
   const [activeLog, setActiveLog] = useState<PregnancyLogType | null>(null)
+  useConsumeWidgetIntent('pregnancy', (t) => setActiveLog(t as PregnancyLogType))
   const [weekDetailVisible, setWeekDetailVisible] = useState(false)
   const [detailWeek, setDetailWeek] = useState(weekNumber)
   const [apptDetail, setApptDetail] = useState<StandardAppointment | null>(null)

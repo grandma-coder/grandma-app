@@ -70,6 +70,7 @@ import {
 } from '../../lib/menopauseSymptoms'
 import { supabase } from '../../lib/supabase'
 
+import { useConsumeWidgetIntent } from '../../store/useWidgetIntentStore'
 // ─── Static copy (resolved at render so a language change applies live) ──────
 
 const stageLabelOf = (stage: MenopauseStage): string =>
@@ -234,6 +235,7 @@ export function MenopauseHome() {
 
   // Quick-log chip → straight to the compact severity form for that symptom.
   const openSymptom = (id: MenopauseSymptomId) => { setLogDate(null); setPendingSymptom(id); setActiveSheet('symptom') }
+  useConsumeWidgetIntent('menopause', (t) => (t === 'period' ? setActiveSheet('period') : openSymptom(t as MenopauseSymptomId)))
   // "More" and a week-strip tap open the tile grid (cycle LogActivitySheet parity).
   const openMore = () => { setGridDate(null); setGridOpen(true) }
   const openLogForDate = (date: string) => { if (isFutureDate(date)) return; setGridDate(date); setGridOpen(true) }
