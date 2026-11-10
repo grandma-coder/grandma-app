@@ -6627,4 +6627,26 @@ export interface TranslationKeys {
   widget_name_pregnancy: string
   widget_name_menopause: string
   widget_weekShort: string
+  widget_kidsSlept: string
+  widget_sinceLastFeed: string
+  widget_series_feeds: string
+  widget_stat_feedsToday: string
+  widget_stat_diapersToday: string
+  widget_stat_nextVaccine: string
+  widget_menoMonths: string
+  widget_menoMonths_one: string
+  widget_menoMonthsZero: string
+  widget_menoHotToday: string
+  widget_menoNoHotToday: string
+  widget_series_hotFlashes: string
+  widget_stat_sleepTrouble: string
+  widget_stat_topSymptom: string
+  widget_empty_menopause: string
+  widget_signIn: string
+  widget_pickChild: string
+  widget_refresh: string
+  widget_start_cycle: string
+  widget_start_pregnancy: string
+  widget_start_kids: string
+  widget_start_menopause: string
 }

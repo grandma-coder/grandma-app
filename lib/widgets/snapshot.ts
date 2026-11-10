@@ -8,8 +8,13 @@ import { getUpcomingAppointment } from '../pregnancyAppointments'
 import { MINOR_HIDDEN_CYCLE_LOGS } from '../ageRules'
 import { t } from '../i18n'
 import { useLanguageStore } from '../../store/useLanguageStore'
-import { WIDGET_BUTTONS, buildHomeUrl, buildLogUrl, type WidgetJourney } from './deepLinks'
-import type { WidgetButton, WidgetDay, WidgetEntry, WidgetStat } from './types'
+import { formatChildAge } from '../childAge'
+import { getNextDueVaccines, type HealthRecord } from '../vaccineSchedule'
+import { latestPeriodDate, monthsSinceDate, type MenopauseStage } from '../menopauseStage'
+import { menopauseSymptomLabel, resolveMenopauseSymptomId, type MenopauseSymptomId } from '../menopauseSymptoms'
+import type { JourneyMode } from '../../types'
+import { WIDGET_BUTTONS, buildHomeUrl, buildLogUrl, modeToJourney, type WidgetJourney } from './deepLinks'
+import { WIDGET_SNAPSHOT_VERSION, type WidgetButton, type WidgetDay, type WidgetEntry, type WidgetSnapshot, type WidgetStat } from './types'
 
 /** Today plus the next 7 days — a widget stays right for a week without the app opening. */
 export const WIDGET_DAYS = 8
@@ -172,4 +177,174 @@ export function buildPregnancyEntry(input: PregnancyInput, ctx: Ctx): WidgetEntr
   e.stats = stats
   if (input.fruitPng) e.image = input.fruitPng
   return e
+}
+
+// ─── kids ──────────────────────────────────────────────────────────────────
+
+export interface KidLog { date: string; type: string; value: string | null; created_at: string }
+export interface KidInput { id: string; name: string; birthDate: string; countryCode?: string }
+
+const FEED_TYPES = new Set(['feeding', 'food'])
+
+function sleepDuration(value: string | null): string | null {
+  if (!value) return null
+  try {
+    const d = (JSON.parse(value) as { duration?: unknown }).duration
+    return typeof d === 'string' && d ? d : null
+  } catch {
+    return null
+  }
+}
+
+export function buildKidsEntry(child: KidInput, logs: KidLog[], given: HealthRecord[], ctx: Ctx): WidgetEntry {
+  const { now } = ctx
+  const e = baseEntry('kids', `kids:${child.id}`, child.name, now, child.id)
+  const today = toDateStr(now)
+  const byNewest = [...logs].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+  const lastSleep = byNewest.find((l) => l.type === 'sleep')
+  const slept = lastSleep ? sleepDuration(lastSleep.value) : null
+  const lastFeed = byNewest.find((l) => FEED_TYPES.has(l.type))
+
+  for (let i = 0; i < WIDGET_DAYS; i++) {
+    const d = dayAt(now, i)
+    e.days.push({
+      date: toDateStr(d),
+      title: `${child.name} · ${formatChildAge(child.birthDate, d)}`,
+      subtitle: slept ? t('widget_kidsSlept', { d: slept }) : '',
+    })
+  }
+  if (lastFeed) e.sinceLast = { label: t('widget_sinceLastFeed'), at: lastFeed.created_at }
+
+  const feedsOn = (date: string) => logs.filter((l) => l.date === date && FEED_TYPES.has(l.type)).length
+  e.series = { label: t('widget_series_feeds'), kind: 'bars', values: last7(now).map(feedsOn) }
+  e.stats = [
+    { label: t('widget_stat_feedsToday'), value: String(feedsOn(today)), daily: true },
+    { label: t('widget_stat_diapersToday'), value: String(logs.filter((l) => l.date === today && l.type === 'diaper').length), daily: true },
+  ]
+  const vaccine = getNextDueVaccines(child.birthDate, given, child.countryCode ?? 'US')[0]
+  if (vaccine) e.stats.push({ label: t('widget_stat_nextVaccine'), value: `${vaccine.name} · ${vaccine.dueAge}`, daily: false })
+  return e
+}
+
+// ─── menopause ─────────────────────────────────────────────────────────────
+
+export interface MenopauseInput {
+  stage: MenopauseStage | null
+  lastPeriodDate: string | null
+  logs: { date: string; type: string; value: string | null; severity: number | null }[]
+}
+
+const STAGE_KEY = { peri: 'report_meno_stage_peri', meno: 'report_meno_stage_meno', post: 'report_meno_stage_post' } as const
+
+export function buildMenopauseEntry(input: MenopauseInput, ctx: Ctx): WidgetEntry {
+  const { now } = ctx
+  const e = baseEntry('menopause', 'menopause', t('widget_name_menopause'), now)
+  const lastPeriod = latestPeriodDate(input.logs, input.lastPeriodDate)
+  if (!input.stage && !lastPeriod && input.logs.length === 0) {
+    e.state = 'empty'
+    e.emptyText = t('widget_empty_menopause')
+    return e
+  }
+  const severityOn = (date: string, type: string) =>
+    input.logs.find((l) => l.date === date && l.type === type)?.severity ?? 0
+
+  for (let i = 0; i < WIDGET_DAYS; i++) {
+    const d = dayAt(now, i)
+    const date = toDateStr(d)
+    const months = monthsSinceDate(lastPeriod, d)
+    const parts: string[] = []
+    if (months != null) parts.push(months === 0 ? t('widget_menoMonthsZero') : plural('widget_menoMonths', months))
+    if (input.stage) parts.push(t(STAGE_KEY[input.stage]))
+    const hot = severityOn(date, 'hot_flash')
+    e.days.push({
+      date,
+      title: parts.join(' · '),
+      subtitle: hot > 0 ? t('widget_menoHotToday', { n: hot }) : t('widget_menoNoHotToday'),
+    })
+  }
+
+  const today = toDateStr(now)
+  e.series = { label: t('widget_series_hotFlashes'), kind: 'bars', values: last7(now).map((d) => severityOn(d, 'hot_flash')) }
+  const sleep = severityOn(today, 'sleep')
+  e.stats = [{ label: t('widget_stat_sleepTrouble'), value: sleep > 0 ? `${sleep}/5` : '0', daily: true }]
+
+  const since = toDateStr(dayAt(now, -29))
+  const counts = new Map<MenopauseSymptomId, number>()
+  for (const l of input.logs) {
+    const id = l.date >= since ? resolveMenopauseSymptomId(l.type) : null
+    if (id) counts.set(id, (counts.get(id) ?? 0) + 1)
+  }
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]
+  if (top) e.stats.push({ label: t('widget_stat_topSymptom'), value: menopauseSymptomLabel(top[0]), daily: false })
+  return e
+}
+
+// ─── whole snapshot ────────────────────────────────────────────────────────
+
+export interface SnapshotInput {
+  now: Date
+  isMinor: boolean
+  enrolled: JourneyMode[]
+  activeMode: JourneyMode
+  activeChildId: string | null
+  cycle?: CycleInput
+  pregnancy?: PregnancyInput
+  kids?: { children: KidInput[]; logs: Record<string, KidLog[]>; given: Record<string, HealthRecord[]> }
+  menopause?: MenopauseInput
+}
+
+function snapshotStrings(): WidgetSnapshot['strings'] {
+  return {
+    signIn: t('widget_signIn'),
+    pickChild: t('widget_pickChild'),
+    refresh: t('widget_refresh'),
+    start: {
+      cycle: t('widget_start_cycle'),
+      pregnancy: t('widget_start_pregnancy'),
+      kids: t('widget_start_kids'),
+      menopause: t('widget_start_menopause'),
+    },
+  }
+}
+
+export function buildSnapshot(input: SnapshotInput): WidgetSnapshot {
+  const ctx: Ctx = { now: input.now, isMinor: input.isMinor }
+  const has = (m: JourneyMode) => input.enrolled.includes(m)
+  const entries: WidgetEntry[] = []
+  if (has('pre-pregnancy') && input.cycle) entries.push(buildCycleEntry(input.cycle, ctx))
+  if (has('pregnancy') && input.pregnancy) entries.push(buildPregnancyEntry(input.pregnancy, ctx))
+  if (has('kids') && input.kids) {
+    for (const c of input.kids.children) {
+      entries.push(buildKidsEntry(c, input.kids.logs[c.id] ?? [], input.kids.given[c.id] ?? [], ctx))
+    }
+  }
+  if (has('menopause') && input.menopause) entries.push(buildMenopauseEntry(input.menopause, ctx))
+
+  const journey = modeToJourney(input.activeMode)
+  const wanted = journey === 'kids' ? `kids:${input.activeChildId ?? ''}` : journey
+  const activeKey = entries.find((e) => e.key === wanted)?.key
+    ?? entries.find((e) => e.journey === journey)?.key
+    ?? entries[0]?.key
+    ?? null
+
+  return {
+    version: WIDGET_SNAPSHOT_VERSION,
+    signedIn: true,
+    generatedAt: input.now.toISOString(),
+    activeKey,
+    entries,
+    strings: snapshotStrings(),
+  }
+}
+
+/** What widgets show after sign-out: no entries, "Sign in to Grandma". */
+export function emptySnapshot(now: Date): WidgetSnapshot {
+  return {
+    version: WIDGET_SNAPSHOT_VERSION,
+    signedIn: false,
+    generatedAt: now.toISOString(),
+    activeKey: null,
+    entries: [],
+    strings: snapshotStrings(),
+  }
 }
