@@ -12,7 +12,7 @@ abrir de novo. Atualizar a cada build.
 | Compartilhar jornada | Não dá para outro adulto ver ou registrar o ciclo/gravidez/menopausa | V2 (Círculo de Cuidados v2); filhos já compartilham |
 | Recompensas / ranking | Não aparecem | Flag desligada no beta |
 | Assinatura | Não há paywall | Flag desligada no beta |
-| Android | Sem build Android | Beta só iOS (decisão pendente) |
+| Android | Sem build Android (o widget Android já está no código) | Beta só iOS (decisão pendente) |
 | Ícones de atividade | Natação usa sol, música usa sino, dança usa estrela; na menopausa, "café" usa copo e "álcool" usa frutinhas | Faltam figurinhas próprias |
 
 ## Bugs conhecidos em aberto
@@ -30,6 +30,18 @@ abrir de novo. Atualizar a cada build.
 | Onboarding da menopausa | Perguntas de sintomas e terapia hormonal (TRH) não são salvas nem usadas, embora a tela diga que "ajuda a personalizar" | Decisão: salvar (sintomas como primeiros registros) ou remover as 2 telas |
 | Onboarding da gravidez | Humor do primeiro dia "calma", "cansada" ou "enjoada" não aparece selecionado ao editar o registro (o formulário só tem 5 humores) | Cosmético; calendário já mostra certo |
 | Onboarding do ciclo | O registro de menstruação criado no onboarding guarda a duração no campo de fluxo; ao editar, nenhum fluxo aparece selecionado | Cosmético |
+
+## Widgets e atalhos (build 19)
+
+| Área | O que testar / limitação | Status |
+|---|---|---|
+| iOS mínimo | O app passa a exigir iOS 16.4 (antes 15.1): o módulo que grava os dados para o widget não existe antes disso | Por design, build 19 |
+| Widget iOS | Só aparece no iOS 17 ou mais novo (configuração por App Intent) | Por design |
+| Widget iOS | Atualização no aparelho: frequência real de atualização, bateria e troca de dia à meia-noite só se confirmam num iPhone de verdade | Testar no TestFlight |
+| Assinatura do widget | O build 19 precisa do bundle `co.sauceroom.grandma.widget` e do App Group `group.co.sauceroom.grandma` registrados na conta Apple | Antes do build EAS |
+| Widget Android | Código pronto, mas nunca rodou: não há Android SDK/emulador nesta máquina | Primeiro build Android pendente |
+| Atalhos no ícone | Pressionar o ícone do app mostra os 4 registros da jornada ativa + Calendário; só testável depois de um build nativo novo | Testar no TestFlight |
+| Dados no widget | Se o app não for aberto por dias, contadores de hoje zeram à meia-noite, mas registros feitos por um cuidador só aparecem depois que o app abrir | Aceito no v1 |
 
 ## Corrigido recentemente (se aparecer de novo, é regressão — prioridade alta)
 
