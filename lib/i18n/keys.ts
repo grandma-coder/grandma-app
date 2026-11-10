@@ -6604,4 +6604,27 @@ export interface TranslationKeys {
   widget_btn_diaper: string
   widget_btn_hotFlash: string
   widget_btn_sweats: string
+  widget_cycleDay: string
+  widget_cycleDayOnly: string
+  widget_periodIn: string
+  widget_periodIn_one: string
+  widget_periodLate: string
+  widget_periodLate_one: string
+  widget_empty_cycle: string
+  widget_stat_nextPeriod: string
+  widget_stat_fertile: string
+  widget_stat_loggedToday: string
+  widget_series_mood: string
+  widget_pregWeeks: string
+  widget_daysToGo: string
+  widget_daysToGo_one: string
+  widget_dueNow: string
+  widget_empty_pregnancy: string
+  widget_stat_kicksToday: string
+  widget_stat_waterToday: string
+  widget_stat_nextAppointment: string
+  widget_name_cycle: string
+  widget_name_pregnancy: string
+  widget_name_menopause: string
+  widget_weekShort: string
 }
