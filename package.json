@@ -1,7 +1,7 @@
 {
   "name": "grandma-app",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "scripts": {
     "start": "expo start --dev-client",
     "start:clear": "expo start --dev-client --clear",
