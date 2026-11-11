@@ -140,7 +140,7 @@ export default function CycleSettingsScreen() {
       {diffuse ? (
         <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}><ScreenHeader title="" /></View>
       ) : (
-        <SiteHeader title={t('cycleSettings_title')} sticker="drop" subtitle={t('cycleSettings_subtitle')} />
+        <SiteHeader title={t('cycleSettings_title')} sticker="flower" subtitle={t('cycleSettings_subtitle')} />
       )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

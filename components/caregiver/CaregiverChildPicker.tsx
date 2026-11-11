@@ -56,7 +56,7 @@ export function CaregiverChildPicker() {
               selected={active}
               onPress={() => switchTo(c)}
               tone={stickers.yellowSoft}
-              sticker={c.caregiverRole === 'family' ? 'heart' : 'baby'}
+              sticker={c.caregiverRole === 'family' ? 'love' : 'stroller'}
             />
           )
         }

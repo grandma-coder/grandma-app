@@ -292,7 +292,7 @@ export function buildKidsHandoff(
       case 'temperature': {
         const raw = str(parsed)
         const value = /^\d+(?:[.,]\d+)?$/.test(raw) ? `${raw} °C` : raw
-        groups.health.push({ kind: 'health', sticker: KIDS_LOG_STICKER.health, emoji: '🌡️', text: t('handoff_at', { what: t('handoff_temp', { value }), time: fmtTime(at) }) })
+        groups.health.push({ kind: 'health', sticker: KIDS_LOG_STICKER.temperature, emoji: '🌡️', text: t('handoff_at', { what: t('handoff_temp', { value }), time: fmtTime(at) }) })
         break
       }
       case 'vaccine': {
@@ -304,7 +304,8 @@ export function buildKidsHandoff(
         const desc = str(val?.description) || str(val?.text) || (val ? '' : str(parsed))
         const label = /doctor/i.test(evt) ? t('handoff_doctor') : /injur/i.test(evt) ? t('handoff_injury') : ''
         const what = [label, desc && desc !== evt ? desc : ''].filter(Boolean).join(': ') || desc || label
-        if (what) groups.health.push({ kind: 'health', sticker: KIDS_LOG_STICKER.health, emoji: '🩺', text: t('handoff_at', { what, time: fmtTime(at) }) })
+        const sticker = /injur/i.test(evt) ? 'bandage' : /doctor/i.test(evt) || !evt ? KIDS_LOG_STICKER.note : 'pencil'
+        if (what) groups.health.push({ kind: 'health', sticker, emoji: '🩺', text: t('handoff_at', { what, time: fmtTime(at) }) })
         break
       }
       case 'mood': {

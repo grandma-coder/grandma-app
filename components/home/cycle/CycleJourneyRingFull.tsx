@@ -32,7 +32,6 @@ import { DaySticker, DayCharacter } from './dayStickers'
 import type { SiteStickerName } from '../../stickers/SiteSticker'
 import { DayMarks } from '../../calendar/AgendaCalendar'
 import { useCycleLogDates } from '../../calendar/CycleMonthGrid'
-import { cycleDayMarks } from '../../../lib/logStickers'
 
 // ─── Diffuse phase palette ────────────────────────────────────────────────
 // Under Diffuse the phase hues come from the cycle field (coral→rose→lilac→
@@ -847,7 +846,7 @@ export function CycleJourneyRingFull({ cycleConfig, onSelectedDateChange, freeze
             fontSemiBold={font.bodySemiBold}
             fontDisplay={font.display}
             onPress={() => { onStripPress(s.date); onDatePress?.(s.date) }}
-            marks={cycleDayMarks(stripLogs.logsByDate.get(s.date) ?? [])}
+            marks={stripLogs.marksFor(s.date)}
             diffuse={diffuse}
             diffuseLine={dt.colors.line}
             diffuseAccent={diffuseAccent}

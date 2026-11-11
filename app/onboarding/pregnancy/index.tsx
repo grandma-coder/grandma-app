@@ -8,6 +8,7 @@
 
 import { SiteSticker } from '../../../components/stickers/SiteSticker'
 import type { SiteStickerName } from '../../../components/stickers/SiteSticker'
+import { PREGNANCY_MOOD_STICKER } from '../../../lib/logStickers'
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import {
   View,
@@ -79,17 +80,17 @@ const MOOD_OPTIONS: {
   sticker: SiteStickerName
   labelKey: TranslationKey
 }[] = [
-  { id: 'excited', labelKey: 'preg_onboard_mood_excited', sticker: 'star' },
-  { id: 'happy', labelKey: 'preg_onboard_mood_happy', sticker: 'face3' },
-  { id: 'calm', labelKey: 'preg_onboard_mood_calm', sticker: 'leaf' },
-  { id: 'anxious', labelKey: 'preg_onboard_mood_anxious', sticker: 'cloud' },
-  { id: 'tired', labelKey: 'preg_onboard_mood_tired', sticker: 'zz' },
-  { id: 'nauseous', labelKey: 'preg_onboard_mood_nauseous', sticker: 'face2' },
+  { id: 'excited', labelKey: 'preg_onboard_mood_excited', sticker: PREGNANCY_MOOD_STICKER.excited },
+  { id: 'happy', labelKey: 'preg_onboard_mood_happy', sticker: PREGNANCY_MOOD_STICKER.happy },
+  { id: 'calm', labelKey: 'preg_onboard_mood_calm', sticker: PREGNANCY_MOOD_STICKER.calm },
+  { id: 'anxious', labelKey: 'preg_onboard_mood_anxious', sticker: PREGNANCY_MOOD_STICKER.anxious },
+  { id: 'tired', labelKey: 'preg_onboard_mood_tired', sticker: PREGNANCY_MOOD_STICKER.tired },
+  { id: 'nauseous', labelKey: 'preg_onboard_mood_nauseous', sticker: PREGNANCY_MOOD_STICKER.nauseous },
 ]
 
 const BIRTH_PLACE_OPTIONS: { id: BirthPlace; labelKey: TranslationKey; sticker: SiteStickerName }[] = [
-  { id: 'hospital', labelKey: 'preg_onboard_birth_hospital', sticker: 'doc' },
-  { id: 'birth_center', labelKey: 'preg_onboard_birth_center', sticker: 'heart' },
+  { id: 'hospital', labelKey: 'preg_onboard_birth_hospital', sticker: 'hospital' },
+  { id: 'birth_center', labelKey: 'preg_onboard_birth_center', sticker: 'flower' },
   { id: 'home_birth', labelKey: 'preg_onboard_birth_home', sticker: 'house' },
   { id: 'undecided', labelKey: 'preg_onboard_birth_undecided', sticker: 'cloud' },
 ]

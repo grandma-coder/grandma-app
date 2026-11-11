@@ -79,7 +79,7 @@ export function DailyMessageCard() {
       {/* Eyebrow: sticker + label, collection count on the right once answered.
           Wraps instead of truncating in long languages. */}
       <View style={styles.eyebrowRow}>
-        <SiteSticker name={mode === 'pregnancy' ? 'heart' : 'moon'} size={22} cut />
+        <SiteSticker name={mode === 'pregnancy' ? 'love' : 'moon'} size={22} cut />
         <Text style={[styles.eyebrow, { color: colors.textMuted, fontFamily: font.bodySemiBold }]}>
           {t('sw1_daily_eyebrow')}
         </Text>

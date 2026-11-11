@@ -153,6 +153,7 @@ import { BrandedLoader } from '../ui/BrandedLoader'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
 import { useTranslation, t as tNow } from '../../lib/i18n'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { KIDS_LOG_STICKER } from '../../lib/logStickers'
 import { DetailSheetHeader } from '../ui/DetailSheetHeader'
 import { FadeUp } from '../ui/Motion'
 import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
@@ -171,12 +172,12 @@ const HAIR = StyleSheet.hairlineWidth * 2
 
 // Pillar → site sticker (+ the soft tone that sits behind it in sheet headers).
 const PILLAR_SITE_STICKER: Record<'nutrition' | 'sleep' | 'mood' | 'health' | 'growth' | 'activity', SiteStickerName> = {
-  nutrition: 'avocado', sleep: 'moon', mood: 'face3', health: 'thermo', growth: 'ruler', activity: 'shoe',
+  nutrition: 'avocado', sleep: 'moon', mood: 'face3', health: 'heart', growth: 'ruler', activity: 'shoe',
 }
 // Old emoji used by the guide lists → the nearest site sticker.
 const EMOJI_SITE_STICKER: Record<string, SiteStickerName> = {
-  '👶': 'baby', '🧸': 'star', '🚶': 'shoe', '😴': 'zz', '🏃': 'shoe', '🌳': 'leaf',
-  '🧩': 'pencil', '📖': 'books', '⚽': 'shoe', '🎨': 'pencil', '📚': 'books',
+  '👶': 'baby', '🧸': 'star', '🚶': 'stroller', '😴': 'moon', '🏃': 'shoe', '🌳': 'leaf',
+  '🧩': 'pencil', '📖': 'books', '⚽': 'shoe', '🎨': 'flower', '📚': 'books',
 }
 // Pillar colour → its soft tone (for outlined chart bars).
 const SOFT_BY_PILLAR_COLOR: Record<string, string> = {
@@ -190,9 +191,7 @@ const SOFT_BY_PILLAR_COLOR: Record<string, string> = {
 const MOOD_SITE_STICKER: Record<string, SiteStickerName> = {
   happy: 'face4', calm: 'face3', energetic: 'star', fussy: 'face2', cranky: 'face1',
 }
-const HEALTH_EVENT_STICKER: Record<string, SiteStickerName> = {
-  temperature: 'thermo', medicine: 'pill', vaccine: 'syringe', note: 'pencil',
-}
+const HEALTH_EVENT_STICKER: Record<string, SiteStickerName> = KIDS_LOG_STICKER
 
 /** Light bottom sheet: bg paper, 2.5px ink top border, 26px top radius, grabber at 25% ink. */
 function LightSheet({ visible, onClose, height, children }: {
@@ -1795,11 +1794,11 @@ function KidsWellnessRingCard({
   // back to the matching pillar detail modal via onPillarPress.
   const segments: RingSegment[] = [
     { sticker: 'leaf',   color: stickers.green,  id: 'nutrition' },
-    { sticker: 'cross',  color: stickers.yellow, id: 'health'    },
-    { sticker: 'heart',  color: stickers.pink,   id: 'mood'      },
+    { sticker: 'heart',  color: stickers.yellow, id: 'health'    },
+    { sticker: 'flower', color: stickers.pink,   id: 'mood'      },
     { sticker: 'burst',  color: stickers.coral,  id: 'activity'  },
     { sticker: 'moon',   color: stickers.lilac,  id: 'sleep'     },
-    { sticker: 'drop',   color: stickers.blue,   id: 'growth'    },
+    { sticker: 'star',   color: stickers.blue,   id: 'growth'    },
   ]
 
   const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
@@ -4540,7 +4539,7 @@ function SleepQualityChart({ counts }: { counts: { great: number; good: number; 
   }
 
   const siteTone = [stickers.greenSoft, stickers.blueSoft, stickers.peachSoft, stickers.pinkSoft]
-  const siteSticker: SiteStickerName[] = ['zz', 'moon', 'face2', 'face1']
+  const siteSticker: SiteStickerName[] = ['face4', 'face3', 'face2', 'face1']
   return (
     <View style={styles.qualityWrap}>
       {items.map((item, i) => {

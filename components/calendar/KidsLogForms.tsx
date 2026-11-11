@@ -2121,7 +2121,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
               key={ft}
               width="33.33%"
               label={t(`feedType_${ft}` as TranslationKey)}
-              sticker={ft === 'breast' ? 'heart' : ft === 'bottle' ? 'bottle' : 'avocado'}
+              sticker={ft === 'breast' ? 'love' : ft === 'bottle' ? 'bottle' : 'avocado'}
               on={feedType === ft}
               tone={siteTone}
               onPress={() => setFeedType(ft)}

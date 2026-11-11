@@ -322,7 +322,7 @@ export default function PrivacyScreen() {
           <ScreenHeader title="" />
         </View>
       ) : (
-        <SiteHeader title={t('privacy_title')} sticker="eye" subtitle={t('privacy_subtitle')} />
+        <SiteHeader title={t('privacy_title')} sticker="shield" subtitle={t('privacy_subtitle')} />
       )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -346,7 +346,7 @@ export default function PrivacyScreen() {
             <SiteRow sticker="doc" label={t('privacy_exportData')} desc={t('privacy_exportDataDesc')} onPress={handleExportData} loading={exporting} />
             {/* Feeding/sleep/mood logs and vaccine/growth records are per child — without
                 children these two rows could only answer "no data". */}
-            {hasChildren && <SiteRow sticker="doc" label={t('privacy_clearLogs')} desc={t('privacy_clearLogsDesc')} onPress={handleClearLogs} loading={clearingLogs} />}
+            {hasChildren && <SiteRow sticker="pencil" label={t('privacy_clearLogs')} desc={t('privacy_clearLogsDesc')} onPress={handleClearLogs} loading={clearingLogs} />}
             {chatOn && <SiteRow sticker="bubble" label={t('privacy_clearChat')} desc={t('privacy_clearChatDesc')} onPress={handleClearChat} loading={clearingChat} />}
             <SiteRow sticker="camera" label={t('privacy_clearMemories')} desc={t('privacy_clearMemoriesDesc')} onPress={handleClearMemories} loading={clearingMemories} last={!hasChildren} />
             {hasChildren && <SiteRow sticker="syringe" label={t('privacy_clearHealth')} desc={t('privacy_clearHealthDesc')} onPress={handleClearHealthRecords} last />}

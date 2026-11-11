@@ -26,6 +26,7 @@ import { UnlockToast } from '../ui/diffuse/UnlockToast'
 import { Character } from '../characters/Characters'
 import { ChevronRight } from 'lucide-react-native'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { CYCLE_LOG_STICKER } from '../../lib/logStickers'
 import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { Moon, Burst, Flower, Heart, Drop, Star } from '../ui/Stickers'
 import {
@@ -377,7 +378,7 @@ export function CycleAnalytics() {
             tint={stickers.lilacSoft}
             sticker={<Moon size={24} fill={stickers.lilac} />}
             diffuseIcon={<Character name="period" size={26} color={stickerPalette.lilac} />}
-            siteSticker="moon"
+            siteSticker="bars"
             value={regularLabel}
             sub={regularSub}
             label={t('cycleAnalytics_tileLabel_regularity')}
@@ -420,7 +421,7 @@ export function CycleAnalytics() {
               tint={stickers.greenSoft}
               sticker={<Drop size={24} fill={stickers.green} />}
               diffuseIcon={<Character name="water" size={26} color={stickerPalette.green} />}
-              siteSticker="egg"
+              siteSticker={CYCLE_LOG_STICKER.cervical_mucus}
               value={mucusLabel}
               sub={mucusSub}
               label={t('cycleAnalytics_tileLabel_mucus')}
@@ -432,7 +433,7 @@ export function CycleAnalytics() {
             tint={stickers.pinkSoft}
             sticker={<Burst size={24} fill={stickers.coral} points={8} />}
             diffuseIcon={<Character name="activity" size={26} color={stickerPalette.coral} />}
-            siteSticker="bubble"
+            siteSticker={CYCLE_LOG_STICKER.symptom}
             value={pmsLabel}
             sub={pmsSub}
             label={t('cycleAnalytics_tileLabel_pms')}
@@ -469,7 +470,7 @@ export function CycleAnalytics() {
               onPress={() => setDetailType('intercourse')}
               lock={unlocks.intercourse}
               lockHint={t('cycleInsights_lock_intimacy')}
-              siteSticker="heart"
+              siteSticker={CYCLE_LOG_STICKER.intercourse}
             />
           )}
         </GridWrap>
@@ -705,7 +706,7 @@ function GridWrap({ children }: { children: React.ReactNode }) {
 /** Phase-specific decorative sticker for the hero. */
 function PhaseSticker({ phase }: { phase: CyclePhase; stickers?: ReturnType<typeof useTheme>['stickers'] }) {
   const name: SiteStickerName =
-    phase === 'menstruation' ? 'drop' : phase === 'follicular' ? 'leaf' : phase === 'ovulation' ? 'flower' : 'moon'
+    phase === 'menstruation' ? 'drop' : phase === 'follicular' ? 'leaf' : phase === 'ovulation' ? 'egg' : 'moon'
   return <SiteSticker name={name} size={52} cut />
 }
 

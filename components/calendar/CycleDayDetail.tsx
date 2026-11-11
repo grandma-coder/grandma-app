@@ -30,6 +30,7 @@ import { formatTemp, formatWeight } from '../../lib/units'
 import { translations, type TranslationKey } from '../../lib/i18n'
 import { CYCLE_LOG_STICKER, CYCLE_MOOD_STICKER } from '../../lib/logStickers'
 import { resolveSymptomId, symptomLabel } from '../../lib/cycleSymptoms'
+import { SymptomSiteSticker } from './symptomStickers'
 import type { LogType } from './LogActivitySheet'
 
 /** Stored `cycle_logs.type` → the form that edits it (the sheet id differs for cervical mucus). */
@@ -190,6 +191,19 @@ export function CycleDayDetail({ cycleConfig, day, dayLoading, date, onAddLog, o
     return CYCLE_LOG_STICKER[g.type] ?? 'pencil'
   }
 
+  // Symptoms show the first logged symptom's own sticker (cramps → uterus), not a generic headache.
+  function renderSticker(g: { type: string; values: string[] }) {
+    if (g.type === 'symptom') {
+      for (const raw of g.values) {
+        for (const part of raw.split(',')) {
+          const id = resolveSymptomId(part.trim())
+          if (id) return <SymptomSiteSticker id={id} size={28} />
+        }
+      }
+    }
+    return <SiteSticker name={stickerFor(g)} size={28} />
+  }
+
   async function removeType(type: string, label: string) {
     const ok = await confirm({
       title: t('cycleDayDetail_deleteTitle'),
@@ -294,7 +308,7 @@ export function CycleDayDetail({ cycleConfig, day, dayLoading, date, onAddLog, o
                     accessibilityLabel={`${g.label}: ${g.summary}`}
                     style={({ pressed }) => [styles.siteRow, { opacity: pressed ? 0.7 : 1 }]}
                   >
-                    <SiteSticker name={stickerFor(g)} size={28} />
+                    {renderSticker(g)}
                     <Text style={[styles.logLabel, { color: ink, fontFamily: font.bodyBold, flexShrink: 1 }]} numberOfLines={1}>
                       {g.label}
                     </Text>

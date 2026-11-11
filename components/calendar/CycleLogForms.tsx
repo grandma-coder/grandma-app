@@ -842,7 +842,7 @@ export function SymptomsForm({
         >
           {diffuse
             ? <Character name="heart" size={18} color={dt.stickers.lilac} />
-            : <SiteSticker name="heart" size={20} />}
+            : <SiteSticker name="bubble" size={20} />}
           <Text style={{
             color: diffuse ? dt.colors.ink : stickers.charcoal,
             fontFamily: diffuse ? diffuseFont.bodySemiBold : undefined,
@@ -1289,7 +1289,7 @@ export function IntimacyForm({
       ) : (
         <ChoiceGrid>
           {(['unprotected', 'protected'] as const).map((opt) => (
-            <StickerChoice key={opt} label={t(opt === 'unprotected' ? 'cycleLogForm_unprotected' : 'cycleLogForm_protected')} sticker={opt === 'protected' ? 'lock' : CYCLE_LOG_STICKER.intercourse} on={value === opt} onPress={() => { existing.markTouched(); setValue(opt) }} tone={tint} width="50%" />
+            <StickerChoice key={opt} label={t(opt === 'unprotected' ? 'cycleLogForm_unprotected' : 'cycleLogForm_protected')} sticker={opt === 'protected' ? 'shield' : CYCLE_LOG_STICKER.intercourse} on={value === opt} onPress={() => { existing.markTouched(); setValue(opt) }} tone={tint} width="50%" />
           ))}
         </ChoiceGrid>
       )}

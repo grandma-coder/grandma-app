@@ -14,6 +14,7 @@ import { diffuseFont, useTheme } from '../../constants/theme'
 import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
 import { SiteSticker } from '../stickers/SiteSticker'
 import { menoSticker } from './MenopauseLogSheet'
+import { menopauseDayMarks } from '../../lib/logStickers'
 import type { MenopauseLogRow } from '../../lib/menopauseAnalytics'
 import type { MenoPalette } from './menoPalette'
 import { Skeleton, SkeletonRing } from '../ui/Skeleton'
@@ -156,7 +157,7 @@ export function MenopauseRing({
               ]}
             >
               {logged ? (
-                <SiteSticker name={menoSticker(n.logs[0].type)} size={16} />
+                <SiteSticker name={menopauseDayMarks(n.logs)[0] ?? menoSticker(n.logs[0].type)} size={16} />
               ) : n.isToday ? (
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.text }} />
               ) : null}

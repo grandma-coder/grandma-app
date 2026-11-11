@@ -192,7 +192,7 @@ export default function BirthPlan() {
               )}
             </DiffuseBloomIcon>
           ) : (
-            <SiteSticker name={isMom ? 'heart' : isBaby ? 'bottle' : 'star'} size={26} cut />
+            <SiteSticker name={isMom ? 'me' : isBaby ? 'bottle' : 'love'} size={26} cut />
           )
           return (
             <View

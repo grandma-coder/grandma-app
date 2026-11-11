@@ -102,7 +102,7 @@ const stageOptions = (): { id: MenopauseStage; label: string; desc: string; icon
 ]
 
 // Site-look stickers (non-diffuse only)
-const STAGE_STICKERS: Record<MenopauseStage, SiteStickerName> = { peri: 'moon', meno: 'moon2', post: 'leaf' }
+const STAGE_STICKERS: Record<MenopauseStage, SiteStickerName> = { peri: 'sun', meno: 'moon2', post: 'leaf' }
 const SYMPTOM_STICKERS: Partial<Record<MenopauseSymptomId, SiteStickerName>> = MENOPAUSE_LOG_STICKER
 
 const GROUP_META: Record<MenopauseGroup, { icon: CharacterName }> = {
@@ -493,7 +493,7 @@ function StepSymptoms({
       total={total}
       auraMode="menopause"
       question={COPY.symptomsQ}
-      sticker={<SiteSticker name="thermo" size={48} cut />}
+      sticker={<SiteSticker name="notebook" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -504,7 +504,7 @@ function StepSymptoms({
           return (
             <View key={group} style={styles.groupBlock}>
               <View style={styles.groupHead}>
-                <Character name={meta.icon} size={20} color={pal.accent} bg={pal.bg} />
+                {pal.diffuse ? <Character name={meta.icon} size={20} color={pal.accent} bg={pal.bg} /> : null}
                 <Text style={[styles.groupLabel, { color: pal.textMuted, fontFamily: pal.diffuse ? pal.fontBodySemiBold : 'SpaceMono_400Regular' }]}>
                   {menopauseGroupLabel(group)}
                 </Text>
@@ -561,7 +561,7 @@ function StepHrt({ step, total, onContinue }: { step: number; total: number; onC
       total={total}
       auraMode="menopause"
       question={COPY.hrtQ}
-      sticker={<SiteSticker name="syringe" size={48} cut />}
+      sticker={<SiteSticker name="pill" size={48} cut />}
       onContinue={onContinue}
     >
       {pal.diffuse ? (
@@ -638,7 +638,7 @@ function CompletionScreen({ onFinish, saving }: { onFinish: () => void; saving: 
         {pal.diffuse ? (
           <View style={[completeStyles.summary, { backgroundColor: pal.surface, borderColor: pal.border, borderRadius: pal.radius.lg }]}>
           {stageLabel && (
-            <SummaryRow icon="phase" label={t('meno_ob_sum_stage')} value={stageLabel} pal={pal} />
+            <SummaryRow icon="phase" siteSticker={stage ? STAGE_STICKERS[stage] : undefined} label={t('meno_ob_sum_stage')} value={stageLabel} pal={pal} />
           )}
           <SummaryRow
             icon="health"
@@ -652,7 +652,7 @@ function CompletionScreen({ onFinish, saving }: { onFinish: () => void; saving: 
           <FadeUp index={0} delay={700} style={{ alignSelf: 'stretch' }}>
             <HandDrawnBox fill={pal.surface} stroke={pal.text} radius={20} seed="meno-summary" style={completeStyles.summarySite}>
           {stageLabel && (
-            <SummaryRow icon="phase" label={t('meno_ob_sum_stage')} value={stageLabel} pal={pal} />
+            <SummaryRow icon="phase" siteSticker={stage ? STAGE_STICKERS[stage] : undefined} label={t('meno_ob_sum_stage')} value={stageLabel} pal={pal} />
           )}
           <SummaryRow
             icon="health"
@@ -679,12 +679,15 @@ function CompletionScreen({ onFinish, saving }: { onFinish: () => void; saving: 
 
 function SummaryRow({
   icon,
+  siteSticker,
   label,
   value,
   pal,
   last,
 }: {
   icon: CharacterName
+  /** Site look: overrides the default sticker (the stage row shows the chosen stage's sticker). */
+  siteSticker?: SiteStickerName
   label: string
   value: string
   pal: ReturnType<typeof useMenoPalette>
@@ -694,7 +697,7 @@ function SummaryRow({
     <View style={[completeStyles.summaryRow, !last && { borderBottomWidth: pal.diffuse ? 1 : 0.75, borderBottomColor: pal.border }]}>
       {pal.diffuse
         ? <Character name={icon} size={22} color={pal.accent} bg={pal.bg} />
-        : <SiteSticker name={icon === 'phase' ? 'moon' : 'thermo'} size={26} cut />}
+        : <SiteSticker name={siteSticker ?? (icon === 'phase' ? 'moon2' : 'notebook')} size={26} cut />}
       <Text style={[completeStyles.summaryLabel, { color: pal.diffuse ? pal.textMuted : pal.text, fontFamily: pal.fontBody }]}>{label}</Text>
       {pal.diffuse ? (
         <Text style={[completeStyles.summaryValue, { color: pal.text, fontFamily: pal.fontDisplay }]}>{value}</Text>

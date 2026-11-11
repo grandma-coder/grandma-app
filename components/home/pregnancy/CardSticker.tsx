@@ -24,7 +24,7 @@ export function CardSticker({ color, size = 44, mode = 'pregnancy' }: Props) {
   // Site look: card-less sticker, no socket around it.
   if (!diffuse) {
     const name: SiteStickerName =
-      glyph === 'Heart' ? 'heart' : glyph === 'Star' ? 'star' : glyph === 'Drop' ? 'drop' : glyph === 'Moon' ? 'moon' : 'flower'
+      glyph === 'Heart' ? 'heart' : glyph === 'Star' ? 'star' : glyph === 'Drop' ? (mode === 'pregnancy' ? 'moon2' : 'drop') : glyph === 'Moon' ? 'moon' : 'flower'
     return <SiteSticker name={name} size={size} cut />
   }
   const g = Math.round(size * 0.52)

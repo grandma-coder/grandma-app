@@ -11,18 +11,19 @@ import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 
 const BLOB_STICKER: Partial<Record<CharacterName, SiteStickerName>> = {
   ovulation: 'egg', nutrition: 'avocado', night: 'moon', heartbeat: 'heart', kick: 'foot',
-  contraction: 'stopwatch', baby: 'baby', sleep: 'zz', feeding: 'bottle', growth: 'ruler',
-  vaccine: 'syringe', community: 'house', selfcare: 'flower', health: 'thermo', star: 'star',
-  heart: 'heart', water: 'glass', sparkle: 'star', sun: 'sun', gem: 'plum', crown: 'owl',
-  photo: 'camera',
+  contraction: 'stopwatch', baby: 'baby', sleep: 'moon', feeding: 'bottle', growth: 'ruler',
+  vaccine: 'syringe', community: 'globe', selfcare: 'leaf', health: 'stetho', star: 'star',
+  heart: 'love', water: 'glass', sparkle: 'star', sun: 'sun', gem: 'plum', crown: 'star',
+  photo: 'camera', chart: 'bars', chat: 'bubble', activity: 'sun',
 }
 
 export function blobSiteSticker(name: CharacterName): SiteStickerName {
-  return BLOB_STICKER[name] ?? 'house'
+  return BLOB_STICKER[name] ?? 'globe'
 }
 
-export function ChannelGlyph({ name, size, bg, color }: { name: CharacterName; size: number; bg?: string; color?: string }) {
+/** `site` overrides the light-look sticker when the blob concept is too broad (e.g. a person → `me`). */
+export function ChannelGlyph({ name, size, bg, color, site }: { name: CharacterName; size: number; bg?: string; color?: string; site?: SiteStickerName }) {
   const diffuse = useIsDiffuse()
   if (diffuse) return <Character name={name} size={size} bg={bg} color={color} />
-  return <SiteSticker name={blobSiteSticker(name)} size={Math.round(size * 1.15)} />
+  return <SiteSticker name={site ?? blobSiteSticker(name)} size={Math.round(size * 1.15)} />
 }

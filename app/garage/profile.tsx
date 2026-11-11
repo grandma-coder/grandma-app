@@ -174,7 +174,7 @@ export default function GarageProfileScreen() {
           <Text style={[s.headerTitle, { color: dt.colors.ink, fontFamily: diffuseFont.display }]}>{t('garage_profile_myVillage')}</Text>
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <SiteSticker name="house" size={28} cut />
+            <SiteSticker name="bodysuit" size={28} cut />
             <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 22, letterSpacing: 0.3, textTransform: 'uppercase' }}>{t('garage_profile_myVillage')}</Text>
           </View>
         )}
@@ -285,7 +285,7 @@ export default function GarageProfileScreen() {
             </>
           ) : (
             <>
-              <SiteSticker name="heart" size={64} cut />
+              <SiteSticker name="love" size={64} cut />
               <Text style={[s.emptyTitle, { color: colors.text, fontFamily: font.display, fontWeight: undefined, textTransform: 'uppercase', letterSpacing: 0.3 }]}>{t('garage_profile_emptySavedTitle')}</Text>
               <Text style={[s.emptyBody, { color: colors.textSecondary, fontFamily: font.body, fontWeight: undefined }]}>
                 {t('garage_profile_emptySavedBody')}

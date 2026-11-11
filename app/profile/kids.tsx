@@ -543,7 +543,7 @@ function ChildCard({ child, index, onEdit, onDelete }: { child: ChildWithRole; i
 
       {child.pediatrician?.name ? (
         <View style={styles.pedRow}>
-          {site ? <SiteSticker name="phone" size={18} /> : <Character name="checkup" size={12} color={colors.textMuted} />}
+          {site ? <SiteSticker name="stetho" size={18} /> : <Character name="checkup" size={12} color={colors.textMuted} />}
           <Text style={[styles.pedText, { color: site ? colors.text : colors.textMuted, fontFamily: font.body }]} numberOfLines={1}>
             {child.pediatrician.name}{child.pediatrician.phone ? ` · ${child.pediatrician.phone}` : ''}
           </Text>

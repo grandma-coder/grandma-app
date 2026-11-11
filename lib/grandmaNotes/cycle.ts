@@ -47,7 +47,7 @@ export function buildCycleNote(input: CycleNoteInput, t: Translate): GrandmaLett
 
   // Where you are today — always useful, rarely the most informative.
   c.push({
-    id: 'today', area: 'fertile', sticker: 'cal', weight: 4.5,
+    id: 'today', area: 'fertile', sticker: 'flower', weight: 4.5,
     title: t('gn_cycle_day_title', { day: info.cycleDay }),
     body: info.daysUntilPeriod <= 1
       ? t('gn_cycle_day_soon_body', { phase })
@@ -60,7 +60,7 @@ export function buildCycleNote(input: CycleNoteInput, t: Translate): GrandmaLett
     const min = Math.min(...recent)
     const max = Math.max(...recent)
     c.push({
-      id: 'range', area: 'cycleLength', sticker: 'moon', weight: 4 + (max - min <= 3 ? 1 : 0),
+      id: 'range', area: 'cycleLength', sticker: 'cal', weight: 4 + (max - min <= 3 ? 1 : 0),
       title: t('gn_cycle_range_title'),
       body: min === max
         ? t('gn_cycle_same_body', { min, n: recent.length })
@@ -86,7 +86,7 @@ export function buildCycleNote(input: CycleNoteInput, t: Translate): GrandmaLett
   const symPhase = input.pms?.overallDominantPhase
   if (symCount >= 3 && symPhase) {
     c.push({
-      id: 'symptoms', area: 'pms', sticker: 'bubble', weight: 3.5,
+      id: 'symptoms', area: 'pms', sticker: 'headache', weight: 3.5,
       title: t('gn_cycle_sym_title'),
       body: t('gn_cycle_sym_body', { count: symCount, phase: t(`gn_phaseIn_${symPhase}` as NoteKey) }),
     })

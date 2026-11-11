@@ -34,7 +34,8 @@ import { useTranslation, type TranslationKey } from '../../../lib/i18n'
 import { useLanguageStore } from '../../../store/useLanguageStore'
 import { getWeekData } from '../../../lib/pregnancyData'
 import { getWeekStat, formatWeight, formatLength } from '../../../lib/weekStats'
-import { getWeekContent, PrepItemDef } from '../../../lib/weekContent'
+import { getWeekContent, prepSiteSticker, PrepItemDef } from '../../../lib/weekContent'
+import { SiteSticker } from '../../stickers/SiteSticker'
 import { localizedWeekContent, localizedPrepGuide } from '../../../lib/pregnancyContent'
 import { StickerIcon } from './stickerIcons'
 import { BabyIllustration } from './babyIllustrations'
@@ -151,8 +152,8 @@ function PrepListRow({
           <StickerIcon name={item.i} size={30} />
         </DiffuseBloomIcon>
       ) : (
-        <View style={[styles.prepIconBox, { backgroundColor: iconBg, width: 44, height: 44 }]}>
-          <StickerIcon name={item.i} size={38} />
+        <View style={[styles.prepIconBox, { backgroundColor: 'transparent', width: 44, height: 44 }]}>
+          <SiteSticker name={prepSiteSticker(item)} size={40} cut />
         </View>
       )}
       <View style={{ flex: 1 }}>
@@ -212,7 +213,7 @@ function PrepDetailSheet({
             </DiffuseBloomIcon>
           ) : (
             <View style={[styles.prepIconBox, { backgroundColor: 'transparent', width: 52, height: 52 }]}>
-              <StickerIcon name={item.i} size={46} />
+              <SiteSticker name={prepSiteSticker(item)} size={48} cut />
             </View>
           )}
           <View style={{ flex: 1 }}>

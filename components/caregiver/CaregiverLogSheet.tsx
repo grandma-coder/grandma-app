@@ -37,6 +37,7 @@ import {
 import { LogSheet } from '../calendar/LogSheet'
 import { StickerChoice } from '../calendar/QuickLogKit'
 import type { SiteStickerName } from '../stickers/SiteSticker'
+import { KIDS_LOG_STICKER } from '../../lib/logStickers'
 import type { ChildWithRole } from '../../types'
 import { useTranslation } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
@@ -61,13 +62,13 @@ interface LogTypeDef {
 }
 
 const LOG_TYPES: LogTypeDef[] = [
-  { key: 'feeding', labelKey: 'kids_logForm_labelFeeding', emoji: '🍼', sticker: 'bottle', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'sleep', labelKey: 'kids_logForm_labelSleep', emoji: '😴', sticker: 'zz', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'diaper', labelKey: 'kids_logForm_labelDiaper', emoji: '🧷', sticker: 'diaper', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'mood', labelKey: 'kids_logForm_labelMood', emoji: '🙂', sticker: 'face3', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'memory', labelKey: 'kids_logForm_labelMemory', emoji: '📸', sticker: 'camera', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'activity', labelKey: 'kids_logForm_labelActivity', emoji: '🧩', sticker: 'star', capability: CAPABILITY.LOG_ACTIVITY },
-  { key: 'health', labelKey: 'kids_logForm_labelHealth', emoji: '🩺', sticker: 'thermo', capability: CAPABILITY.EMERGENCY },
+  { key: 'feeding', labelKey: 'kids_logForm_labelFeeding', emoji: '🍼', sticker: KIDS_LOG_STICKER.feeding, capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'sleep', labelKey: 'kids_logForm_labelSleep', emoji: '😴', sticker: KIDS_LOG_STICKER.sleep, capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'diaper', labelKey: 'kids_logForm_labelDiaper', emoji: '🧷', sticker: KIDS_LOG_STICKER.diaper, capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'mood', labelKey: 'kids_logForm_labelMood', emoji: '🙂', sticker: KIDS_LOG_STICKER.mood, capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'memory', labelKey: 'kids_logForm_labelMemory', emoji: '📸', sticker: KIDS_LOG_STICKER.memory, capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'activity', labelKey: 'kids_logForm_labelActivity', emoji: '🧩', sticker: KIDS_LOG_STICKER.activity, capability: CAPABILITY.LOG_ACTIVITY },
+  { key: 'health', labelKey: 'kids_logForm_labelHealth', emoji: '🩺', sticker: KIDS_LOG_STICKER.health, capability: CAPABILITY.EMERGENCY },
 ]
 
 interface Props {

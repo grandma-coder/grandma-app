@@ -463,7 +463,7 @@ const walletBlock = (
       {/* Reused U7 log sheets — the parent supplies the sheet shell + title. */}
       <LogSheet
         visible={activeSheet === 'symptom'}
-        sticker="thermo"
+        sticker={pendingSymptom ? menoSticker(pendingSymptom) : 'notebook'}
         title={t('meno_h_log_symptom')}
         onClose={() => { setActiveSheet(null); setLogDate(null) }}
       >

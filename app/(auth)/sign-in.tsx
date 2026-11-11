@@ -223,7 +223,7 @@ export default function SignIn() {
     <View style={[styles.root, { backgroundColor: bg }]}>
       {/* Decorative sticker — collage art */}
       <StickerEnter delay={450} tilt={12} seed={7} style={[styles.stickerTR, { top: insets.top + 14 }]}>
-        <SiteSticker name="flower" size={48} cut />
+        <SiteSticker name="eye" size={48} cut />
       </StickerEnter>
 
       <KeyboardAvoidingView

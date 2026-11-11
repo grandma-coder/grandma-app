@@ -252,7 +252,7 @@ export default function AccountScreen() {
 
             {/* Sessions */}
             <SiteEyebrow>{t('account_sectionSessions')}</SiteEyebrow>
-            <SiteRow sticker="moon" label={t('account_signOutAllDevices')} onPress={handleSignOutAll} last />
+            <SiteRow sticker="phone" label={t('account_signOutAllDevices')} onPress={handleSignOutAll} last />
 
             {/* Danger zone */}
             <SiteEyebrow>{t('account_sectionDanger')}</SiteEyebrow>

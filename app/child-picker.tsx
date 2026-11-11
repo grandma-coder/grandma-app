@@ -117,7 +117,7 @@ export default function ChildPicker() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: isActive }}
               >
-                <SiteSticker name={item.caregiverRole === 'parent' ? 'baby' : 'baby2'} size={42} cut />
+                <SiteSticker name="baby" size={42} cut />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.siteName} numberOfLines={1}>{item.name}</Text>
                   <View style={[styles.siteTag, { backgroundColor: ROLE_COLORS[item.caregiverRole] ?? colors.surfaceRaised }]}>

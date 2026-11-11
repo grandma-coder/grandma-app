@@ -193,7 +193,7 @@ export default function ManageCaregivers() {
           ]}>{t('leaderboard_tabCaregivers')}</Text>
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <SiteSticker name="heart" size={30} cut />
+            <SiteSticker name="stroller" size={30} cut />
             <Text style={styles.siteTitle}>{t('leaderboard_tabCaregivers')}</Text>
           </View>
         )}
@@ -308,7 +308,7 @@ export default function ManageCaregivers() {
               ? (DIFFUSE_STATUS_TEXT[item.status] ?? dt.colors.ink3)
               : (STATUS_TEXT_COLORS[item.status] ?? colors.textMuted)
             if (!diffuse) {
-              const avatar: SiteStickerName = item.role === 'nanny' ? 'baby' : item.role === 'family' ? 'heart' : 'me'
+              const avatar: SiteStickerName = item.role === 'nanny' ? 'stroller' : item.role === 'family' ? 'love' : 'me'
               const statusTone = item.status === 'accepted' ? stickers.greenSoft : item.status === 'pending' ? stickers.peachSoft : colors.surfaceRaised
               return (
                 <View style={styles.siteRow}>

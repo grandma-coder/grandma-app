@@ -25,6 +25,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTheme, brand, stickers as stickerPalette, getModeColor, getModeColorSoft, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { stickerForEmoji } from '../../lib/emojiToSticker'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+
+// Light (site) look: the card / bullet emojis this screen uses → the SiteSticker set,
+// so Insights reads like the rest of the app. Diffuse keeps the legacy reward glyphs.
+const EMOJI_SITE: Record<string, SiteStickerName> = {
+  '🌅': 'sun', '🌊': 'wave', '💫': 'star', '👶': 'baby', '🌸': 'love',
+  '💡': 'brain', '💜': 'hospital', '✨': 'star', '📅': 'cal', '🏥': 'hospital',
+  '🥗': 'lettuce', '🧠': 'brain', '📖': 'books',
+  '⏱️': 'stopwatch', '🏠': 'house', '🏡': 'house', '🌿': 'leaf', '💊': 'pill', '💧': 'glass',
+  '💪': 'dumbbell', '📋': 'doc', '🔊': 'bubble', '😴': 'moon', '🚨': 'alert', '🚫': 'alert',
+  '🤢': 'nausea', '🧘': 'leaf', '🧪': 'doc', '🧳': 'backpack',
+}
+const siteForEmoji = (emoji: string | undefined): SiteStickerName => (emoji && EMOJI_SITE[emoji]) || 'star'
 import { GrandmaLogo } from '../ui/GrandmaLogo'
 import { NotifyHealthAlert, TalkMaster } from '../stickers/RewardStickers'
 import { useModeStore } from '../../store/useModeStore'
@@ -558,7 +571,7 @@ function CollapsibleCard({
     <View style={[ci.card, { backgroundColor: colors.surface }, diffuse ? null : { borderColor: colors.text, borderWidth: 1.5, borderRadius: 18 }]}>
       <Pressable onPress={() => onToggle(id)} style={ci.cardHeader}>
         <View style={[ci.cardStickerWrap, { backgroundColor: color + '28' }]}>
-          <Sticker size={26} />
+          {diffuse ? <Sticker size={26} /> : <SiteSticker name={siteForEmoji(emoji)} size={28} />}
         </View>
         <Text style={[ci.cardTitle, diffuse ? null : SITE_TITLE, { color: colors.text, flex: 1 }]}>{title}</Text>
         <View style={[ci.cardChevronPill, { backgroundColor: colors.surfaceRaised }]}>
@@ -580,7 +593,7 @@ function CollapsibleCard({
               },
             ]}
           >
-            <TalkMaster size={16} />
+            {diffuse ? <TalkMaster size={16} /> : <SiteSticker name="bubble" size={18} />}
             <Text style={[ci.askCtaText, { color: STICKER_INK }]}>
               {t('insights_askGrandmaAbout', { topic: title.toLowerCase() })}
             </Text>
@@ -707,7 +720,7 @@ function PregnancyInsightsContent() {
           const BulletSticker = stickerForEmoji(b.icon)
           return (
             <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 2 }}>
-              <View style={{ marginTop: 2 }}><BulletSticker size={18} /></View>
+              <View style={{ marginTop: 2 }}>{diffuse ? <BulletSticker size={18} /> : <SiteSticker name={siteForEmoji(b.icon)} size={20} />}</View>
               <Text style={[ci.bulletText, { color: colors.textSecondary, flex: 1 }]}>{b.text}</Text>
             </View>
           )
@@ -738,7 +751,7 @@ function PregnancyInsightsContent() {
     <>
       <View style={[ci.warningCard, { backgroundColor: stickerPalette.peachSoft }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <NotifyHealthAlert size={22} />
+          {diffuse ? <NotifyHealthAlert size={22} /> : <SiteSticker name="alert" size={24} />}
           <Text style={[ci.warningTitle, { color: ink }]}>{t('insights_callProviderIf')}</Text>
         </View>
         {WARNING_SIGNS.map((sign, i) => (
@@ -853,7 +866,7 @@ function PregnancyInsightsContent() {
           { backgroundColor: colors.accent, bottom: insets.bottom + 8, transform: [{ translateY: pressed ? 2 : 0 }] },
         ]}
       >
-        <TalkMaster size={28} />
+        {diffuse ? <TalkMaster size={28} /> : <SiteSticker name="bubble" size={30} />}
         <Text style={[ci.askBarText, { color: ink }]}>{t('insights_askGrandma')}</Text>
         <ChevronRight size={18} color={ink} strokeWidth={2.5} />
       </Pressable>

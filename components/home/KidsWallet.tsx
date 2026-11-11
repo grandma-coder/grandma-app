@@ -131,12 +131,12 @@ export function KidsWallet({
       }
     }
     switch (id) {
-      case 'goals': return <SiteSticker name="star" size={26} />
-      case 'health': return <SiteSticker name="thermo" size={26} />
+      case 'goals': return <SiteSticker name="bars" size={26} />
+      case 'health': return <SiteSticker name="heart" size={26} />
       case 'vaccines': return <SiteSticker name="syringe" size={26} />
       case 'exams': return <SiteSticker name="doc" size={26} />
       case 'diaper': return <SiteSticker name="diaper" size={26} />
-      case 'growth_leap': return <SiteSticker name="ruler" size={26} />
+      case 'growth_leap': return <SiteSticker name="brain" size={26} />
       case 'reminders': return <SiteSticker name="bell" size={26} />
       case 'memories': return <SiteSticker name="camera" size={26} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="sky" outline={colors.text} />
@@ -212,7 +212,7 @@ export function KidsWallet({
   const editColor = diffuse ? dt.colors.ink3 : colors.textMuted
 
   const SITE_STICKER: Record<KidsCardId, SiteStickerName> = {
-    goals: 'star', health: 'thermo', vaccines: 'syringe', exams: 'doc', diaper: 'diaper',
+    goals: 'bars', health: 'heart', vaccines: 'syringe', exams: 'doc', diaper: 'diaper',
     growth_leap: 'brain', reminders: 'bell', memories: 'camera', ask_grandma: 'bubble',
     rewards: 'star', channels: 'bubble', village: 'house',
   }

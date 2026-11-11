@@ -64,7 +64,7 @@ const SCREEN_W = Dimensions.get('window').width
 // Site stickers per health-event kind (light look).
 const SITE_STICKER: Record<string, SiteStickerName> = {
   vaccine: 'syringe', medicine: 'pill', temperature: 'thermo', growth: 'ruler',
-  star: 'star', milestone: 'star', note: 'doc', warning: 'bell',
+  star: 'star', milestone: 'star', note: 'doc', warning: 'alert',
 }
 
 // ─── Types & Config ───────────────────────────────────────────────────────

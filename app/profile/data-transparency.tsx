@@ -59,7 +59,7 @@ export default function DataTransparencyScreen() {
           <ScreenHeader title="" />
         </View>
       ) : (
-        <SiteHeader title={t('dataTrans_title')} sticker="leaf" subtitle={t('dataTrans_subtitle')} />
+        <SiteHeader title={t('dataTrans_title')} sticker="notebook" subtitle={t('dataTrans_subtitle')} />
       )}
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

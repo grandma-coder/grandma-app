@@ -186,7 +186,7 @@ export function MenopauseAnalytics() {
 
               <SiteSection eyebrow={t('meno_an_sleepmood_title')}>
                 <SiteNote>{t('menoAnalytics_severityNote')}</SiteNote>
-                <SiteTrend sticker="zz" title={t('gn_meno_sym_sleep')} series={sleepSeries} tone={palette.accentSoft} />
+                <SiteTrend sticker="moon" title={t('gn_meno_sym_sleep')} series={sleepSeries} tone={palette.accentSoft} />
                 <View style={{ height: 14 }} />
                 <SiteTrend sticker="face1" title={t('gn_meno_sym_low_mood')} series={moodSeries} tone={palette.accentSoft} />
               </SiteSection>
@@ -585,7 +585,7 @@ function SiteHero({ stageWord, heroLine }: { stageWord: string; heroLine: string
         </Text>
         <Text style={{ fontFamily: font.body, fontSize: 15, lineHeight: 21, color: colors.textSecondary, marginTop: 4 }}>{heroLine}</Text>
       </View>
-      <SiteSticker name="thermo" size={52} />
+      <SiteSticker name="flame" size={52} />
     </View>
   )
 }

@@ -398,7 +398,7 @@ function BannerCarousel({ channels, myIds, accent, onJoin }: { channels: Channel
         {channels.map((c) => {
           const joined = myIds.includes(c.id)
           const sticker = channelSticker(c.id, isDark, c.avatarUrl)
-          const blob = channelBlob(c.name, c.category)
+          const blob = channelBlob(c.name, c.category, c.avatarUrl)
           return (
             <Pressable
               key={c.id}
@@ -527,7 +527,7 @@ function ChannelCard({ channel, joined, unread, accent, muted, onToggleMute }: {
   const { t } = useTranslation()
   const { confirm, confirmDialog } = useConfirmDialog()
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
-  const blob = channelBlob(channel.name, channel.category)
+  const blob = channelBlob(channel.name, channel.category, channel.avatarUrl)
 
   return (
     <>
@@ -621,7 +621,7 @@ function ChannelCardCompact({ channel, joined, accent, onJoin }: { channel: Chan
   const { t } = useTranslation()
   const mode = useModeStore((st) => st.mode)
   const sticker = channelSticker(channel.id, isDark, channel.avatarUrl)
-  const blob = channelBlob(channel.name, channel.category)
+  const blob = channelBlob(channel.name, channel.category, channel.avatarUrl)
 
   return (
     <Pressable

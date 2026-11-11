@@ -886,7 +886,7 @@ export default function ChannelChat() {
               const s = channel
                 ? channelSticker(channel.id, isDark, channel.avatarUrl)
                 : null
-              const blob = channel ? channelBlob(channel.name, channel.category) : null
+              const blob = channel ? channelBlob(channel.name, channel.category, channel.avatarUrl) : null
               const emptyTitle = isMember ? t('channelScreen_emptyTitle') : t('channelScreen_emptySubtitle')
               const emptyMsg = isMember
                 ? t('channelScreen_emptyMemberMsg')
@@ -938,7 +938,7 @@ export default function ChannelChat() {
             diffuse ? <Lock size={16} color={dt.colors.ink3} strokeWidth={2} /> : <SiteSticker name="lock" size={24} cut />
           ) : channel ? (
             (() => {
-              const blob = channelBlob(channel.name, channel.category)
+              const blob = channelBlob(channel.name, channel.category, channel.avatarUrl)
               return (
                 <View style={[{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }, !diffuse && { width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: colors.text, backgroundColor: getModeColorSoft(mode, isDark) }]}>
                   <ChannelGlyph name={blob} size={diffuse ? 22 : 20} bg={diffuse ? dt.colors.bg : getModeColorSoft(mode, isDark)} />
@@ -1372,7 +1372,7 @@ export default function ChannelChat() {
             {/* Sticker accent — channel's own sticker */}
             {channel && (() => {
               const s = channelSticker(channel.id, isDark, channel.avatarUrl)
-              const blob = channelBlob(channel.name, channel.category)
+              const blob = channelBlob(channel.name, channel.category, channel.avatarUrl)
               return (
                 <View style={[styles.ratingStickerBubble, diffuse
                   ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
@@ -1749,7 +1749,7 @@ function MessageBubbleBase({
       <View style={[styles.avatar, diffuse
         ? { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth, borderColor: dt.colors.line2 }
         : { backgroundColor: s.tint, borderWidth: 1.5, borderColor: colors.text }]}>
-        <ChannelGlyph name={personBlob(authorKey)} size={20} bg={avatarBg} />
+        <ChannelGlyph name={personBlob(authorKey)} size={20} bg={avatarBg} site="me" />
       </View>
 
       <View style={[styles.bubbleContent, !diffuse && { backgroundColor: isMine ? tone : colors.surface, borderWidth: 1.5, borderColor: colors.text, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 10 }]}>

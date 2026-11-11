@@ -77,12 +77,12 @@ function formatTime(hhmm: string): string {
 }
 
 const SITE_STICKER: Record<StickerName, SiteStickerName> = {
-  sun: 'bell',
+  sun: 'pencil',
   sparkle: 'brain',
   star: 'cal',
-  moon: 'moon',
-  heart: 'heart',
-  flower: 'flower',
+  moon: 'drop',
+  heart: 'love',
+  flower: 'star',
   leaf: 'doc',
 }
 

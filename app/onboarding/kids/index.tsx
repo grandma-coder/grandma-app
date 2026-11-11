@@ -1028,7 +1028,7 @@ function StepChildAllergies({
       total={total}
       auraMode="kids"
       question={tNow('sw2_ob_qAllergies', { name: childName })}
-      sticker={<SiteSticker name="rasp" size={48} cut />}
+      sticker={<SiteSticker name="alert" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1127,7 +1127,7 @@ function StepChildConditions({
       total={total}
       auraMode="kids"
       question={tNow('sw2_ob_qConditions', { name: childName })}
-      sticker={<SiteSticker name="thermo" size={48} cut />}
+      sticker={<SiteSticker name="heart" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1185,7 +1185,7 @@ function StepPartner({
       total={total}
       auraMode="kids"
       question={tNow('preg_onboard_step_partner')}
-      sticker={<SiteSticker name="heart" size={48} cut />}
+      sticker={<SiteSticker name="love" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -1255,7 +1255,7 @@ function StepCaregiver({
       total={total}
       auraMode="kids"
       question={tNow('sw2_ob_qCaregiver')}
-      sticker={<SiteSticker name="bubble" size={48} cut />}
+      sticker={<SiteSticker name="stroller" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >

@@ -218,14 +218,14 @@ function renderActivitySticker(kind: string, size: number, stickerColors: { cora
 
 /** Site-look: log kind → card-less sticker. */
 const ACTIVITY_SITE_STICKER: Record<string, SiteStickerName> = {
-  vaccine: 'syringe', medicine: 'syringe', health: 'thermo', temperature: 'thermo',
+  vaccine: 'syringe', medicine: 'pill', health: 'thermo', temperature: 'thermo',
   diaper: 'diaper', feeding: 'bottle', food: 'bottle', sleep: 'zz', mood: 'face3',
   activity: 'star', memory: 'camera', photo: 'camera', growth: 'ruler', milestone: 'star', note: 'pencil',
 }
 
 /** Site-look: member role → avatar sticker (never `us`). */
 const MEMBER_SITE_STICKER: Record<string, SiteStickerName> = {
-  partner: 'heart', nanny: 'baby', family: 'house', doctor: 'me',
+  partner: 'love', nanny: 'stroller', family: 'house', doctor: 'stetho',
 }
 
 /**
@@ -812,7 +812,7 @@ export default function CareCircleScreen() {
               />
             ) : (
               <View style={styles.siteEmpty}>
-                <SiteSticker name="heart" size={84} cut />
+                <SiteSticker name="love" size={84} cut />
                 <Display size={24} align="center" color={colors.text} style={{ textTransform: 'uppercase', letterSpacing: 0.3 }}>
                   {t('careCircle_no_caregivers')}
                 </Display>

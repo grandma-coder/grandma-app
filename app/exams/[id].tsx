@@ -214,7 +214,7 @@ export default function ExamDetailScreen() {
               <Text style={[styles.flaggedTitle, { color: dt.colors.error, fontFamily: diffuseFont.mono }]}>{t('examDetail_flaggedTitle')}</Text>
             ) : (
               <View style={[styles.sectionHead, { marginBottom: 6 }]}>
-                <SiteSticker name="bell" size={22} />
+                <SiteSticker name="alert" size={22} />
                 <MonoCaps size={10} color={colors.textMuted}>{t('examDetail_flaggedTitle')}</MonoCaps>
               </View>
             )}

@@ -358,18 +358,18 @@ function plfLabel(id: string): string {
 }
 
 const APPOINTMENT_STICKER: Record<string, SiteStickerName> = {
-  'Regular checkup': 'doc', Ultrasound: 'camera', 'Blood test': 'syringe', 'Glucose test': 'drop',
-  'Group B strep': 'otest', Specialist: 'heart', Other: 'pencil',
+  'Regular checkup': 'stetho', Ultrasound: 'camera', 'Blood test': 'syringe', 'Glucose test': 'glass',
+  'Group B strep': 'doc', Specialist: 'stetho', Other: 'pencil',
 }
 const EXERCISE_STICKER: Record<string, SiteStickerName> = {
-  Yoga: 'flower', Walk: 'shoe', Swim: 'sun', Stretching: 'leaf', Pilates: 'star', Other: 'pencil',
+  Yoga: 'leaf', Walk: 'shoe', Swim: 'wave', Stretching: 'me', Pilates: 'star', Other: 'pencil',
 }
 const NESTING_STICKER: Record<string, SiteStickerName> = {
   Nursery: 'crib', Cleaning: 'house', Laundry: 'bodysuit', Shopping: 'stroller', Organizing: 'books', Other: 'pencil',
 }
 const BIRTH_PREP_STICKER: Record<string, SiteStickerName> = {
-  'Hospital bag': 'backpack', 'Birth plan': 'doc', Classes: 'brain', Postpartum: 'flower',
-  'Baby gear': 'stroller', Admin: 'cal', Other: 'pencil',
+  'Hospital bag': 'backpack', 'Birth plan': 'doc', Classes: 'books', Postpartum: 'love',
+  'Baby gear': 'stroller', Admin: 'doc', Other: 'pencil',
 }
 
 
@@ -1797,7 +1797,7 @@ export function VitaminsLogForm({ date, onSaved }: { date: string; onSaved: () =
         <SiteQuestion>{t('preg_form_vitamins_question')}</SiteQuestion>
         <SiteStickerGrid
           width="50%"
-          options={OPTIONS.map((o) => ({ id: o.label, label: o.label, sticker: o.value ? 'face3' : 'face2' }))}
+          options={OPTIONS.map((o) => ({ id: o.label, label: o.label, sticker: o.value ? 'pill' : 'face2' }))}
           isOn={(id) => taken !== null && OPTIONS.find((o) => o.value === taken)?.label === id}
           onPress={(id) => setTaken(OPTIONS.find((o) => o.label === id)?.value ?? null)}
         />

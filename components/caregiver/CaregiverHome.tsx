@@ -117,7 +117,7 @@ export function CaregiverHome() {
             >
               {diffuse
                 ? (isFamily ? <RoleFamily size={36} /> : <RoleNanny size={36} />)
-                : <SiteSticker name={isFamily ? 'heart' : 'baby'} size={44} cut />}
+                : <SiteSticker name={isFamily ? 'love' : 'stroller'} size={44} cut />}
             </View>
             <View style={styles.headerText}>
               <Text

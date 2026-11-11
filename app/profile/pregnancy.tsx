@@ -1637,7 +1637,7 @@ export default function PregnancyProfileScreen() {
         {/* 9. Breastfeeding Plan */}
         <SectionCard
           title={t('sw1_pp_bf')}
-          sticker="bottle"
+          sticker="love"
           subtitle={t('sw1_pp_bf_sub')}
           badge={<Character name="milk" size={26} />}
           badgeTint={stickers.pinkSoft}

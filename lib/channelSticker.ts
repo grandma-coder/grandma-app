@@ -108,8 +108,13 @@ const NAME_BLOB: Record<string, CharacterName> = {
   'Ask the Village': 'community',
 }
 
-/** A channel's Character blob concept — name override first, then category, then community. */
-export function channelBlob(name: string, category?: string | null): CharacterName {
+/**
+ * A channel's Character blob concept — the owner's explicit avatar pick
+ * (`sticker://name/color`) first, then name override, then category, then community.
+ */
+export function channelBlob(name: string, category?: string | null, avatarUrl?: string | null): CharacterName {
+  const picked = parseStickerUrl(avatarUrl)
+  if (picked) return PRESET_BLOB[picked.name]
   return NAME_BLOB[name] ?? (category ? CATEGORY_BLOB[category] : undefined) ?? 'community'
 }
 

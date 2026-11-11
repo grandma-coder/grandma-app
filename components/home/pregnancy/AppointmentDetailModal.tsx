@@ -24,10 +24,10 @@ import { AppointmentQuestions, CopySuggestedQuestion, nextStandardAppointmentId 
 import type { StandardAppointment } from '../../../lib/pregnancyAppointments'
 
 const TYPE_LABEL: Record<StandardAppointment['type'], { labelKey: TranslationKey; sticker: SiteStickerName }> = {
-  ultrasound: { labelKey: 'preg_appts_type_ultrasound',  sticker: 'baby' },
-  blood_test: { labelKey: 'sw1_appt_bloodTest',  sticker: 'drop' },
-  checkup:    { labelKey: 'preg_appts_type_checkup',    sticker: 'doc' },
-  test:       { labelKey: 'sw1_appt_test',       sticker: 'cal' },
+  ultrasound: { labelKey: 'preg_appts_type_ultrasound',  sticker: 'camera' },
+  blood_test: { labelKey: 'sw1_appt_bloodTest',  sticker: 'syringe' },
+  checkup:    { labelKey: 'preg_appts_type_checkup',    sticker: 'stetho' },
+  test:       { labelKey: 'sw1_appt_test',       sticker: 'doc' },
   vaccine:    { labelKey: 'agenda_vaccine',     sticker: 'syringe' },
 }
 

@@ -2368,7 +2368,7 @@ function HydrationDetail({ hydrationHistory, trimester, weekNumber, accentColor,
                   />
                 ) : (
                   <View style={{ opacity: filled ? 1 : 0.2 }}>
-                    <SiteSticker name="drop" size={30} cut />
+                    <SiteSticker name="glass" size={30} cut />
                   </View>
                 )}
               </View>

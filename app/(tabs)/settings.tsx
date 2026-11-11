@@ -521,7 +521,7 @@ export default function ProfileScreen() {
                 onPress={() => router.push('/profile/account')}
               />
               <SiteRow
-                sticker="eye"
+                sticker="shield"
                 label={t('profile_dataPrivacy')}
                 onPress={() => router.push('/profile/privacy')}
               />

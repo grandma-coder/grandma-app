@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { PaperCard } from '../ui/PaperCard'
 import { RoleNanny, RoleFamily } from '../stickers/RewardStickers'
+import { SiteSticker } from '../stickers/SiteSticker'
+import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { useTheme, borderRadius } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 
@@ -19,6 +21,7 @@ interface NannyUpdatesFeedProps {
 
 export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
   const { colors } = useTheme()
+  const diffuse = useIsDiffuse()
   const { t } = useTranslation()
   const styles = useMemo(() => makeStyles(colors), [colors])
 
@@ -30,7 +33,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
         </View>
         <PaperCard radius={28} padding={20}>
           <View style={styles.empty}>
-            <View style={styles.emptyIcon}><RoleFamily size={48} /></View>
+            <View style={styles.emptyIcon}>{diffuse ? <RoleFamily size={48} /> : <SiteSticker name="stroller" size={48} cut />}</View>
             <Text style={styles.emptyText}>{t('kids_nannyFeed_emptyText')}</Text>
             <Text style={styles.emptySubtext}>
               {t('kids_nannyFeed_emptySubtext')}
@@ -52,7 +55,7 @@ export function NannyUpdatesFeed({ updates = [] }: NannyUpdatesFeedProps) {
         <PaperCard radius={28} padding={20} key={update.id} style={styles.updateCard}>
           <View style={styles.updateHeader}>
             <View style={styles.avatar}>
-              <RoleNanny size={26} />
+              {diffuse ? <RoleNanny size={26} /> : <SiteSticker name="stroller" size={26} cut />}
             </View>
             <Text style={styles.nannyName}>{update.name}</Text>
             <Text style={styles.timeAgo}>{update.timeAgo}</Text>

@@ -158,18 +158,20 @@ const kitStyles = StyleSheet.create({
 // Site look: Character concept → site sticker (falls back to the Character blob).
 const SITE_FOR_BLOB: Partial<Record<CharacterName, SiteStickerName>> = {
   sleep: 'moon', night: 'moon', nutrition: 'avocado', calories: 'avocado', water: 'glass', temperature: 'thermo',
-  feeding: 'bottle', milk: 'bottle', diaper: 'diaper', potty: 'diaper', bath: 'cloud', baby: 'baby',
-  medicine: 'syringe', vaccine: 'syringe', heartbeat: 'heart', checkup: 'doc', exam: 'doc',
+  feeding: 'bottle', milk: 'bottle', diaper: 'diaper', potty: 'potty', bath: 'duck', baby: 'baby',
+  medicine: 'pill', vaccine: 'syringe', heartbeat: 'heart', checkup: 'stetho', exam: 'doc', note: 'pencil',
   period: 'drop', ovulation: 'egg', kick: 'shoe', ultrasound: 'camera', growth: 'ruler', activity: 'shoe',
   star: 'star', sparkle: 'star', sun: 'flower', heart: 'heart', health: 'heart',
 }
 // Option ids that deserve their own sticker (so a list of one concept doesn't repeat one icon).
 const ID_STICKER: Record<string, SiteStickerName> = {
   // Kids activities — never reuse a sticker that means something else in the app (the red drop is
-  // a period, the leaf the end of a period, the brain the pillars).
-  class: 'owl', school: 'backpack', study: 'pencil', reading: 'books', sport: 'shoe', swim: 'sun',
-  dance: 'star', music: 'bell', art: 'flower', playground: 'stroller', walk: 'foot', therapy: 'heart', playdate: 'baby2',
+  // a period, the leaf the end of a period). Therapy shares the brain with the therapy pillar.
+  class: 'owl', school: 'backpack', study: 'pencil', reading: 'books', sport: 'shoe', swim: 'wave',
+  dance: 'star', music: 'music', art: 'flower', playground: 'stroller', walk: 'foot', therapy: 'brain', playdate: 'baby2',
   pee: 'pee', poop: 'poop', mixed: 'diaper',
+  // Kids health form (ids are the stored English event names).
+  Temperature: 'thermo', Vaccine: 'syringe', Medicine: 'pill', 'Doctor visit': 'stetho', Injury: 'bandage', Other: 'pencil',
 }
 const FACE_STICKER: Record<string, SiteStickerName> = {
   happy: 'face4', calm: 'face3', content: 'face3', energetic: 'star', fussy: 'face2', sad: 'face1', cranky: 'face1', tired: 'zz',

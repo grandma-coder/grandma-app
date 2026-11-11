@@ -321,7 +321,7 @@ export default function PostDetail() {
               <Animated.View style={{ transform: [{ scale: likeScale }] }}>
                 {diffuse
                   ? <HeartSticker size={22} fill={post.user_liked ? accent : dt.colors.ink3} />
-                  : <SiteSticker name="heart" size={26} cut />}
+                  : <SiteSticker name="love" size={26} cut />}
               </Animated.View>
             </ActionChip>
 

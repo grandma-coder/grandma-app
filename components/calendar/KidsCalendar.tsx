@@ -151,15 +151,16 @@ import { CenterModal } from '../ui/CenterModal'
 // Calm ink outlines, card-less sticker rows, ink text. Used only by the light
 // (non-diffuse) rendering; every diffuse path keeps its own primitives.
 
-const LOG_STICKER: Record<string, SiteStickerName> = {
-  feeding: 'bottle', food: 'bottle', sleep: 'moon', wake_up: 'cloud',
-  health: 'thermo', temperature: 'thermo', medicine: 'syringe', vaccine: 'syringe',
-  mood: 'face3', memory: 'camera', photo: 'camera', diaper: 'diaper',
-  growth: 'ruler', milestone: 'star', activity: 'shoe', note: 'pencil', exam: 'doc',
-  // canonical journey map wins — one sticker per log type everywhere
-  ...KIDS_LOG_STICKER,
+// One sticker per log type everywhere: the canonical journey map.
+const stickerForLog = (type: string): SiteStickerName => KIDS_LOG_STICKER[type] ?? 'pencil'
+/** A health `note` row is a doctor visit, an injury or a free note — each gets its own sticker. */
+function stickerForHealthLog(type: string, kind: string | null): SiteStickerName {
+  if (type === 'note' && kind) {
+    if (/injur/i.test(kind)) return 'bandage'
+    if (/other/i.test(kind)) return 'pencil'
+  }
+  return stickerForLog(type)
 }
-const stickerForLog = (type: string): SiteStickerName => LOG_STICKER[type] ?? 'pencil'
 
 const SITE_MONO = 'SpaceMono_400Regular'
 
@@ -809,7 +810,7 @@ function LogActivitySheet({
               accessibilityRole="button"
               style={({ pressed }) => [styles.manageRoutinesBtn, { borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 }]}
             >
-              <SiteSticker name="cal" size={30} />
+              <SiteSticker name="bell" size={30} />
               <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink, flex: 1 }}>
                 {t('kids_calendar_manageRoutines')}
               </Text>
@@ -2932,7 +2933,7 @@ export function KidsCalendar() {
       return (
         <View>
           <FadeUp style={styles.siteEmpty}>
-            <SiteSticker name="thermo" size={64} />
+            <SiteSticker name="stetho" size={64} />
             <Text style={{ fontFamily: font.bodyBold, fontSize: 16, color: colors.text, textAlign: 'center', marginTop: 12 }}>{t('kids_calendar_noVisitsYet')}</Text>
             <Text style={{ fontFamily: font.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: 4 }}>
               {t('kids_calendar_visitHint')}
@@ -3490,7 +3491,7 @@ export function KidsCalendar() {
 
                 {/* Header */}
                 <View {...dragZone} style={[styles.popupHeader, { paddingBottom: 12 }]}>
-                  <SiteSticker name="cal" size={44} />
+                  <SiteSticker name="bell" size={44} />
                   <View style={styles.popupHeaderText}>
                     <SiteTitle size={24}>{t('kids_calendar_routines')}</SiteTitle>
                     <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: font.body }}>
@@ -3848,7 +3849,7 @@ export function KidsCalendar() {
 
                           {fp.hasReaction && (
                             <View style={[styles.siteCallout, { borderColor: ink, backgroundColor: stickers.peachSoft }]}>
-                              <SiteSticker name="bell" size={28} />
+                              <SiteSticker name="alert" size={28} />
                               <View style={{ flex: 1 }}>
                                 <Text style={{ color: ink, fontSize: 14, fontFamily: font.bodyBold }}>{t('kids_calendar_detail_reactionNoted')}</Text>
                                 {fp.reactionFood && <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: font.body, marginTop: 2 }}>{fp.reactionFood}</Text>}
@@ -3974,7 +3975,7 @@ export function KidsCalendar() {
                         calm:      { label: tNow('kids_logForm_moodCalm'),      face: 'face3' },
                         fussy:     { label: tNow('kids_logForm_moodFussy'),     face: 'face2' },
                         cranky:    { label: tNow('kids_logForm_moodCranky'),    face: 'face1' },
-                        energetic: { label: tNow('kids_logForm_moodEnergetic'), face: 'face4' },
+                        energetic: { label: tNow('kids_logForm_moodEnergetic'), face: 'star' },
                       }
                       const m = moodMeta[moodVal] ?? { label: moodVal || tNow('kids_calendar_labelMood'), face: 'face3' as SiteStickerName }
                       return <DetailHero sticker={m.face} value={m.label} valueSize={34} eyebrow={t('kids_calendar_detail_todaysMood')} />
@@ -3987,7 +3988,7 @@ export function KidsCalendar() {
                       const shown = text && text !== shownLog.type ? text : null
                       return (
                         <DetailHero
-                          sticker={stickerForLog(shownLog.type)}
+                          sticker={stickerForHealthLog(shownLog.type, kind)}
                           value={shown}
                           // Short readings ("37.2", "MMR") stay big; sentences read at body-heading size.
                           valueSize={shown && shown.length > 14 ? 22 : 32}

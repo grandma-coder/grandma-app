@@ -17,7 +17,7 @@ export interface KidsNoteInput {
 }
 
 const STICKER: Record<PillarKey, SiteStickerName> = {
-  sleep: 'moon', nutrition: 'bottle', mood: 'face3', activity: 'shoe', growth: 'ruler', health: 'thermo',
+  sleep: 'moon', nutrition: 'bottle', mood: 'face3', activity: 'shoe', growth: 'ruler', health: 'heart',
 }
 
 function ageSuggestion(ageMonths: number): NoteKey {

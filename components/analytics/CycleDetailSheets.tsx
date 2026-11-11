@@ -21,7 +21,8 @@ import type { CyclePhase } from '../../lib/cycleLogic'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { cToDisplay, tempLabel } from '../../lib/units'
 import { Character } from '../characters/Characters'
-import { SymptomBlob, CustomSymptomBlob } from '../calendar/symptomStickers'
+import { SymptomBlob, CustomSymptomBlob, SymptomSiteSticker, CustomSymptomSiteSticker } from '../calendar/symptomStickers'
+import { CYCLE_LOG_STICKER, CYCLE_MOOD_STICKER } from '../../lib/logStickers'
 import { symptomLabel, resolveSymptomId } from '../../lib/cycleSymptoms'
 import { MiniLineChart, BeadedThread } from './shared/MiniCharts'
 import { MoodBubbleCluster } from '../charts/SvgCharts'
@@ -145,8 +146,8 @@ export function CycleDetailSheet({ type, accent, onClose }: Props) {
 }
 
 const SHEET_STICKER: Record<CycleDetailType, SiteStickerName> = {
-  cycleLength: 'cal', regularity: 'moon', pms: 'bubble', fertile: 'flower',
-  mood: 'face3', bbt: 'thermo', mucus: 'egg', intercourse: 'heart',
+  cycleLength: 'cal', regularity: 'bars', pms: CYCLE_LOG_STICKER.symptom, fertile: 'flower',
+  mood: 'face3', bbt: 'thermo', mucus: CYCLE_LOG_STICKER.cervical_mucus, intercourse: CYCLE_LOG_STICKER.intercourse,
 }
 const SHEET_TONE: Record<CycleDetailType, 'pinkSoft' | 'lilacSoft' | 'peachSoft' | 'yellowSoft' | 'greenSoft' | 'blueSoft'> = {
   cycleLength: 'pinkSoft', regularity: 'lilacSoft', pms: 'peachSoft', fertile: 'yellowSoft',
@@ -691,8 +692,10 @@ function PMSDetail() {
                     ) : (
                       <CustomSymptomBlob size={40} />
                     )
+                  ) : resolvedId ? (
+                    <SymptomSiteSticker id={resolvedId} size={32} />
                   ) : (
-                    <SiteSticker name="bubble" size={32} cut />
+                    <CustomSymptomSiteSticker size={32} />
                   )}
                   <View style={{ flex: 1, gap: 2 }}>
                     <Body size={14} color={diffuse ? dt.colors.ink : colors.text}>{label}</Body>
@@ -909,7 +912,9 @@ const fertStyles = StyleSheet.create({
 })
 
 const MOOD_STICKER: Record<MoodId, SiteStickerName> = {
-  great: 'face4', energetic: 'star', good: 'face3', okay: 'face2', down: 'face1', low: 'face1',
+  // Same faces as the mood log form; energetic is only a stats bucket.
+  great: CYCLE_MOOD_STICKER.great, energetic: 'star', good: CYCLE_MOOD_STICKER.good,
+  okay: CYCLE_MOOD_STICKER.okay, down: CYCLE_MOOD_STICKER.down, low: CYCLE_MOOD_STICKER.low,
 }
 
 const MOOD_LABEL_KEYS: Record<MoodId, TranslationKey> = {

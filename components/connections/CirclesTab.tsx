@@ -13,11 +13,21 @@ import { useTranslation } from '../../lib/i18n'
 import { useModeStore } from '../../store/useModeStore'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { Character } from '../characters/Characters'
-import { SiteSticker } from '../stickers/SiteSticker'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
 import { circleBlob } from '../../lib/circleBlob'
 import { getCircles, type Circle, type CircleJourney } from '../../lib/circles'
 import { PillButton } from '../ui/PillButton'
 import { circleDisplayName, circleDisplayDesc } from './communityLabels'
+
+/** Light look: each seeded circle gets its own sticker (keyed by the canonical DB name, like circleBlob). */
+const CIRCLE_SITE: Record<string, SiteStickerName> = {
+  'The Trying Years': 'otest',
+  'Pregnancy Fears': 'worry',
+  'Am I a Good Parent?': 'stroller',
+  'Postpartum & Me': 'me',
+  'Relationship Real Talk': 'love',
+  'No Judgment Zone': 'bubble',
+}
 
 export function CirclesTab() {
   const { colors, font, stickers, radius } = useTheme()
@@ -59,7 +69,7 @@ export function CirclesTab() {
           style={({ pressed }) => [styles.siteRow, { borderBottomColor: colors.border }, pressed && { opacity: 0.7 }]}
         >
           <View style={[styles.siteDisc, { backgroundColor: iconTint, borderColor: colors.text }]}>
-            <SiteSticker name="owl" size={28} cut />
+            <SiteSticker name={CIRCLE_SITE[item.name] ?? 'bubble'} size={28} cut />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.name, { color: colors.text, fontFamily: font.bodySemiBold }]}>{circleDisplayName(item.name)}</Text>

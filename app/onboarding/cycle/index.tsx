@@ -537,7 +537,7 @@ function StepPeriodDuration({
 
 const CONDITION_STICKER: Record<ConditionChip, SiteStickerName> = {
   pcos: 'egg',
-  endometriosis: 'flame',
+  endometriosis: 'uterus',
   other: 'pencil',
   prefer_not_to_say: 'lock',
 }
@@ -830,7 +830,7 @@ function StepTTCSupplements({
       total={total}
       auraMode="pre-pregnancy"
       question={t('cycleOnboarding_q_supplements')}
-      sticker={<SiteSticker name="leaf" size={48} cut />}
+      sticker={<SiteSticker name="pill" size={48} cut />}
       onContinue={onContinue}
       onSkip={onSkip}
     >
@@ -904,7 +904,7 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
   return (
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>
       <ScrollView contentContainerStyle={completeStyles.content} showsVerticalScrollIndicator={false}>
-        <CelebrateHero sticker="flower" tone={modeSoft} confetti={['heart', 'star', 'drop', 'moon', 'leaf', 'egg']} />
+        <CelebrateHero sticker="flower" tone={modeSoft} confetti={['love', 'star', 'drop', 'moon', 'leaf', 'egg']} />
 
         <Text style={[completeStyles.title, { color: colors.text, fontFamily: font.display }]}>
           {t('cycleOnboarding_complete_title')}

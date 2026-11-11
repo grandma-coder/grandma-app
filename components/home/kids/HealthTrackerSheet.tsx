@@ -370,7 +370,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
           editor lives). */}
       <>
         <View style={styles.modalSectionRow}>
-          <SiteSticker name="rasp" size={24} />
+          <SiteSticker name="alert" size={24} />
           <Text style={[styles.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>{t('kids_home_health_allergies')}</Text>
         </View>
         <View style={[styles.healthTagsRow, { marginTop: 4 }]}>
@@ -411,12 +411,12 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
       {child.medications.length > 0 && (
         <>
           <View style={styles.modalSectionRow}>
-            <SiteSticker name="syringe" size={24} />
+            <SiteSticker name="pill" size={24} />
             <Text style={[styles.modalSectionTitle, { color: ink, marginTop: 0, marginBottom: 0 }]}>{t('kids_home_health_medications')}</Text>
           </View>
           {child.medications.map((m, i) => (
             <View key={i} style={[styles.modalTaskRow, { borderBottomColor: paperBorder }]}>
-              <SiteSticker name="syringe" size={16} />
+              <SiteSticker name="pill" size={16} />
               <Text style={[styles.modalTaskLabel, { color: ink }]}>{m}</Text>
               <Text style={[styles.modalTaskStatus, { color: colors.text, fontFamily: font.bodyBold }]}>{t('kids_home_health_medication_active')}</Text>
             </View>

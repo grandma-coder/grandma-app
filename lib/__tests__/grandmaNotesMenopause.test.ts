@@ -90,7 +90,7 @@ describe('buildMenopauseNote', () => {
     const l = buildMenopauseNote({ rows, today: TODAY }, tx)
     const note = l.notes.find((n) => n.id.startsWith('trigger-'))
     expect(note).toMatchObject({
-      id: 'trigger-coffee', sticker: 'glass', title: 'Something you noted',
+      id: 'trigger-coffee', sticker: 'coffee', title: 'Something you noted',
       body: 'Coffee came up 4 times before a hot flash or night sweat this week.',
     })
     const text = letterText(l)

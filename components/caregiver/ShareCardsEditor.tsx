@@ -39,10 +39,10 @@ const CARD_STICKERS: Record<string, SiteStickerName> = {
   'today-summary': 'cal',
   today_summary: 'cal',
   vaccines: 'syringe',
-  health: 'thermo',
-  exams: 'otest',
+  health: 'heart',
+  exams: 'doc',
   diaper: 'diaper',
-  growth_leap: 'ruler',
+  growth_leap: 'brain',
   reminders: 'bell',
   ask_grandma: 'bubble',
   rewards: 'star',
@@ -59,7 +59,7 @@ const CARD_STICKERS: Record<string, SiteStickerName> = {
 
 const CAPABILITY_ROWS: CapabilityRow[] = [
   { key: 'log_activity', labelKey: 'sw2_cg_canLogActivity', sticker: 'pencil' },
-  { key: 'emergency', labelKey: 'sw2_cg_canViewEmergency', sticker: 'thermo' },
+  { key: 'emergency', labelKey: 'sw2_cg_canViewEmergency', sticker: 'alert' },
   { key: 'chat', labelKey: 'sw2_cg_canChat', sticker: 'bubble' },
   { key: 'edit_child', labelKey: 'sw2_cg_canEditChild', sticker: 'baby' },
 ]

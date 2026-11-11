@@ -1494,7 +1494,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
     return (
       <View style={{ flex: 1, backgroundColor: diffuse ? dt.colors.bg : colors.bg, justifyContent: 'center' }}>
         <EmptyState
-          icon={<HeartSticker size={36} fill={stickers.pink} />}
+          icon={diffuse ? <HeartSticker size={36} fill={stickers.pink} /> : <SiteSticker name="baby" size={40} cut />}
           iconBg={stickers.pinkSoft}
           title={t('kids_home_empty_state_title')}
           message={t('kids_home_empty_state_msg')}
@@ -2152,21 +2152,12 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
           shadowRadius: 14,
           shadowOffset: { width: 0, height: 4 },
         }]}>
-          {/* Sticker decoration — top-right corner (softened under Diffuse) */}
-          {!diffuse && (
-            <View style={{ position: 'absolute', top: -10, right: 14, transform: [{ rotate: '15deg' }] }} pointerEvents="none">
-              <StarSticker size={36} fill={stickers.yellow} stroke="#141313" />
-            </View>
-          )}
-
           {/* Header row */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             {diffuse ? (
               <View style={{ opacity: 0.8 }}><Character name="bell" size={16} color={dt.colors.ink3} /></View>
             ) : (
-              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: stickers.yellow, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
-                <Bell size={13} color="#141313" strokeWidth={2.5} />
-              </View>
+              <SiteSticker name="bell" size={30} />
             )}
             <Text style={diffuse
               ? { fontSize: 18, fontFamily: diffuseFont.display, color: dt.colors.ink, letterSpacing: -0.3 }
@@ -2359,9 +2350,11 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
             }}>
               {/* Calendar header label */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 }}>
-                <View style={{ transform: [{ rotate: '-10deg' }], opacity: diffuse ? 0.85 : 1 }}>
-                  <StarSticker size={diffuse ? 16 : 18} fill={stickers.blue} stroke={diffuse ? dt.colors.ink : '#141313'} />
-                </View>
+                {diffuse ? (
+                  <View style={{ transform: [{ rotate: '-10deg' }], opacity: 0.85 }}>
+                    <StarSticker size={16} fill={stickers.blue} stroke={dt.colors.ink} />
+                  </View>
+                ) : <SiteSticker name="cal" size={20} />}
                 <Text style={{ fontFamily: diffuse ? diffuseFont.display : font.display, fontSize: diffuse ? 16 : 14, color: diffuse ? dt.colors.ink : colors.text, letterSpacing: -0.2 }}>{t('kids_home_picker_pick_date')}</Text>
               </View>
               {diffuse ? (
@@ -2423,9 +2416,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
                       <Character name="bell" size={10} color={dt.colors.ink3} />
                     </View>
                   ) : (
-                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: stickers.peach, borderWidth: 1.5, borderColor: '#141313', alignItems: 'center', justifyContent: 'center' }}>
-                      <Bell size={10} color="#141313" strokeWidth={2.5} />
-                    </View>
+                    <SiteSticker name="bell" size={22} />
                   )}
                   <Text style={{ fontFamily: diffuse ? diffuseFont.display : font.display, fontSize: diffuse ? 16 : 14, color: diffuse ? dt.colors.ink : colors.text, letterSpacing: -0.2 }}>{t('kids_home_picker_set_time_header')}</Text>
                 </View>
@@ -2477,7 +2468,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
             <View style={diffuse
               ? { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: dt.colors.line2, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }
               : { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(245,214,82,0.24)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-              {diffuse ? <Character name="bell" size={24} color={stickers.yellow} /> : <Bell size={20} color="#EE7B6D" strokeWidth={2} />}
+              {diffuse ? <Character name="bell" size={24} color={stickers.yellow} /> : <SiteSticker name="bell" size={30} cut />}
             </View>
             <Text style={[s.remindersEmptyText, diffuse
               ? { color: dt.colors.ink, fontFamily: diffuseFont.display }
@@ -4125,7 +4116,7 @@ function MoodDetailModal({ visible, onClose, moodCounts, dominantMood, dateRange
             </>
           ) : (
             <View style={s.modalEmpty}>
-              <MoodFace size={44} variant="okay" fill="#F5EDDC" />
+              <SiteSticker name="face2" size={44} cut />
               <Text style={[s.modalEmptyText, { color: colors.textSecondary }]}>{t('kids_home_mood_modal_empty_title')}</Text>
               <Text style={[s.modalEmptyHint, { color: colors.textMuted }]}>{t('kids_home_mood_modal_empty_hint')}</Text>
             </View>
@@ -7069,7 +7060,7 @@ function GrowthLeapDetail({ visible, onClose, leap, childName, isActive, phaseIn
 
           {/* Vertical leap path */}
           <View style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <SiteSticker name="shoe" size={24} />
+            <SiteSticker name="brain" size={24} />
             <Text style={{ fontSize: 18, fontFamily: font.display, color: ink, letterSpacing: 0.3, textTransform: 'uppercase' }}>{t('kids_home_leaps_path_title')}</Text>
             <View style={{ flex: 1 }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>

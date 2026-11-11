@@ -26,7 +26,6 @@ import { AgendaHeader } from './AgendaHeader'
 import { SegmentedTabs } from './SegmentedTabs'
 import { CycleMonthGrid, CycleSiteLegend, cycleSiteDay, useCycleLogDates } from './CycleMonthGrid'
 import { AgendaCalendar, DayMarks } from './AgendaCalendar'
-import { cycleDayMarks } from '../../lib/logStickers'
 import { deviceWeekStart, monthGridDates } from './agendaDates'
 import { CycleDayDetail } from './CycleDayDetail'
 import { LogActivitySheet, type LogType } from './LogActivitySheet'
@@ -101,7 +100,7 @@ export function CycleCalendar() {
     const cells = monthGridDates(selectedDate, weekStart)
     return { start: cells[0].date, end: cells[cells.length - 1].date }
   }, [selectedDate, weekStart])
-  const { logsByDate: agendaLogs, isLoading: agendaLogsLoading } = useCycleLogDates(agendaRange.start, agendaRange.end)
+  const { marksFor: agendaMarksFor, isLoading: agendaLogsLoading } = useCycleLogDates(agendaRange.start, agendaRange.end)
   // First load: no real cycle yet → skeleton, never a provisional cycle that then jumps.
   const agendaLoading = (calendarLoading && !calendarInput) || agendaLogsLoading
 
@@ -185,7 +184,7 @@ export function CycleCalendar() {
                 renderDayDecoration={(date) => {
                   const { isOvulation } = cycleSiteDay(dayOf(date), stickers)
                   // What was logged, at a glance — heart for intimacy first, then tests, period, symptoms…
-                  const marks = cycleDayMarks(agendaLogs.get(date) ?? [])
+                  const marks = agendaMarksFor(date)
                   if (!isOvulation && marks.length === 0) return null
                   return <DayMarks stickers={isOvulation ? ['egg', ...marks] : marks} max={2} />
                 }}

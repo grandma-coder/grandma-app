@@ -527,7 +527,7 @@ function QuickLogSheet({
                 accessibilityRole="button"
                 style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 16, marginTop: 8, borderTopWidth: 1.5, borderTopColor: colors.border, opacity: pressed ? 0.6 : 1 })}
               >
-                <SiteSticker name="cal" size={30} />
+                <SiteSticker name="bell" size={30} />
                 <Text style={{ fontFamily: font.bodyBold, fontSize: 15, color: ink, flex: 1 }}>
                   {t('pregCal_manage_routines')}
                 </Text>
@@ -934,7 +934,7 @@ function RoutineManager({
             <View style={[siteSheetFrame(colors, insets.bottom + 20), { maxHeight: '90%' }]}>
               <SiteGrabber {...dragZone} />
               <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 14, gap: 12 }}>
-                <SiteSticker name="cal" size={44} />
+                <SiteSticker name="bell" size={44} />
                 <View style={{ flex: 1, gap: 4 }}>
                   <SiteTitle size={22} numberOfLines={2}>{t('pregCal_manage_routines')}</SiteTitle>
                   <SiteEyebrow>{t('pregCal_recurring_desc')}</SiteEyebrow>
@@ -3006,7 +3006,7 @@ export function PregnancyCalendar() {
               label={t('pregCal_upload_exam_btn')}
               variant="paper"
               onPress={() => setLogForm({ type: 'exam_result', date: todayStr })}
-              leading={<SiteSticker name="camera" size={20} />}
+              leading={<SiteSticker name="doc" size={20} />}
               height={54}
               style={{ flex: 1 }}
             />

@@ -26,7 +26,7 @@ import { useSavedToast } from '../../components/ui/SavedToast'
 import type { SiteStickerName } from '../../components/stickers/SiteSticker'
 
 // Same stickers the onboarding stage step uses.
-const STAGE_STICKERS: Record<MenopauseStage, SiteStickerName> = { peri: 'moon', meno: 'moon2', post: 'leaf' }
+const STAGE_STICKERS: Record<MenopauseStage, SiteStickerName> = { peri: 'sun', meno: 'moon2', post: 'leaf' }
 
 export default function MenopauseSettingsScreen() {
   const { colors, font } = useTheme()

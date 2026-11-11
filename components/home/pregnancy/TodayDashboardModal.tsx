@@ -18,6 +18,7 @@ import { LogSheet } from '../../calendar/LogSheet'
 import { Display, MonoCaps, Body } from '../../ui/Typography'
 import { PaperCard } from '../../ui/PaperCard'
 import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
+import { PREGNANCY_MOOD_STICKER } from '../../../lib/logStickers'
 import { FadeUp } from '../../ui/Motion'
 import {
   MoodFace, LogWeight, LogWater, LogSleep, LogKicks, LogNutrition, LogExercise,
@@ -39,9 +40,7 @@ interface Props {
 
 interface Point { date: string; value: number }
 
-const MOOD_STICKER: Record<string, SiteStickerName> = {
-  excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face1', nauseous: 'face1', energetic: 'face4', sad: 'face1',
-}
+const MOOD_STICKER: Record<string, SiteStickerName> = PREGNANCY_MOOD_STICKER
 
 const MOOD_LABELS: Record<string, string> = {
   excited: 'Excited', happy: 'Happy', okay: 'Okay',
@@ -392,7 +391,7 @@ function CalmBody(p: {
       <FadeUp index={i++}>
         <Divider />
         <Row
-          sticker="zz" label={t('pregnancy_todayDash_labelSleep')}
+          sticker="moon" label={t('pregnancy_todayDash_labelSleep')}
           value={p.sleepVal !== null ? `${nf(p.sleepVal, 1)}h` : '—'}
           sub={p.sleepVal !== null ? (p.sleepVal >= 7 ? t('pregnancy_dashboard_restfulNight') : t('pregnancy_dashboard_couldUseMore')) : notLogged}
         />
@@ -404,20 +403,20 @@ function CalmBody(p: {
         />
         <Divider />
         <Row
-          sticker="flame" label={t('pregnancy_todayDash_labelExercise')}
+          sticker="dumbbell" label={t('pregnancy_todayDash_labelExercise')}
           value={p.exerciseLogged ? '✓' : '—'}
           sub={p.exerciseLogged ? t('pregnancy_dashboard_doneToday') : notLogged}
         />
         <Divider />
         {p.weekNumber >= 28 ? (
           <Row
-            sticker="shoe" label={t('pregnancy_todayDash_labelKicks')}
+            sticker="foot" label={t('pregnancy_todayDash_labelKicks')}
             value={p.kicksVal !== null ? String(p.kicksVal) : '—'}
             sub={p.kicksVal !== null ? t('pregnancy_dashboard_sessionsToday') : notLogged}
           />
         ) : (
           <Row
-            sticker="ruler" label={t('pregnancy_todayDash_labelWeight')}
+            sticker="scale" label={t('pregnancy_todayDash_labelWeight')}
             value={p.weightVal !== null ? `${nf(p.weightVal, 1)}${t('pregnancy_todayDash_unitKg')}` : '—'}
             sub={p.weightVal !== null ? t('pregnancy_dashboard_loggedToday') : notLogged}
           />

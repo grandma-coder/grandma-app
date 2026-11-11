@@ -54,7 +54,7 @@ export function buildMenopauseReport(input: MenopauseReportInput, ctx: ReportCon
   sections.push({
     id: 'symptoms',
     title: t('report_sec_symptoms'),
-    sticker: 'bubble',
+    sticker: 'headache',
     count: symptomRows.length,
     summary: [],
     table: {

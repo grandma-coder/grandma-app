@@ -187,7 +187,7 @@ export default function SignUp() {
     <View style={[styles.root, { backgroundColor: bg }]}>
       {/* Decorative sticker — one per auth screen, level with the back button */}
       <StickerEnter delay={450} tilt={12} seed={7} style={[styles.stickerTR, { top: insets.top + 14 }]}>
-        <SiteSticker name="heart" size={48} cut />
+        <SiteSticker name="eye" size={48} cut />
       </StickerEnter>
 
       <KeyboardAvoidingView

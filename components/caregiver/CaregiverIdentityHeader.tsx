@@ -48,7 +48,7 @@ export function CaregiverIdentityHeader({ size = 26 }: CaregiverIdentityHeaderPr
         <View style={styles.badge}>
           {diffuse
             ? (isFamily ? <RoleFamily size={40} /> : <RoleNanny size={40} />)
-            : <SiteSticker name={isFamily ? 'heart' : 'baby'} size={44} cut />}
+            : <SiteSticker name={isFamily ? 'love' : 'stroller'} size={44} cut />}
         </View>
         <View style={{ flex: 1 }}>
           <View style={styles.row}>

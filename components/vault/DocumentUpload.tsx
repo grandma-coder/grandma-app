@@ -91,7 +91,7 @@ export function DocumentUpload({ onCamera, onFilePick }: DocumentUploadProps) {
           {diffuse ? (
             <FolderOpen size={18} color={dt.colors.ink2} strokeWidth={1.6} />
           ) : (
-            <SiteSticker name="books" size={26} />
+            <SiteSticker name="doc" size={26} />
           )}
           <Text
             style={[

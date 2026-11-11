@@ -116,14 +116,14 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
 
 // Light (site look): one Site sticker per notification type.
 const SITE_STICKER: Record<string, SiteStickerName> = {
-  wellness_drop: 'thermo', wellness_improve: 'flower', missing_data: 'pencil',
+  wellness_drop: 'face1', wellness_improve: 'face4', missing_data: 'pencil',
   routine_reminder: 'cal', routine_missed: 'cal',
-  health_alert: 'thermo', vaccine_due: 'syringe',
-  goal_achieved: 'star', goal_missed: 'star', streak: 'flame', streak_broken: 'flame',
+  health_alert: 'alert', vaccine_due: 'syringe',
+  goal_achieved: 'star', goal_missed: 'star', streak: 'cal', streak_broken: 'cal',
   insight: 'brain', milestone: 'star', daily_summary: 'doc', weekly_report: 'bars',
-  mention: 'bubble', reply: 'bubble', like: 'heart', channel: 'bubble',
-  care_circle_invite: 'heart', care_circle_accepted: 'heart',
-  pregnancy_week: 'baby', appointment: 'cal', reminder: 'bell',
+  mention: 'bubble', reply: 'bubble', like: 'love', channel: 'bubble',
+  care_circle_invite: 'love', care_circle_accepted: 'love',
+  pregnancy_week: 'heart', appointment: 'cal', reminder: 'bell',
 }
 
 const DEFAULT_CONFIG: TypeConfig = { character: 'bell', stickerKey: 'lilac', category: 'Other' }

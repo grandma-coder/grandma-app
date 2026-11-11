@@ -250,7 +250,7 @@ export function GarageScreen() {
             </Text>
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <SiteSticker name="house" size={30} cut />
+              <SiteSticker name="bodysuit" size={30} cut />
               <Text style={{ color: colors.text, fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase', flexShrink: 1 }} numberOfLines={1}>
                 {t('garage_screen_header_title')}
               </Text>
@@ -287,7 +287,7 @@ export function GarageScreen() {
           >
             {diffuse
               ? <Character name="heart" size={20} color={accent} bg="transparent" />
-              : <SiteSticker name="heart" size={22} cut />}
+              : <SiteSticker name="me" size={22} cut />}
           </CircleBtn>
           <CircleBtn
             onPress={() => router.push('/garage/create' as any)}
@@ -551,7 +551,7 @@ function GalleryGrid({
               <Character name="gift" size={30} bg={dt.colors.bg} />
             </DiffuseBloomIcon>
           ) : (
-            <SiteSticker name="house" size={64} cut />
+            <SiteSticker name="bodysuit" size={64} cut />
           )}
           <Text style={[styles.galleryEmptyText, { color: diffuse ? dt.colors.ink3 : colors.textMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}>
             {emptyText}
@@ -619,7 +619,7 @@ function GalleryTile({
             </View>
           ) : (
             <View style={[styles.gridLikes, { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.text }]}>
-              <SiteSticker name="heart" size={12} />
+              <SiteSticker name="love" size={12} />
               <Text style={[styles.gridLikesText, { fontFamily: font.bodyBold, color: colors.text }]}>{post.like_count}</Text>
             </View>
           )
@@ -674,7 +674,7 @@ function SwipeCard({
             </Text>
             {post.like_count > 0 ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <SiteSticker name="heart" size={16} />
+                <SiteSticker name="love" size={16} />
                 <Text style={{ fontFamily: font.bodyBold, fontSize: 13, color: colors.text }}>{post.like_count}</Text>
               </View>
             ) : null}
@@ -863,7 +863,7 @@ function DeckDone({ accent, onRefresh, empty = false }: { accent: string; onRefr
 
   return (
     <View style={styles.doneWrap}>
-      <SiteSticker name={empty ? 'house' : 'heart'} size={72} cut />
+      <SiteSticker name={empty ? 'bodysuit' : 'love'} size={72} cut />
       <Text style={[styles.doneTitle, { color: colors.text, fontFamily: font.display, textTransform: 'uppercase', letterSpacing: 0.3 }]}>
         {title}
       </Text>

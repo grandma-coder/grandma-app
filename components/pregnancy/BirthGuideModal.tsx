@@ -78,9 +78,9 @@ export const BIRTH_TOPIC_CHARACTER: Record<BirthTopicKey, CharacterName> = {
 }
 
 export const BIRTH_TOPIC_SITE_STICKER: Record<BirthTopicKey, SiteStickerName> = {
-  natural: 'leaf', csection: 'doc', home: 'house', water: 'cloud',
-  'labor-stages': 'cal', 'warning-signs': 'bell', 'hospital-bag': 'backpack',
-  'pain-relief': 'syringe', positions: 'me', 'partner-guide': 'heart', recovery: 'moon',
+  natural: 'leaf', csection: 'hospital', home: 'house', water: 'wave',
+  'labor-stages': 'stopwatch', 'warning-signs': 'alert', 'hospital-bag': 'backpack',
+  'pain-relief': 'syringe', positions: 'me', 'partner-guide': 'love', recovery: 'moon',
 }
 
 export function BirthGuideModal({ visible, onClose }: BirthGuideModalProps) {

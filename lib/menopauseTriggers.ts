@@ -27,11 +27,12 @@ export type MenopauseTrigger = (typeof MENOPAUSE_TRIGGERS)[number]
 export const TRIGGER_SYMPTOMS = new Set(['hot_flash', 'night_sweat'])
 
 export const TRIGGER_STICKER: Record<MenopauseTrigger, SiteStickerName> = {
-  coffee: 'glass',
-  // Red drop is reserved for period/bleeding. Grape-like cluster until a wine/coffee sticker exists.
-  alcohol: 'rasp',
-  spicy_food: 'flame',
-  stress: 'brain',
+  coffee: 'coffee',
+  alcohol: 'wine',
+  // Not 'flame' — that is the hot flash itself, shown on the same form.
+  spicy_food: 'chili',
+  // Not 'brain' — that is brain fog.
+  stress: 'cloud',
   warm_room: 'sun',
   poor_sleep: 'moon',
   other: 'pencil',

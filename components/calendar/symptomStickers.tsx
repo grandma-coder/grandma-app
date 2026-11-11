@@ -10,7 +10,7 @@ import { View } from 'react-native'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { Drop, Heart, Sleepy, Sad, Bolt } from '../ui/Stickers'
 import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
-import type { SymptomId } from '../../lib/cycleSymptoms'
+import { resolveSymptomId, type SymptomId } from '../../lib/cycleSymptoms'
 
 interface Props {
   id: SymptomId
@@ -196,13 +196,31 @@ export function SymptomBlob({ id, size = 40 }: { id: SymptomId; size?: number })
 // same grammar — flat pastel fill + thick ink outline — so the 14 chips read as one set and no
 // two symptoms share a picture. Diffuse keeps SymptomSticker above, unchanged.
 export const SYMPTOM_SITE_STICKER: Partial<Record<SymptomId, SiteStickerName>> = {
+  cramps: 'uterus',
   headache: 'headache',
-  fatigue: 'zz',
-  'tender-breasts': 'heart',
+  fatigue: 'battery',
+  nausea: 'nausea',
+  'tender-breasts': 'bra',
   insomnia: 'owl',
   cravings: 'banana',
   'low-mood': 'face1',
   energetic: 'sun',
+}
+
+/**
+ * The sticker for a day's logged symptoms (raw `cycle_logs.value` strings, maybe comma-joined):
+ * the first logged symptom that has a site PNG. Null when none does — callers keep the generic
+ * symptom sticker. Used by the calendar / day-strip marks so cramps don't show as a headache.
+ */
+export function symptomMarkSticker(rawValues: Iterable<string>): SiteStickerName | null {
+  for (const raw of rawValues) {
+    for (const part of raw.split(',')) {
+      const id = resolveSymptomId(part.trim())
+      const name = id ? SYMPTOM_SITE_STICKER[id] : undefined
+      if (name) return name
+    }
+  }
+  return null
 }
 
 const SW = 2.4 // ink outline at a 40-unit viewBox ≈ the PNG stickers' stroke at 30–40 px

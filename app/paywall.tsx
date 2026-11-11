@@ -41,7 +41,7 @@ const FALLBACK_PRICE: Record<PaywallTier, Record<BillingPeriod, string>> = {
   premium_family: { monthly: '$14.99', annual: '$99.99' },
 }
 
-type FeatureSticker = 'heart' | 'cross' | 'sparkle' | 'star' | 'sun'
+type FeatureSticker = 'heart' | 'family' | 'cross' | 'sparkle' | 'star' | 'sun'
 
 interface TierCopyEntry {
   title: string
@@ -67,7 +67,7 @@ function FeatureStickerIcon({ kind, size = 32 }: { kind: FeatureSticker; size?: 
     )
   }
 
-  const siteName: Record<FeatureSticker, SiteStickerName> = { heart: 'heart', cross: 'camera', sparkle: 'bubble', star: 'syringe', sun: 'star' }
+  const siteName: Record<FeatureSticker, SiteStickerName> = { heart: 'me', family: 'house', cross: 'camera', sparkle: 'bubble', star: 'syringe', sun: 'star' }
   return <SiteSticker name={siteName[kind]} size={size} cut />
 }
 
@@ -125,7 +125,7 @@ export default function Paywall() {
       title: t('paywall_tierFamily'),
       seats: t('paywall_tierFamilySeats'),
       features: [
-        { sticker: 'heart', text: t('paywall_featureFamilyAccounts') },
+        { sticker: 'family', text: t('paywall_featureFamilyAccounts') },
         { sticker: 'cross', text: t('paywall_featureFamilyScans'), needs: 'scan' },
         { sticker: 'sparkle', text: t('paywall_featureSharedChat'), needs: 'chat' },
         { sticker: 'star', text: t('paywall_featureSyncedVaccines') },

@@ -16,8 +16,9 @@ import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { supabase } from '../../lib/supabase'
 import { getCycleInfo, getCycleCalendarDay, toDateStr, type CycleConfig, type CyclePhase, type CycleCalendarDay } from '../../lib/cycleLogic'
 import { useCycleCalendarInput } from '../../lib/cycleAnalytics'
-import { CYCLE_LOG_STICKER } from '../../lib/logStickers'
-import { SiteSticker } from '../stickers/SiteSticker'
+import { CYCLE_LOG_STICKER, cycleDayMarks } from '../../lib/logStickers'
+import { SiteSticker, type SiteStickerName } from '../stickers/SiteSticker'
+import { symptomMarkSticker } from './symptomStickers'
 import { CyclePhaseGlyph, CYCLE_PHASE_ORDER } from './CyclePhaseGlyph'
 import { useTranslation } from '../../lib/i18n'
 import { appIntlLocale } from '../../lib/cycleLogForms'
@@ -116,16 +117,16 @@ export function useCycleLogDates(start: string, end: string) {
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ['cycleLogs', 'monthGrid', userId, start, end],
-    queryFn: async (): Promise<{ date: string; type: string }[]> => {
+    queryFn: async (): Promise<{ date: string; type: string; value: string | null }[]> => {
       if (!userId) return []
       const { data, error } = await supabase
         .from('cycle_logs')
-        .select('date, type')
+        .select('date, type, value')
         .eq('user_id', userId)
         .gte('date', start)
         .lte('date', end)
       if (error) throw error
-      return (data ?? []) as { date: string; type: string }[]
+      return (data ?? []) as { date: string; type: string; value: string | null }[]
     },
     enabled: !!userId,
   })
@@ -140,7 +141,29 @@ export function useCycleLogDates(start: string, end: string) {
     return map
   }, [logs])
 
-  return { logsByDate, isLoading: isLoading && !logs }
+  // The day's symptom mark shows what was logged (cramps → uterus), not a generic headache.
+  const symptomByDate = useMemo(() => {
+    const raw = new Map<string, string[]>()
+    for (const l of logs ?? []) {
+      if (l.type !== 'symptom' || !l.value) continue
+      raw.set(l.date, [...(raw.get(l.date) ?? []), l.value])
+    }
+    const out = new Map<string, SiteStickerName>()
+    for (const [date, values] of raw) {
+      const name = symptomMarkSticker(values)
+      if (name) out.set(date, name)
+    }
+    return out
+  }, [logs])
+
+  /** Calendar marks for a day: the shared cycle marks with the symptom mark made value-driven. */
+  const marksFor = (date: string): SiteStickerName[] => {
+    const marks = cycleDayMarks(logsByDate.get(date) ?? [])
+    const symptom = symptomByDate.get(date)
+    return symptom ? marks.map((m) => (m === CYCLE_LOG_STICKER.symptom ? symptom : m)) : marks
+  }
+
+  return { logsByDate, marksFor, isLoading: isLoading && !logs }
 }
 
 export function CycleMonthGrid({

@@ -120,12 +120,12 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
     }
     switch (id) {
       case 'reminders': return <SiteSticker name="bell" size={26} />
-      case 'pillars': return <SiteSticker name="flower" size={26} />
+      case 'pillars': return <SiteSticker name="books" size={26} />
       case 'memories': return <SiteSticker name="camera" size={26} />
       case 'exams': return <SiteSticker name="doc" size={26} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="rose" outline={colors.text} />
       case 'rewards': return <SiteSticker name="star" size={26} />
-      case 'channels': return <SiteSticker name="bubble" size={26} />
+      case 'channels': return <SiteSticker name="globe" size={26} />
       case 'village': return <SiteSticker name="house" size={26} />
     }
   }
@@ -178,8 +178,8 @@ export function CycleWallet({ visibleCardIds = null }: CycleWalletProps = {}) {
   const editColor = diffuse ? dt.colors.ink3 : colors.textMuted
 
   const SITE_STICKER: Record<CycleCardId, SiteStickerName> = {
-    reminders: 'bell', pillars: 'flower', memories: 'camera', exams: 'doc',
-    ask_grandma: 'bubble', rewards: 'star', channels: 'bubble', village: 'house',
+    reminders: 'bell', pillars: 'books', memories: 'camera', exams: 'doc',
+    ask_grandma: 'bubble', rewards: 'star', channels: 'globe', village: 'house',
   }
 
   return (

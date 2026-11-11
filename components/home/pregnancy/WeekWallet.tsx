@@ -156,13 +156,13 @@ export function WeekWallet({
       case 'week_tip': return <SiteSticker name="brain" size={26} />
       case 'kicks': return <SiteSticker name={PREGNANCY_LOG_STICKER.kick_count} size={26} />
       case 'reminders': return <SiteSticker name="bell" size={26} />
-      case 'memories': return <SiteSticker name="camera" size={26} />
+      case 'memories': return <SiteSticker name="pola" size={26} />
       case 'exams': return <SiteSticker name="doc" size={26} />
       case 'birth_guide': return <SiteSticker name="books" size={26} />
       case 'ask_grandma': return <GrandmaLogo size={26} palette="lilac" outline={colors.text} />
       case 'rewards': return <SiteSticker name="star" size={26} />
       case 'channels': return <SiteSticker name="bubble" size={26} />
-      case 'village': return <SiteSticker name="bodysuit" size={26} />
+      case 'village': return <SiteSticker name="house" size={26} />
     }
   }
 
