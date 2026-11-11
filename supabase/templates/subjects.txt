@@ -1,0 +1,9 @@
+confirmation: {{ $l := "" }}{{ with .Data }}{{ $l = printf "%v" .locale }}{{ end }}{{ if or (eq $l "pt-BR") (eq $l "pt") }}Confirme seu email no Grandma{{ else if eq $l "es" }}Confirma tu email en Grandma{{ else }}Confirm your email for Grandma{{ end }}
+recovery: {{ $l := "" }}{{ with .Data }}{{ $l = printf "%v" .locale }}{{ end }}{{ if or (eq $l "pt-BR") (eq $l "pt") }}Redefina sua senha do Grandma{{ else if eq $l "es" }}Restablece tu contraseña de Grandma{{ else }}Reset your Grandma password{{ end }}
+magic_link: {{ $l := "" }}{{ with .Data }}{{ $l = printf "%v" .locale }}{{ end }}{{ if or (eq $l "pt-BR") (eq $l "pt") }}Seu link para entrar no Grandma{{ else if eq $l "es" }}Tu enlace para entrar en Grandma{{ else }}Your Grandma sign-in link{{ end }}
+email_change: {{ $l := "" }}{{ with .Data }}{{ $l = printf "%v" .locale }}{{ end }}{{ if or (eq $l "pt-BR") (eq $l "pt") }}Confirme seu novo email no Grandma{{ else if eq $l "es" }}Confirma tu nuevo email en Grandma{{ else }}Confirm your new email for Grandma{{ end }}
+invite: {{ $l := "" }}{{ with .Data }}{{ $l = printf "%v" .locale }}{{ end }}{{ if or (eq $l "pt-BR") (eq $l "pt") }}Você foi convidada para o Grandma{{ else if eq $l "es" }}Te invitaron a Grandma{{ else }}You’re invited to Grandma{{ end }}
+reauthentication: {{ $l := "" }}{{ with .Data }}{{ $l = printf "%v" .locale }}{{ end }}{{ if or (eq $l "pt-BR") (eq $l "pt") }}Seu código do Grandma{{ else if eq $l "es" }}Tu código de Grandma{{ else }}Your Grandma code{{ end }}
+password_changed_notification: Your Grandma password was changed
+email_changed_notification: Your Grandma email was changed
+identity_linked_notification: A new sign-in method was added to Grandma

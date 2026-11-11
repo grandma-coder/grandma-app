@@ -15,6 +15,8 @@ import { AnimatedSplash } from '../components/ui/AnimatedSplash'
 import { RootErrorScreen } from '../components/ui/RootErrorScreen'
 import '../lib/fontDefaults' // first: default Hanken on StyleSheet text styles
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { syncEmailLocale } from '../lib/emailLocale'
+import { useLanguageStore } from '../store/useLanguageStore'
 import { Text as RNText, TextInput as RNTextInput, AppState, View, StyleSheet, Alert } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -152,6 +154,13 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Pro
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
+  // Auth emails pick their language from the account's `locale` metadata (supabase/templates/).
+  const appLanguage = useLanguageStore((s) => s.language)
+  const sessionUserId = session?.user?.id
+  useEffect(() => {
+    if (sessionUserId) void syncEmailLocale(session?.user?.user_metadata, appLanguage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per account and language change
+  }, [sessionUserId, appLanguage])
   // Boot gate: holds the native splash until the first auth answer + data load.
   const [loading, setLoading] = useState(true)
   // Data load after boot (sign-in, sign-up, OAuth return, email-confirm link): only pauses the route

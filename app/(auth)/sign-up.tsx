@@ -22,6 +22,7 @@ import { authErrorText } from '../../lib/authError'
 import { AUTH_CONFIRM_REDIRECT } from '../../lib/authRedirect'
 import { promptCheckEmail } from '../../lib/authPrompts'
 import { supabase } from '../../lib/supabase'
+import { useLanguageStore } from '../../store/useLanguageStore'
 import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { EyeAction, ACTION_TONES } from '../../components/ui/AuthDock'
@@ -74,7 +75,8 @@ export default function SignUp() {
         email: trimmedEmail,
         password,
         // The confirmation link opens the app and signs the user in (root layout → lib/authRedirect).
-        options: { emailRedirectTo: AUTH_CONFIRM_REDIRECT },
+        // `locale` picks the language of the auth emails (supabase/templates/).
+        options: { emailRedirectTo: AUTH_CONFIRM_REDIRECT, data: { locale: useLanguageStore.getState().language } },
       })
       if (error) {
         Alert.alert(t('auth_signUpFailed'), authErrorText(error))

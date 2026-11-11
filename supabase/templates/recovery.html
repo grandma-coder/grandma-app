@@ -1,0 +1,34 @@
+{{ $l := "" }}{{ with .Data }}{{ $l = printf "%v" .locale }}{{ end }}<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light">
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Hanken+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+<title>Grandma</title>
+</head>
+<body style="margin:0;padding:0;background:#F3F0E8;-webkit-text-size-adjust:100%">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">{{ if or (eq $l "pt-BR") (eq $l "pt") }}Vamos te colocar de volta{{ else if eq $l "es" }}Volvamos a entrar{{ else }}Let’s get you back in{{ end }}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F3F0E8">
+<tr><td align="center" style="padding:32px 16px">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px">
+    <tr><td style="padding:0 4px 18px">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td style="vertical-align:middle"><img src="https://www.thegrandma.app/email/eye.png" width="40" height="40" alt="" style="display:block;border:0"></td>
+        <td style="vertical-align:middle;padding-left:8px;font-family:'Architects Daughter', 'Comic Sans MS', 'Chalkboard SE', cursive;font-size:24px;color:#161513">grandma</td>
+      </tr></table>
+    </td></tr>
+    <tr><td style="background:#FBF6EA;border:2px solid #161513;border-radius:28px;box-shadow:0 4px 0 #161513;padding:32px 28px 28px">
+      <img src="https://www.thegrandma.app/email/lock.png" width="72" height="72" alt="" style="display:block;border:0;margin:0 0 16px">
+      <h1 style="margin:0 0 12px;font-family:'Architects Daughter', 'Comic Sans MS', 'Chalkboard SE', cursive;font-weight:400;font-size:28px;line-height:1.2;letter-spacing:.5px;text-transform:uppercase;color:#161513">{{ if or (eq $l "pt-BR") (eq $l "pt") }}Vamos te colocar de volta{{ else if eq $l "es" }}Volvamos a entrar{{ else }}Let’s get you back in{{ end }}</h1>
+      <div style="font-family:'Hanken Grotesk', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:16px;line-height:1.55;color:#4F4B43">{{ if or (eq $l "pt-BR") (eq $l "pt") }}Toque no botão pelo celular para escolher uma nova senha. O link funciona uma vez e expira em 1 hora.{{ else if eq $l "es" }}Toca el botón desde tu teléfono para elegir una nueva contraseña. El enlace funciona una vez y caduca en 1 hora.{{ else }}Tap the button on your phone to choose a new password. The link works once and expires in 1 hour.{{ end }}</div>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 8px">
+  <tr><td style="border-radius:999px;background:#F9C846;border:2px solid #161513;box-shadow:0 3px 0 #161513">
+    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;font-family:'Hanken Grotesk', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:16px;font-weight:700;color:#161513;text-decoration:none;border-radius:999px">{{ if or (eq $l "pt-BR") (eq $l "pt") }}Escolher nova senha{{ else if eq $l "es" }}Elegir nueva contraseña{{ else }}Choose a new password{{ end }}</a>
+  </td></tr></table>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(26,25,22,.12);font-family:'Hanken Grotesk', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:13px;line-height:1.5;color:#8C877C">{{ if or (eq $l "pt-BR") (eq $l "pt") }}Não foi você que pediu? Ignore este email — sua senha continua a mesma.{{ else if eq $l "es" }}¿No lo pediste? Ignora este email: tu contraseña sigue igual.{{ else }}Didn’t ask for this? Ignore this email — your password stays the same.{{ end }}<br><br>{{ if or (eq $l "pt-BR") (eq $l "pt") }}O botão não funciona? Cole este link no navegador:<br><a href="{{ .ConfirmationURL }}" style="color:#8C877C;word-break:break-all">{{ .ConfirmationURL }}</a>{{ else if eq $l "es" }}¿El botón no funciona? Pega este enlace en tu navegador:<br><a href="{{ .ConfirmationURL }}" style="color:#8C877C;word-break:break-all">{{ .ConfirmationURL }}</a>{{ else }}Button not working? Paste this link into your browser:<br><a href="{{ .ConfirmationURL }}" style="color:#8C877C;word-break:break-all">{{ .ConfirmationURL }}</a>{{ end }}</div>
+    </td></tr>
+    <tr><td style="padding:20px 8px 0;font-family:'Hanken Grotesk', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:12px;line-height:1.5;color:#8C877C;text-align:center">
+      {{ if or (eq $l "pt-BR") (eq $l "pt") }}Você recebeu este email por causa da sua conta no Grandma.{{ else if eq $l "es" }}Recibes este email por tu cuenta de Grandma.{{ else }}You’re getting this because of your Grandma account.{{ end }}<br><a href="https://www.thegrandma.app" style="color:#8C877C">thegrandma.app</a> · <a href="mailto:grandma@sauceroom.co" style="color:#8C877C">grandma@sauceroom.co</a>
+    </td></tr>
+  </table>
+</td></tr></table>
+</body></html>
