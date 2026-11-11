@@ -1792,7 +1792,7 @@ function KidsWellnessRingCard({
 
   // Map pillars → ring segments (clockwise from top). The `id` routes taps
   // back to the matching pillar detail modal via onPillarPress.
-  const segments: RingSegment[] = [
+  const baseSegments: RingSegment[] = [
     { sticker: 'leaf',   color: stickers.green,  id: 'nutrition' },
     { sticker: 'heart',  color: stickers.yellow, id: 'health'    },
     { sticker: 'flower', color: stickers.pink,   id: 'mood'      },
@@ -1800,6 +1800,9 @@ function KidsWellnessRingCard({
     { sticker: 'moon',   color: stickers.lilac,  id: 'sleep'     },
     { sticker: 'star',   color: stickers.blue,   id: 'growth'    },
   ]
+  const segments: RingSegment[] = diffuse
+    ? baseSegments
+    : baseSegments.map((seg) => ({ ...seg, site: PILLAR_SITE_STICKER[seg.id as keyof typeof PILLAR_SITE_STICKER] }))
 
   const hasAnyData = PILLAR_ORDER.some((k) => scores[k].hasData)
   const rawOverall = hasAnyData ? scores.overall : 0

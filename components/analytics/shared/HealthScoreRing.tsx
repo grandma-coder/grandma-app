@@ -25,6 +25,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useTheme } from '../../../constants/theme'
 import { Heart, Moon, Drop, Cross, Leaf, Flower, Star, Burst } from '../../ui/Stickers'
+import { SiteSticker, type SiteStickerName } from '../../stickers/SiteSticker'
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)
@@ -32,6 +33,8 @@ const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)
 export interface RingSegment {
   /** Sticker key: renders the matching paper-bordered chip */
   sticker: 'heart' | 'moon' | 'drop' | 'cross' | 'leaf' | 'flower' | 'star' | 'burst'
+  /** Site-look sticker; when set it replaces the old drawn chip icon. */
+  site?: SiteStickerName
   /** Arc color (use token.stickers.*) */
   color: string
   /** Optional identifier passed back to onSegmentPress (e.g. pillar key). */
@@ -247,13 +250,13 @@ export function HealthScoreRing({
               onPress={() => onSegmentPress!(seg.id!)}
               style={baseStyle}
             >
-              <StickerByKey kind={seg.sticker} color={seg.color} />
+              <StickerByKey kind={seg.sticker} color={seg.color} site={seg.site} />
             </AnimatedPressable>
           )
         }
         return (
           <Animated.View key={i} style={baseStyle}>
-            <StickerByKey kind={seg.sticker} color={seg.color} />
+            <StickerByKey kind={seg.sticker} color={seg.color} site={seg.site} />
           </Animated.View>
         )
       })}
@@ -285,8 +288,9 @@ export function HealthScoreRing({
 // Animated Pressable — so `style` can accept animated values
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
-function StickerByKey({ kind, color }: { kind: RingSegment['sticker']; color: string }) {
+function StickerByKey({ kind, color, site }: { kind: RingSegment['sticker']; color: string; site?: SiteStickerName }) {
   const size = 22
+  if (site) return <SiteSticker name={site} size={size} />
   switch (kind) {
     case 'heart':
       return <Heart size={size} fill={color} />

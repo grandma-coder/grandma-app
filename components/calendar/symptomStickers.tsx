@@ -192,10 +192,9 @@ export function SymptomBlob({ id, size = 40 }: { id: SymptomId; size?: number })
 
 // ─── Site look: symptom stickers ────────────────────────────────────────────
 // The light look draws every symptom as a hand-drawn site sticker (same family as the log
-// stickers). Where the PNG set has a fitting sticker it is used; the rest are drawn here in the
-// same grammar — flat pastel fill + thick ink outline — so the 14 chips read as one set and no
-// two symptoms share a picture. Diffuse keeps SymptomSticker above, unchanged.
-export const SYMPTOM_SITE_STICKER: Partial<Record<SymptomId, SiteStickerName>> = {
+// stickers): every one of the 14 symptoms has its own PNG, so no two share a picture.
+// Diffuse keeps SymptomSticker above, unchanged.
+export const SYMPTOM_SITE_STICKER: Record<SymptomId, SiteStickerName> = {
   cramps: 'uterus',
   headache: 'headache',
   fatigue: 'battery',
@@ -205,6 +204,11 @@ export const SYMPTOM_SITE_STICKER: Partial<Record<SymptomId, SiteStickerName>> =
   cravings: 'banana',
   'low-mood': 'face1',
   energetic: 'sun',
+  bloated: 'bloat',
+  'back-pain': 'spine',
+  acne: 'acne',
+  spotting: 'spotting',
+  restless: 'restless',
 }
 
 /**
@@ -223,83 +227,11 @@ export function symptomMarkSticker(rawValues: Iterable<string>): SiteStickerName
   return null
 }
 
-const SW = 2.4 // ink outline at a 40-unit viewBox ≈ the PNG stickers' stroke at 30–40 px
-
-function SiteGlyph({ id, size }: { id: SymptomId; size: number }) {
-  const body = (() => {
-    switch (id) {
-      case 'cramps': // sharp twinge: a coral bolt
-        return <Path d="M23 4 L10 22 L18 22 L14 36 L30 16 L21 16 L26 4 Z" fill="#EE7B6D" stroke={INK} strokeWidth={SW} strokeLinejoin="round" />
-      case 'bloated': // a puffed-up lilac balloon
-        return (
-          <>
-            <Path d="M20 30 Q 20 34 17 37" stroke={INK} strokeWidth={SW - 0.6} fill="none" strokeLinecap="round" />
-            <Path d="M18 28 L22 28 L20 31 Z" fill="#C8B6E8" stroke={INK} strokeWidth={SW - 0.6} strokeLinejoin="round" />
-            <Circle cx={20} cy={16} r={12} fill="#C8B6E8" stroke={INK} strokeWidth={SW} />
-            <Path d="M13 11 Q 15 8 18 8" stroke="#FFFFFF" strokeWidth={2.2} fill="none" strokeLinecap="round" />
-          </>
-        )
-      case 'nausea': // queasy green face: swirly eyes, wavy mouth
-        return (
-          <>
-            <Circle cx={20} cy={20} r={15} fill="#BDD48C" stroke={INK} strokeWidth={SW} />
-            <Path d="M12 16 q 2 -3 4 0 M24 16 q 2 -3 4 0" stroke={INK} strokeWidth={2} fill="none" strokeLinecap="round" />
-            <Path d="M12 26 q 2 -2.5 4 0 t 4 0 t 4 0 t 4 0" stroke={INK} strokeWidth={2} fill="none" strokeLinecap="round" />
-          </>
-        )
-      case 'back-pain': // a little peach spine with an ache spark
-        return (
-          <>
-            {[5, 13, 21, 29].map((y) => (
-              <Path key={y} d={`M13 ${y} h 12 a 2.5 2.5 0 0 1 0 6 h -12 a 2.5 2.5 0 0 1 0 -6 z`} fill="#F5B896" stroke={INK} strokeWidth={SW - 0.4} />
-            ))}
-            <Path d="M30 14 l 5 -3 M31 19 h 6 M30 24 l 5 3" stroke="#EE7B6D" strokeWidth={2.4} strokeLinecap="round" />
-          </>
-        )
-      case 'acne': // peach face with a few coral spots
-        return (
-          <>
-            <Circle cx={20} cy={20} r={15} fill="#F5D7B8" stroke={INK} strokeWidth={SW} />
-            <Circle cx={14} cy={17} r={1.8} fill={INK} />
-            <Circle cx={26} cy={17} r={1.8} fill={INK} />
-            <Path d="M15 25 q 5 3 10 0" stroke={INK} strokeWidth={2} fill="none" strokeLinecap="round" />
-            <Circle cx={10.5} cy={23} r={2.2} fill="#EE7B6D" stroke={INK} strokeWidth={1.2} />
-            <Circle cx={29} cy={22} r={2.2} fill="#EE7B6D" stroke={INK} strokeWidth={1.2} />
-            <Circle cx={21} cy={10} r={1.8} fill="#EE7B6D" stroke={INK} strokeWidth={1.2} />
-          </>
-        )
-      case 'spotting': // two small pink drops (lighter than the period drop)
-        return (
-          <>
-            <Path d="M14 8 C 14 8 6 18 6 23 a 8 8 0 0 0 16 0 C 22 18 14 8 14 8 Z" fill="#F2B2C7" stroke={INK} strokeWidth={SW} strokeLinejoin="round" />
-            <Path d="M29 20 C 29 20 24 26 24 29.5 a 5 5 0 0 0 10 0 C 34 26 29 20 29 20 Z" fill="#F2B2C7" stroke={INK} strokeWidth={SW} strokeLinejoin="round" />
-          </>
-        )
-      case 'restless': // fidgety blue face, zig-zag mouth and motion lines
-        return (
-          <>
-            <Circle cx={19} cy={21} r={13} fill="#9DC3E8" stroke={INK} strokeWidth={SW} />
-            <Circle cx={14} cy={18} r={1.8} fill={INK} />
-            <Circle cx={24} cy={18} r={1.8} fill={INK} />
-            <Path d="M13 26 l 3 -2 l 3 2 l 3 -2 l 3 2" stroke={INK} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <Path d="M34 10 q 3 3 0 6 M37 7 q 4 5 0 10" stroke={INK} strokeWidth={1.8} fill="none" strokeLinecap="round" />
-          </>
-        )
-      default:
-        return <Circle cx={20} cy={20} r={14} fill="#F5D652" stroke={INK} strokeWidth={SW} />
-    }
-  })()
-  return (
-    <Wrap size={size}>
-      <Svg width={size} height={size} viewBox="0 0 40 40">{body}</Svg>
-    </Wrap>
-  )
-}
 
 /** Light-look symptom sticker: the site PNG when one fits, else a drawn glyph in the same style. */
 export function SymptomSiteSticker({ id, size = 30 }: { id: SymptomId; size?: number }) {
   const name = SYMPTOM_SITE_STICKER[id]
-  return name ? <SiteSticker name={name} size={size} /> : <SiteGlyph id={id} size={size} />
+  return <SiteSticker name={name ?? 'headache'} size={size} />
 }
 
 /** Light-look sticker for a free-text "Other" symptom: a notebook (she writes it down). */

@@ -4,7 +4,7 @@ import { SITE_STICKER_NAMES } from '../SiteSticker'
 
 describe('SiteSticker', () => {
   it('ships a plain and a die-cut PNG for every sticker', () => {
-    expect(SITE_STICKER_NAMES.length).toBe(91) // 56 from the site + 12 drawn for the app (poop, pee, scale, pill, dumbbell, glass, foot, sun, stopwatch, headache, notebook, love) + 23 in site/components/stickers/paths.ts (worry … milk)
+    expect(SITE_STICKER_NAMES.length).toBe(96) // 56 from the site + 12 drawn for the app (poop, pee, scale, pill, dumbbell, glass, foot, sun, stopwatch, headache, notebook, love) + 28 in site/components/stickers/paths.ts (worry … restless)
     for (const n of SITE_STICKER_NAMES) {
       for (const f of [`${n}.png`, `${n}-cut.png`]) expect(existsSync(join(__dirname, '../../../assets/stickers-site', f))).toBe(true)
     }

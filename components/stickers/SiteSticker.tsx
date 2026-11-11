@@ -1,7 +1,7 @@
 /**
  * The grandma.app sticker set, rendered from the site's hand-drawn SVGs (wobble filter baked in) to PNG,
  * because react-native-svg can't run feTurbulence/feDisplacementMap. `cut` adds the white die-cut edge
- * and soft drop shadow. Regenerate from v0-grandma-app/components/stickers/paths.ts — never hand-edit.
+ * and soft drop shadow. Regenerate from site/components/stickers/paths.ts with scripts/stickers/render.cjs — never hand-edit.
  */
 import { Image, type ImageStyle, type StyleProp } from 'react-native'
 
@@ -97,6 +97,11 @@ const PLAIN = {
   wave: require('../../assets/stickers-site/wave.png'),
   wine: require('../../assets/stickers-site/wine.png'),
   worry: require('../../assets/stickers-site/worry.png'),
+  acne: require('../../assets/stickers-site/acne.png'),
+  bloat: require('../../assets/stickers-site/bloat.png'),
+  restless: require('../../assets/stickers-site/restless.png'),
+  spine: require('../../assets/stickers-site/spine.png'),
+  spotting: require('../../assets/stickers-site/spotting.png'),
 } as const
 
 const CUT = {
@@ -191,6 +196,11 @@ const CUT = {
   wave: require('../../assets/stickers-site/wave-cut.png'),
   wine: require('../../assets/stickers-site/wine-cut.png'),
   worry: require('../../assets/stickers-site/worry-cut.png'),
+  acne: require('../../assets/stickers-site/acne-cut.png'),
+  bloat: require('../../assets/stickers-site/bloat-cut.png'),
+  restless: require('../../assets/stickers-site/restless-cut.png'),
+  spine: require('../../assets/stickers-site/spine-cut.png'),
+  spotting: require('../../assets/stickers-site/spotting-cut.png'),
 } as const
 
 export type SiteStickerName = keyof typeof PLAIN
