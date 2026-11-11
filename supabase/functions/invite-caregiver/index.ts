@@ -72,20 +72,33 @@ serve(async (req) => {
     // Check for existing invite
     const { data: existing } = await supabaseAuth
       .from('child_caregivers')
-      .select('id, status')
+      .select('id, status, invite_token, invite_token_expires_at')
       .eq('child_id', childId)
       .eq('email', email.toLowerCase())
-      .single()
+      .maybeSingle()
 
     if (existing) {
       if (existing.status === 'accepted') {
         throw new Error('This person already has access')
       }
-      if (existing.status === 'pending') {
-        throw new Error('An invite is already pending for this email')
+      // Still-valid pending invite: hand the same link back (re-share) instead of a dead-end error.
+      const pendingAlive = existing.status === 'pending' && existing.invite_token &&
+        (!existing.invite_token_expires_at || new Date(existing.invite_token_expires_at) > new Date())
+      if (pendingAlive) {
+        return new Response(JSON.stringify({ inviteToken: existing.invite_token }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
       }
-      // If revoked, reactivate
-      if (existing.status === 'revoked') {
+      // Expired pending invite: retire it first so the token trigger issues a fresh token + 7-day
+      // window when it re-enters 'pending' below (pending → pending doesn't rotate).
+      if (existing.status === 'pending') {
+        const { error: expireErr } = await supabaseAuth
+          .from('child_caregivers').update({ status: 'expired' }).eq('id', existing.id)
+        if (expireErr) throw expireErr
+        existing.status = 'expired'
+      }
+      // If revoked / expired, reactivate
+      if (existing.status === 'revoked' || existing.status === 'expired') {
         const { data: updated } = await supabaseAuth
           .from('child_caregivers')
           .update({

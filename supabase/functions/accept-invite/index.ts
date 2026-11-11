@@ -32,11 +32,16 @@ serve(async (req) => {
     // Find the invite
     const { data: invite, error: findError } = await supabase
       .from('child_caregivers')
-      .select('id, child_id, email, status, role, permissions, invite_token_expires_at, children(name)')
+      .select('id, child_id, email, status, role, permissions, invited_by, invite_token_expires_at, children(name, parent_id)')
       .eq('invite_token', token)
       .single()
 
     if (findError || !invite) throw new Error('Invite not found')
+    // The owner tapping their own link would turn themselves into a caregiver of their own child
+    // (and burn a seat).
+    if (invite.children?.parent_id === user.id || invite.invited_by === user.id) {
+      throw new Error('You cannot accept your own invite')
+    }
 
     if (invite.status === 'accepted') throw new Error('This invite has already been accepted')
     if (invite.status === 'revoked') throw new Error('This invite has been revoked')
@@ -78,10 +83,11 @@ serve(async (req) => {
       })
     }
 
-    // Ensure profile exists
+    // Ensure profile exists — without overwriting an existing account's role: a mum who accepts a
+    // co-parent/family invite must stay 'parent' (ignoreDuplicates leaves existing rows untouched).
     await supabase
       .from('profiles')
-      .upsert({ id: user.id, email: user.email, user_role: 'nanny' }, { onConflict: 'id' })
+      .upsert({ id: user.id, email: user.email, user_role: 'nanny' }, { onConflict: 'id', ignoreDuplicates: true })
 
     // Accept the invite
     const { error: updateError } = await supabase
@@ -94,6 +100,21 @@ serve(async (req) => {
       .eq('id', invite.id)
 
     if (updateError) throw updateError
+
+    // One invite can cover several children (care-circle writes one row per child, same inviter +
+    // email, one token each) but only one link is shared — accept the live sibling rows too, or the
+    // other children stay 'pending' forever.
+    if (invite.invited_by && invite.email) {
+      const { error: siblingError } = await supabase
+        .from('child_caregivers')
+        .update({ user_id: user.id, status: 'accepted', accepted_at: new Date().toISOString() })
+        .eq('invited_by', invite.invited_by)
+        .eq('email', invite.email)
+        .eq('status', 'pending')
+        .neq('id', invite.id)
+        .gt('invite_token_expires_at', new Date().toISOString())
+      if (siblingError) console.warn('[accept-invite] sibling accept failed:', siblingError.message)
+    }
 
     // Return only the child's name for post-accept navigation — never PHI.
     // (select('*') here would leak allergies/conditions/blood_type/pediatrician
