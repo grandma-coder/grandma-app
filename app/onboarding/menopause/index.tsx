@@ -69,9 +69,11 @@ import { useConsentStore } from '../../../store/useConsentStore'
 import {
   ALL_MENOPAUSE_SYMPTOMS,
   menopauseSymptomLabel,
+  seedMenopauseQuickLog,
   type MenopauseSymptomId,
   type MenopauseGroup,
 } from '../../../lib/menopauseSymptoms'
+import { useMenopauseQuickLogStore, DEFAULT_MENOPAUSE_QUICK_LOG_KEYS } from '../../../store/useMenopauseQuickLogStore'
 
 // ─── Copy (getters: resolved at render so a language change applies live) ────
 
@@ -293,6 +295,10 @@ export default function MenopauseOnboarding() {
 
     if (stage) useMenopauseStore.getState().setStage(stage)
     useMenopauseStore.getState().setLastPeriodDate(lastPeriodDate)
+    // The HRT answer and the symptoms she picked used to be dropped here. HRT stays on the device
+    // (no profiles column for it); the picks become the home quick-log pins (none → defaults).
+    useMenopauseStore.getState().setOnHrt(store.onHrt)
+    useMenopauseQuickLogStore.getState().setEnabled(seedMenopauseQuickLog(store.symptoms, DEFAULT_MENOPAUSE_QUICK_LOG_KEYS))
     useBehaviorStore.getState().enroll('menopause')
     useMenopauseOnboardingStore.getState().reset()
     // Shared onboarding-complete contract: advances the persisted onboarding

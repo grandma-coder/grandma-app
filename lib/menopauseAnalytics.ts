@@ -2,12 +2,25 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase, fetchAllRows } from './supabase'
 import { resolveMenopauseSymptomId } from './menopauseSymptoms'
 
-export interface MenopauseLogRow { date: string; type: string; value: string | null; severity: number | null; notes?: string | null }
+export interface MenopauseLogRow {
+  /** Row id — present on rows read from the server; lets a stacked entry (hot flash) be edited alone. */
+  id?: string
+  date: string
+  type: string
+  value: string | null
+  severity: number | null
+  notes?: string | null
+  /** When the entry was saved (its time of day when logged on the same day). */
+  created_at?: string | null
+}
 export interface SymptomStat { id: string; count: number; avgSeverity: number }
 
 const VASOMOTOR = new Set(['hot_flash', 'night_sweat'])
 
-/** Count + average severity per symptom id, excluding non-symptom events (period/note). */
+/**
+ * Count + average severity per symptom id, excluding non-symptom events (period/note). Counts are
+ * entries: three hot flashes on one day count 3.
+ */
 export function computeSymptomStats(rows: MenopauseLogRow[]): SymptomStat[] {
   const acc = new Map<string, { count: number; sev: number }>()
   for (const r of rows) {
@@ -23,7 +36,7 @@ export function computeSymptomStats(rows: MenopauseLogRow[]): SymptomStat[] {
     .sort((a, b) => b.count - a.count)
 }
 
-/** Per-day count of vasomotor events (hot flashes + night sweats). */
+/** Per-day count of vasomotor entries (hot flashes + night sweats; several per day allowed). */
 export function computeVasomotorFrequency(rows: MenopauseLogRow[]): { date: string; count: number }[] {
   const byDay = new Map<string, number>()
   for (const r of rows) {
@@ -44,9 +57,11 @@ export function useMenopauseLogs() {
       return fetchAllRows<MenopauseLogRow>(() =>
         supabase
           .from('menopause_logs')
-          .select('date, type, value, severity, notes')
+          .select('id, date, type, value, severity, notes, created_at')
           .eq('user_id', userId)
           .order('date', { ascending: true })
+          // Several hot flashes a day: keep them in the order they were logged.
+          .order('created_at', { ascending: true })
           .order('id', { ascending: true }),
       )
     },

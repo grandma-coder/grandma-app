@@ -11,7 +11,7 @@
 import { useMemo, useState } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from 'react-native'
 import { Trash2 } from 'lucide-react-native'
-import { deleteMenopauseLog } from '../../lib/menopauseLogs'
+import { deleteMenopauseLog, deleteMenopauseLogEntry } from '../../lib/menopauseLogs'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { AgendaHeader } from '../calendar/AgendaHeader'
@@ -26,7 +26,7 @@ import { useLanguageStore } from '../../store/useLanguageStore'
 import { useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
 import { DiffuseDotCalendar } from '../ui/diffuse/DiffusePrimitives'
 import { useMenopauseLogs, type MenopauseLogRow } from '../../lib/menopauseAnalytics'
-import { menopauseSymptomLabel, resolveMenopauseSymptomId, type MenopauseSymptomId } from '../../lib/menopauseSymptoms'
+import { isMultiPerDayType, menopauseEntryTime, menopauseSymptomLabel, resolveMenopauseSymptomId, type MenopauseSymptomId } from '../../lib/menopauseSymptoms'
 import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { MenopauseSymptomForm, MenopausePeriodForm } from './MenopauseLogForms'
 import { MenopauseLogSheet, menoSticker, type MenopauseLogPick } from './MenopauseLogSheet'
@@ -78,8 +78,15 @@ function entrySubtitle(row: MenopauseLogRow): string | null {
       : row.value
   }
   // The same word the log form shows for that level ("Forte"), never a 4/5 grade.
-  if (row.severity != null) return tNow(`meno_f_sev_${Math.min(5, Math.max(1, Math.round(row.severity)))}` as Parameters<typeof tNow>[0])
-  return null
+  const level = row.severity != null
+    ? tNow(`meno_f_sev_${Math.min(5, Math.max(1, Math.round(row.severity)))}` as Parameters<typeof tNow>[0])
+    : null
+  // Hot flashes / night sweats stack — the time tells the day's entries apart.
+  const time = isMultiPerDayType(row.type) ? menopauseEntryTime(row) : null
+  const clock = time
+    ? new Date(2000, 0, 1, time.hours, time.minutes).toLocaleTimeString(useLanguageStore.getState().language, { hour: 'numeric', minute: '2-digit' })
+    : null
+  return [clock, level].filter(Boolean).join(' · ') || null
 }
 
 /**
@@ -88,6 +95,11 @@ function entrySubtitle(row: MenopauseLogRow): string | null {
  * period" counter stays stuck on a period that was removed.
  */
 async function removeLog(row: MenopauseLogRow, all: MenopauseLogRow[]): Promise<void> {
+  // A hot flash among several that day: remove just that entry.
+  if (row.id && isMultiPerDayType(row.type)) {
+    await deleteMenopauseLogEntry(row.id)
+    return
+  }
   await deleteMenopauseLog(row.date, row.type)
   if (row.type !== 'period') return
   const store = useMenopauseStore.getState()
@@ -126,6 +138,8 @@ export function MenopauseCalendar() {
   })
   const [gridOpen, setGridOpen] = useState(false)
   const [pickedSymptom, setPickedSymptom] = useState<MenopauseSymptomId | null>(null)
+  // The one saved entry being edited (stacking types: one hot flash of several on the day).
+  const [editId, setEditId] = useState<string | null>(null)
   const [periodOpen, setPeriodOpen] = useState(false)
 
   const logsByDate = useMemo(() => {
@@ -144,9 +158,16 @@ export function MenopauseCalendar() {
     if (isFutureDate(selectedDate)) return // logs describe what happened; no future entries
     setGridOpen(true)
   }
-  function onPick(type: MenopauseLogPick) {
+  function onPick(type: MenopauseLogPick, entryId?: string) {
     if (type === 'period') setPeriodOpen(true)
-    else setPickedSymptom(type)
+    else {
+      setEditId(entryId ?? null)
+      setPickedSymptom(type)
+    }
+  }
+  function closeSymptom() {
+    setPickedSymptom(null)
+    setEditId(null)
   }
 
   return (
@@ -217,15 +238,19 @@ export function MenopauseCalendar() {
               <View style={{ marginTop: 6 }}>
                 {selectedLogs.map((row, i) => {
                   const sub = entrySubtitle(row)
-                  // Symptoms and periods are one row per day: tap re-opens the pre-filled form,
-                  // the bin removes it. Free notes stack, so they stay read-only here.
+                  // Tap re-opens the pre-filled form, the bin removes it. Most symptoms and periods are
+                  // one row per day; hot flashes / night sweats stack, so each entry is edited or
+                  // removed on its own. Free notes stay read-only here.
                   const editable = row.type !== 'note'
                   const label = entryTitle(row)
                   return (
                     <Pressable
                       key={`${row.type}-${i}`}
                       disabled={!editable}
-                      onPress={() => onPick(row.type === 'period' ? 'period' : (row.type as MenopauseLogPick))}
+                      onPress={() => onPick(
+                        row.type === 'period' ? 'period' : (row.type as MenopauseLogPick),
+                        isMultiPerDayType(row.type) ? row.id : undefined,
+                      )}
                       accessibilityRole={editable ? 'button' : undefined}
                       accessibilityLabel={editable ? tNow('meno_c_editA11y', { label }) : label}
                       style={({ pressed }) => [styles.siteRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.border }, pressed && { opacity: 0.6 }]}
@@ -343,9 +368,15 @@ export function MenopauseCalendar() {
         isPeri={isPeri}
         title={COPY.sheetSymptom}
       />
-      <LogSheet visible={!!pickedSymptom} sticker={pickedSymptom ? menoSticker(pickedSymptom) : 'pencil'} title={COPY.sheetSymptom} onClose={() => setPickedSymptom(null)}>
+      <LogSheet visible={!!pickedSymptom} sticker={pickedSymptom ? menoSticker(pickedSymptom) : 'pencil'} title={COPY.sheetSymptom} onClose={closeSymptom}>
         {pickedSymptom ? (
-          <MenopauseSymptomForm initialId={pickedSymptom} logDate={selectedDate} onSaved={() => setPickedSymptom(null)} />
+          <MenopauseSymptomForm
+            key={editId ?? 'new'}
+            initialId={pickedSymptom}
+            logDate={selectedDate}
+            editId={editId ?? undefined}
+            onSaved={closeSymptom}
+          />
         ) : null}
       </LogSheet>
       <LogSheet visible={periodOpen} sticker="drop" title={COPY.sheetPeriod} onClose={() => setPeriodOpen(false)}>

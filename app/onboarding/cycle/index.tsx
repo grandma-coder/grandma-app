@@ -884,8 +884,8 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
     if (!lastPeriod) return null
     try {
       // Same config the home will use on first open: the settings store gets the CLAMPED cycle
-      // length (or none for "I don't know" → 28), so a 50-day answer predicted day 50 here but
-      // day 45 on the home. And a last period further back than one cycle makes the home say
+      // length (or none for "I don't know" → 28), so an answer above the stepper max would predict
+      // a different day here than on the home. And a last period further back than one cycle makes the home say
       // "late" — don't promise a next-period date here that the home contradicts.
       const cfg = {
         lastPeriodStart: lastPeriod,

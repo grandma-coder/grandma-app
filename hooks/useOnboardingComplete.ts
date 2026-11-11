@@ -13,6 +13,7 @@ import { router } from 'expo-router'
 import { useOnboardingStore } from '../store/useOnboardingStore'
 import { useBehaviorStore, Behavior } from '../store/useBehaviorStore'
 import { useModeStore } from '../store/useModeStore'
+import { usePushPromptStore } from '../store/usePushPromptStore'
 
 export function useOnboardingComplete() {
   // Reactive values for the returned hook API (consumers reading hasNext/next).
@@ -50,6 +51,9 @@ export function useOnboardingComplete() {
         // and the guarded setMode would silently no-op if it hadn't landed yet.
         useModeStore.getState().setModeUnsafe(target)
       }
+      // End of the onboarding run: the home offers notifications with a short "why" sheet
+      // (PushPrePromptSheet) — the OS prompt is never shown at launch.
+      usePushPromptStore.getState().request()
       router.replace('/(tabs)' as any)
     },
     []

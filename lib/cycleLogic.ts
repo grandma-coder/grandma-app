@@ -417,8 +417,11 @@ const EMPTY_CALENDAR_DAY: CycleCalendarDay = {
   predicted: false, daysLate: 0, conceptionProbability: 'none',
 }
 
-/** Closed cycles outside this range are a missed or doubled log: show the period, not a fertile guess. */
-const PLAUSIBLE_CYCLE = { min: 15, max: 45 }
+/**
+ * Closed cycles outside this range are a missed or doubled log: show the period, not a fertile guess.
+ * Same range as the measured average (cycleAnalytics AVG_RANGE): 45–60-day cycles are real.
+ */
+const PLAUSIBLE_CYCLE = { min: 15, max: 60 }
 
 function calendarDay(
   cycleDay: number,

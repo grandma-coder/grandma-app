@@ -20,9 +20,12 @@ import * as SecureStore from 'expo-secure-store'
 import * as Crypto from 'expo-crypto'
 import { requireOptionalNativeModule } from 'expo-modules-core'
 import type * as LocalAuthType from 'expo-local-authentication'
+import { NO_PIN_ATTEMPTS, parsePinAttempts, type PinAttempts } from './appLockAttempts'
 
 const PIN_HASH_KEY = 'grandma_app_lock_pin_hash'
 const PIN_SALT_KEY = 'grandma_app_lock_pin_salt'
+/** Wrong-PIN count + lockout end (see lib/appLockAttempts) — in the keychain, so a kill doesn't reset it. */
+const PIN_ATTEMPTS_KEY = 'grandma_app_lock_pin_attempts'
 
 // expo-local-authentication resolves its NATIVE module at import time, so a bare
 // top-level import crashes any client that predates the rebuild. Probe first,
@@ -137,10 +140,34 @@ export async function hasPin(): Promise<boolean> {
   return !!stored
 }
 
-/** Remove the PIN (called when app-lock is disabled). */
+/** Remove the PIN (called when app-lock is disabled) and its wrong-attempt count. */
 export async function clearPin(): Promise<void> {
   await Promise.all([
     SecureStore.deleteItemAsync(PIN_HASH_KEY),
     SecureStore.deleteItemAsync(PIN_SALT_KEY),
+    SecureStore.deleteItemAsync(PIN_ATTEMPTS_KEY),
   ])
+}
+
+/** Persisted wrong-PIN state; a clean slate when nothing (or junk) is stored or the read fails. */
+export async function readPinAttempts(): Promise<PinAttempts> {
+  try {
+    return parsePinAttempts(await SecureStore.getItemAsync(PIN_ATTEMPTS_KEY))
+  } catch {
+    return NO_PIN_ATTEMPTS
+  }
+}
+
+export async function writePinAttempts(state: PinAttempts): Promise<void> {
+  try {
+    if (state.failures <= 0) await SecureStore.deleteItemAsync(PIN_ATTEMPTS_KEY)
+    else await SecureStore.setItemAsync(PIN_ATTEMPTS_KEY, JSON.stringify(state))
+  } catch {
+    // keychain unavailable — the in-memory count still throttles this session
+  }
+}
+
+/** A correct PIN or a biometric unlock: back to a clean slate. */
+export function resetPinAttempts(): Promise<void> {
+  return writePinAttempts(NO_PIN_ATTEMPTS)
 }

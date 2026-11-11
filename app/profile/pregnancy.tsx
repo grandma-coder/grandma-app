@@ -62,6 +62,7 @@ import { PaperAlert } from '../../components/ui/PaperAlert'
 import { dateLoc, numLoc } from '../../lib/kpLocale'
 import { AfterTransition } from '../../components/ui/AfterTransition'
 import { SheetModal } from '../../components/ui/SheetModal'
+import { BabyArrivedSheet } from '../../components/journey/BabyArrivedSheet'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -875,6 +876,7 @@ export default function PregnancyProfileScreen() {
   )
   const [lmpPickerOpen, setLmpPickerOpen] = useState(false)
   const [draftLmpDate, setDraftLmpDate] = useState<Date>(new Date())
+  const [babyArrivedOpen, setBabyArrivedOpen] = useState(false)
   const [optionsSheet, setOptionsSheet] = useState<{
     label: string
     value: string
@@ -1563,6 +1565,13 @@ export default function PregnancyProfileScreen() {
               },
             })}
           />
+          {/* Always available here (the home offers it from week 37). */}
+          <PillButton
+            label={t('babyArrived_cta')}
+            variant="ink"
+            onPress={() => setBabyArrivedOpen(true)}
+            style={{ marginTop: 14 }}
+          />
         </SectionCard>
 
         {/* 7. Emergency Contacts */}
@@ -1743,6 +1752,8 @@ export default function PregnancyProfileScreen() {
           onClose={() => setOptionsSheet(null)}
         />
       )}
+
+      <BabyArrivedSheet visible={babyArrivedOpen} onClose={() => setBabyArrivedOpen(false)} />
 
       {wheelSheet && (
         <WheelSheet

@@ -11,6 +11,7 @@ type Handler = (c: Call) => Res | undefined
 
 const calls: Call[] = []
 let handler: Handler = () => undefined
+let mockRpcHandler: (fn: string, args: any) => Res = () => ({ data: null, error: null })
 
 function mockBuilder(table: string) {
   const call: Call = { table, op: 'select', filters: [] }
@@ -36,7 +37,7 @@ jest.mock('../supabase', () => ({
   supabase: {
     auth: { getSession: async () => ({ data: { session: { user: { id: 'me', user_metadata: {} } } } }) },
     from: (t: string) => mockBuilder(t),
-    rpc: async () => ({ data: null, error: null }),
+    rpc: async (fn: string, args: any) => mockRpcHandler(fn, args),
     storage: { from: () => ({}) },
   },
 }))
@@ -56,6 +57,7 @@ const rlsError = { code: '42501', message: 'new row violates row-level security 
 beforeEach(() => {
   calls.length = 0
   handler = () => undefined
+  mockRpcHandler = () => ({ data: null, error: null })
 })
 
 describe('approveRequest', () => {
@@ -127,17 +129,42 @@ describe('leaveChannel', () => {
     const del = calls.find((c) => c.table === 'channel_requests' && c.op === 'delete')
     expect(del?.filters).toEqual(expect.arrayContaining([['eq', 'channel_id', 'ch1'], ['eq', 'user_id', 'me']]))
   })
+  it('posts the "left" line while still a member (private channels only accept member posts)', async () => {
+    handler = (c) => (c.table === 'channel_posts' && c.op === 'insert' ? { data: { id: 'leave1' }, error: null } : undefined)
+    await leaveChannel('ch1')
+    const postIdx = calls.findIndex((c) => c.table === 'channel_posts' && c.op === 'insert')
+    const leaveIdx = calls.findIndex((c) => c.table === 'channel_members' && c.op === 'delete')
+    expect(postIdx).toBeGreaterThanOrEqual(0)
+    expect(postIdx).toBeLessThan(leaveIdx)
+  })
+
+  it('takes the "left" line back down when the leave itself fails', async () => {
+    handler = (c) => {
+      if (c.table === 'channel_posts' && c.op === 'insert') return { data: { id: 'leave1' }, error: null }
+      if (c.table === 'channel_members' && c.op === 'delete') return { data: null, error: rlsError }
+      return undefined
+    }
+    await expect(leaveChannel('ch1')).rejects.toBeTruthy()
+    const undo = calls.find((c) => c.table === 'channel_posts' && c.op === 'delete')
+    expect(undo?.filters).toEqual(expect.arrayContaining([['eq', 'id', 'leave1']]))
+  })
 })
 
 describe('transferChannelOwnership', () => {
-  it('throws and posts no "transferred" message when the update is rejected', async () => {
-    handler = (c) => {
-      if (c.table === 'channels' && c.op === 'select') return { data: { created_by: 'me' }, error: null }
-      if (c.table === 'channels' && c.op === 'update') return { data: null, error: rlsError }
-      return undefined
-    }
+  it('throws and posts no "transferred" message when the transfer RPC is rejected', async () => {
+    handler = (c) => (c.table === 'channels' && c.op === 'select' ? { data: { created_by: 'me' }, error: null } : undefined)
+    mockRpcHandler = () => ({ data: null, error: { code: '22023', message: 'the new owner must be a member of the channel' } })
     await expect(transferChannelOwnership('ch1', 'other')).rejects.toBeTruthy()
     expect(calls.some((c) => c.table === 'channel_posts' && c.op === 'insert')).toBe(false)
+  })
+
+  it('moves ownership through the transfer_channel_ownership RPC, never a direct channels update', async () => {
+    handler = (c) => (c.table === 'channels' && c.op === 'select' ? { data: { created_by: 'me' }, error: null } : undefined)
+    const rpcCalls: [string, any][] = []
+    mockRpcHandler = (fn, args) => { rpcCalls.push([fn, args]); return { data: null, error: null } }
+    await transferChannelOwnership('ch1', 'other')
+    expect(rpcCalls).toEqual([['transfer_channel_ownership', { p_channel_id: 'ch1', p_new_owner: 'other' }]])
+    expect(calls.some((c) => c.table === 'channels' && c.op === 'update')).toBe(false)
   })
 })
 

@@ -22,6 +22,7 @@ import { useModeStore } from '../../../../store/useModeStore'
 import { useOnboardingStore } from '../../../../store/useOnboardingStore'
 import { useThemeStore } from '../../../../store/useThemeStore'
 import { useDevStore } from '../../../../store/useDevStore'
+import { useMenopauseQuickLogStore, DEFAULT_MENOPAUSE_QUICK_LOG_KEYS } from '../../../../store/useMenopauseQuickLogStore'
 import { supabase } from '../../../../lib/supabase'
 import { router } from 'expo-router'
 
@@ -94,7 +95,8 @@ beforeEach(() => {
   useThemeStore.setState({ variant: 'current', theme: 'light', hydrated: true })
   useDevStore.setState({ active: false, snapshot: null })
   useMenopauseOnboardingStore.getState().reset()
-  useMenopauseStore.setState({ stage: null, lastPeriodDate: null, hydrated: true })
+  useMenopauseStore.setState({ stage: null, lastPeriodDate: null, onHrt: null, hydrated: true })
+  useMenopauseQuickLogStore.setState({ enabledKeys: DEFAULT_MENOPAUSE_QUICK_LOG_KEYS, hydrated: true })
   useBehaviorStore.setState({ enrolledBehaviors: [], currentBehavior: null })
   useModeStore.setState({ mode: 'kids' as never })
   useOnboardingStore.getState().buildQueue(['menopause'])
@@ -149,5 +151,15 @@ describe('menopause saveAndFinish', () => {
     // Ephemeral buffer still cleared + queue still advanced.
     expect(useMenopauseOnboardingStore.getState().stage).toBeNull()
     expect(useOnboardingStore.getState().currentOnboarding).toBeNull()
+  })
+
+  it('picked symptoms seed the home quick-log pins; the HRT answer is kept', async () => {
+    const { getByText } = await renderToComplete()
+
+    await act(async () => { fireEvent.press(getByText('Enter my space')) })
+    await waitFor(() => expect(mockedRouter.replace).toHaveBeenCalledWith('/(tabs)'))
+
+    expect(useMenopauseQuickLogStore.getState().enabledKeys).toEqual(['hot_flash'])
+    expect(useMenopauseStore.getState().onHrt).toBe(true)
   })
 })

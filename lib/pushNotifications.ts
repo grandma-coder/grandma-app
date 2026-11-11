@@ -123,7 +123,11 @@ export async function saveNotificationPrefs(prefs: NotificationPrefs): Promise<b
 
 // ─── Permission + token registration ───────────────────────────────────────
 
-/** Ask for notification permission. Returns true if granted. */
+/**
+ * Ask for notification permission. Returns true if granted. ONLY from a user action (turning on
+ * a reminder / notification setting, accepting a caregiver invite, the end-of-onboarding sheet) —
+ * never at launch. Once granted, the push token is registered in the background.
+ */
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!isRealDevice()) return false // simulators can't get a push token
   const Notifications = getNotifs()
@@ -134,6 +138,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
     const req = await Notifications.requestPermissionsAsync()
     status = req.status
   }
+  if (status === 'granted') void registerPushToken()
   return status === 'granted'
 }
 
@@ -223,8 +228,9 @@ function easProjectId(): string | undefined {
 
 /**
  * Register this device's Expo push token into `push_tokens` (idempotent upsert).
- * Safe to call on every launch/login. No-op on simulators or when permission is
- * denied. The command center reads these rows to send remote push.
+ * Safe to call on every launch/login: it NEVER prompts — a no-op unless permission was already
+ * granted (asking right after sign-in, before the user knew why, got most people to say no).
+ * No-op on simulators. The command center reads these rows to send remote push.
  */
 export async function registerPushToken(): Promise<string | null> {
   try {
@@ -232,8 +238,8 @@ export async function registerPushToken(): Promise<string | null> {
     const Notifications = getNotifs()
     const Device = getDevice()
     if (!Notifications || !Device) return null
-    const granted = await requestNotificationPermission()
-    if (!granted) return null
+    const { status } = await Notifications.getPermissionsAsync()
+    if (status !== 'granted') return null
 
     const projectId = easProjectId()
     const tokenResp = await Notifications.getExpoPushTokenAsync(
@@ -449,9 +455,10 @@ function ensureForegroundHandler(): void {
 }
 
 /**
- * One-shot bootstrap: set the foreground handler, register the push token, and
- * sync local schedules from the user's saved prefs. Call after auth is ready.
- * Never throws — if the native module is missing (old dev client), it no-ops.
+ * One-shot bootstrap: set the foreground handler, register the push token (silently — only when
+ * permission was already granted; never prompts), and sync local schedules from the user's saved
+ * prefs. Call after auth is ready. Never throws — if the native module is missing (old dev
+ * client), it no-ops.
  */
 export async function initNotifications(): Promise<void> {
   try {

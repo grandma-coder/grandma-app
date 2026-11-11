@@ -31,6 +31,7 @@ export interface CirclePost {
   reply_count: number
   handle: string // anonymous alias — never a real name
   has_reacted: boolean // whether the CURRENT user has reacted (never cross-user)
+  is_mine?: boolean // true only on the caller's own posts (view column added in 20261110120000)
   created_at: string
 }
 
@@ -111,6 +112,23 @@ export async function createCirclePost(circleId: string, content: string, replyT
     reply_to_id: replyToId ?? null,
   })
   if (error) throw error
+}
+
+/**
+ * Delete one of my own posts (RLS: author only). Replies to it are removed with it
+ * (reply_to_id ON DELETE CASCADE); post/reply/reaction counts are trigger-maintained.
+ */
+export async function deleteCirclePost(postId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+  const { data, error } = await supabase
+    .from('circle_posts')
+    .delete()
+    .eq('id', postId)
+    .eq('author_id', session.user.id)
+    .select('id')
+  if (error) throw error
+  if (!data?.length) throw new Error('Post could not be deleted')
 }
 
 /** Top-level posts in a circle, anonymous (from circle_posts_public). */

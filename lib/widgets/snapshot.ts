@@ -306,8 +306,12 @@ export function buildMenopauseEntry(input: MenopauseInput, ctx: Ctx): WidgetEntr
     e.emptyText = t('widget_empty_menopause')
     return e
   }
+  // Hot flashes / night sweats can be logged several times a day: the strongest entry is the
+  // day's intensity, the number of entries is how many there were.
   const severityOn = (date: string, type: string) =>
-    input.logs.find((l) => l.date === date && l.type === type)?.severity ?? 0
+    input.logs.reduce((max, l) => (l.date === date && l.type === type ? Math.max(max, l.severity ?? 0) : max), 0)
+  const countOn = (date: string, type: string) =>
+    input.logs.filter((l) => l.date === date && l.type === type).length
 
   for (let i = 0; i < WIDGET_DAYS; i++) {
     const d = dayAt(now, i)
@@ -319,7 +323,10 @@ export function buildMenopauseEntry(input: MenopauseInput, ctx: Ctx): WidgetEntr
     if (sinceText) parts.push(sinceText)
     if (input.stage) parts.push(t(STAGE_KEY[input.stage]))
     const hot = severityOn(date, 'hot_flash')
-    const footer = hot > 0 ? t('widget_menoHotToday', { n: hot }) : t('widget_menoNoHotToday')
+    const hotCount = countOn(date, 'hot_flash')
+    const footer = hotCount > 1
+      ? t('widget_menoHotTodayCount', { count: hotCount, n: hot })
+      : hot > 0 ? t('widget_menoHotToday', { n: hot }) : t('widget_menoNoHotToday')
     const eyebrow = input.stage ? t(STAGE_KEY[input.stage]) : t('widget_name_menopause')
     e.days.push({
       date,

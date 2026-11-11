@@ -6,7 +6,8 @@
  *
  *  - MenopauseSymptomForm — pick a symptom from ALL_MENOPAUSE_SYMPTOMS (grouped
  *    by the 5 groups) → severity 1–5 via StepSlider → optional note → insert a
- *    `menopause_logs` row via saveMenopauseLog.
+ *    `menopause_logs` row via saveMenopauseLog. Hot flashes / night sweats add a
+ *    new entry each time; `editId` edits one saved entry.
  *  - MenopausePeriodForm — (peri only) pick a flow level → insert a `period`
  *    event (the counter reads the newest logged period; see latestPeriodDate).
  *
@@ -43,6 +44,7 @@ import {
 import { useTranslation, t as tNow } from '../../lib/i18n'
 import {
   ALL_MENOPAUSE_SYMPTOMS,
+  editableEntryFor,
   menopauseSymptomLabel,
   type MenopauseSymptomId,
 } from '../../lib/menopauseSymptoms'
@@ -85,7 +87,13 @@ function SiteEyebrow({ children }: { children: string }) {
 // Symptom form
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved: () => void; initialId?: MenopauseSymptomId; logDate?: string }) {
+export function MenopauseSymptomForm({ onSaved, initialId, logDate, editId }: {
+  onSaved: () => void
+  initialId?: MenopauseSymptomId
+  logDate?: string
+  /** Edit this one saved entry (a hot flash among several that day) instead of adding one. */
+  editId?: string
+}) {
   const pal = useMenoPalette()
   const { stickers, colors, font } = useTheme()
   const st = stickers as Record<string, string>
@@ -98,17 +106,18 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
   const [saving, setSaving] = useState(false)
   const { t } = useTranslation()
   // Re-opening a day that already has this symptom pre-fills its saved intensity / note / triggers
-  // (saving replaces that row — see saveMenopauseLog).
+  // (saving replaces that row — see saveMenopauseLog). Hot flashes / night sweats stack: a new one
+  // starts blank, and only an entry opened for editing (editId) pre-fills and is replaced.
   const { data: existingRows } = useMenopauseLogs()
   const saveDate = logDate ?? toDateStr(new Date())
-  const existing = symptomId ? existingRows?.find((r) => r.date === saveDate && r.type === symptomId) : undefined
+  const existing = symptomId ? editableEntryFor(existingRows, saveDate, symptomId, editId) : undefined
   useEffect(() => {
     if (!existing) return
     if (existing.severity != null) setSeverity(existing.severity)
     setNotes(existing.notes ?? '')
     setTriggers(parseMenopauseTriggers(existing.value))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symptomId, saveDate, !!existing])
+  }, [symptomId, saveDate, editId, !!existing])
   // Optional "What might have set it off?" tags — hot flash / night sweat only.
   const showTriggers = site && !!symptomId && TRIGGER_SYMPTOMS.has(symptomId)
   const toggleTrigger = (id: MenopauseTrigger) =>
@@ -126,6 +135,7 @@ export function MenopauseSymptomForm({ onSaved, initialId, logDate }: { onSaved:
         // Triggers ride in the existing `value` text column as JSON (see menopauseTriggers).
         value: showTriggers ? encodeMenopauseTriggers(triggers) : null,
         notes: notes.trim() || null,
+        id: editId ?? null,
       })
       onSaved()
     } catch (e) {

@@ -1,7 +1,9 @@
 /**
  * menopauseDayLoad — how much a day carried, for the calendar's soft day tint.
  *
- * Score = sum of the day's symptom intensities (1–5 each). A symptom saved without an
+ * Score = sum of the day's symptom intensities (1–5 each), one per symptom: hot flashes / night
+ * sweats can be logged several times a day, and only the strongest entry of each counts (five mild
+ * flashes are not a heavier day than one strong one plus a headache). A symptom saved without an
  * intensity weighs the middle step (3), so a plain count still moves the tint.
  * Period / HRT / notes are events, not symptoms, and don't add to the score.
  *
@@ -18,12 +20,15 @@ const MEDIUM_FROM = 5
 const HEAVY_FROM = 10
 
 export function menopauseDayScore(rows: readonly { type: string; severity: number | null }[]): number {
-  let score = 0
+  const strongest = new Map<string, number>()
   for (const r of rows) {
-    if (!resolveMenopauseSymptomId(r.type)) continue
+    const id = resolveMenopauseSymptomId(r.type)
+    if (!id) continue
     const sev = r.severity == null ? UNRATED_WEIGHT : Math.max(1, Math.min(5, r.severity))
-    score += sev
+    strongest.set(id, Math.max(strongest.get(id) ?? 0, sev))
   }
+  let score = 0
+  for (const sev of strongest.values()) score += sev
   return score
 }
 

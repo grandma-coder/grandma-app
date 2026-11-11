@@ -6399,6 +6399,34 @@ export interface TranslationKeys {
   pregnancy_affirmationFallback_18: string
   pregnancy_affirmationFallback_19: string
   preg_anyDayNow: string
+  babyArrived_rowTitle: string
+  babyArrived_cardTitle: string
+  babyArrived_cardBody: string
+  babyArrived_cta: string
+  babyArrived_sheetTitle: string
+  babyArrived_sheetBody: string
+  babyArrived_birthDate: string
+  babyArrived_dateOutOfRange: string
+  babyArrived_name: string
+  babyArrived_namePlaceholder: string
+  babyArrived_defaultName: string
+  babyArrived_confirm: string
+  babyArrived_saving: string
+  babyArrived_errorTitle: string
+  babyArrived_errorBody: string
+  babyArrived_celebrateTitle: string
+  babyArrived_celebrateBody: string
+  babyArrived_celebrateCta: string
+  posTest_title: string
+  posTest_body: string
+  posTest_start: string
+  posTest_notNow: string
+  keepCycle_title: string
+  keepCycle_body: string
+  keepCycle_keep: string
+  keepCycle_end: string
+  keepCycle_errorTitle: string
+  keepCycle_errorBody: string
   kidsQuickLog_short_sleep: string
   kidsQuickLog_short_mood: string
   kidsQuickLog_short_feeding: string
@@ -6668,4 +6696,14 @@ export interface TranslationKeys {
   widget_style_journey: string
   widget_style_cream: string
   widget_style_dark: string
+  widget_menoHotTodayCount: string
+  pushPrePrompt_title: string
+  pushPrePrompt_body: string
+  pushPrePrompt_allow: string
+  pushPrePrompt_notNow: string
+  lock_lockedFor: string
+  lock_attemptsLeft: string
+  lock_attemptsLeftOne: string
+  lock_tooManyTitle: string
+  lock_tooManyBody: string
 }

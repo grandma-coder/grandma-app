@@ -79,9 +79,10 @@ describe('getCycleCalendarDay', () => {
   })
 
   it('shows only the period for an implausibly long past cycle (missed log)', () => {
-    const inp = input([log('period_start', '2026-06-01'), log('period_start', '2026-07-27')])
-    expect(getCycleCalendarDay(inp, '2026-06-02', '2026-08-01').isPeriod).toBe(true)
-    const mid = getCycleCalendarDay(inp, '2026-07-12', '2026-08-01')
+    // 70 days: over the 60-day cap, so a missed log.
+    const inp = input([log('period_start', '2026-06-01'), log('period_start', '2026-08-10')])
+    expect(getCycleCalendarDay(inp, '2026-06-02', '2026-08-15').isPeriod).toBe(true)
+    const mid = getCycleCalendarDay(inp, '2026-07-26', '2026-08-15')
     expect(mid.isFertile).toBe(false)
     expect(mid.isOvulation).toBe(false)
   })

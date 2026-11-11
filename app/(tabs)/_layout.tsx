@@ -37,6 +37,8 @@ import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../../components/ui/diffu
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
 import { useIsMinor } from '../../hooks/useIsMinor'
+import { JourneyTransitionHost } from '../../components/journey/JourneyTransitionHost'
+import { PushPrePromptSheet } from '../../components/notifications/PushPrePromptSheet'
 
 // ─── Collage Strip constants ───────────────────────────────────────────────
 const STRIP_HEIGHT = 84
@@ -867,6 +869,10 @@ export default function TabLayout() {
           options={{ title: '', href: cg ? (cg.settings ? undefined : null) : undefined }}
         />
       </Tabs>
+      {/* After a journey onboarding: why notifications help, then the OS prompt (never at launch). */}
+      <PushPrePromptSheet />
+      {/* Journey transitions: positive test → pregnancy, keep/end cycle, baby-arrived celebration. */}
+      <JourneyTransitionHost />
     </Animated.View>
   )
 }

@@ -59,3 +59,59 @@ export function resolveMenopauseSymptomId(raw: string): MenopauseSymptomId | nul
   if (byLabel) return byLabel.id
   return ALIASES[n] ?? null
 }
+
+// ─── Entries per day ─────────────────────────────────────────────────────────
+
+/**
+ * Log types that may be saved several times on the same day: hot flashes and night sweats come
+ * in bursts (each log is its own entry with its own time and intensity), and free notes stack.
+ * Every other type is one row per day — saving it again replaces that day's row.
+ */
+const MULTI_PER_DAY_TYPES = new Set<string>(['hot_flash', 'night_sweat', 'note'])
+
+export function isMultiPerDayType(type: string): boolean {
+  return MULTI_PER_DAY_TYPES.has(type)
+}
+
+/**
+ * The saved row a log form should pre-fill (and replace on save). One-per-day types: that day's
+ * row. Stacking types: only the entry being edited (`editId`) — a new hot flash starts blank.
+ */
+export function editableEntryFor<R extends { id?: string; date: string; type: string }>(
+  rows: readonly R[] | undefined,
+  date: string,
+  type: string,
+  editId?: string | null,
+): R | undefined {
+  if (!rows) return undefined
+  if (editId) return rows.find((r) => r.id === editId)
+  if (isMultiPerDayType(type)) return undefined
+  return rows.find((r) => r.date === date && r.type === type)
+}
+
+/**
+ * Local clock time an entry was logged, when it was logged on the day it describes (a
+ * back-dated entry's save time says nothing about when the hot flash happened).
+ */
+export function menopauseEntryTime(row: { date: string; created_at?: string | null }): { hours: number; minutes: number } | null {
+  if (!row.created_at) return null
+  const at = new Date(row.created_at)
+  if (Number.isNaN(at.getTime())) return null
+  const local = `${at.getFullYear()}-${String(at.getMonth() + 1).padStart(2, '0')}-${String(at.getDate()).padStart(2, '0')}`
+  if (local !== row.date) return null
+  return { hours: at.getHours(), minutes: at.getMinutes() }
+}
+
+// ─── Home quick-log dock seeded from onboarding ──────────────────────────────
+
+/** Pins the home quick-log dock holds (the size of the default set). */
+export const MENOPAUSE_QUICK_LOG_MAX = 8
+
+/**
+ * Dock pins from the symptoms picked in onboarding: the picks (catalog order, known ids only,
+ * capped at the dock size); no picks → the defaults.
+ */
+export function seedMenopauseQuickLog(picked: readonly MenopauseSymptomId[], defaults: readonly string[]): string[] {
+  const ids = ALL_MENOPAUSE_SYMPTOMS.map((s) => s.id).filter((id) => picked.includes(id))
+  return ids.length ? ids.slice(0, MENOPAUSE_QUICK_LOG_MAX) : [...defaults]
+}

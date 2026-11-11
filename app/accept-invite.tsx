@@ -4,6 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { ArrowLeft, Eye, PencilLine, MessageCircle, User, HeartPulse } from 'lucide-react-native'
 import { supabase } from '../lib/supabase'
+import { ensureReminderPermission } from '../lib/reminderNotifications'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../constants/theme'
 import { useTranslation } from '../lib/i18n'
 import { useModeStore } from '../store/useModeStore'
@@ -151,6 +152,9 @@ export default function AcceptInvite() {
       // after a restart, and the route guard still sees "no onboarding" on the way home.
       await reloadUserData().catch(() => {})
       setAccepted(true)
+      // Joining a care circle is when updates start to matter — ask now (only if never asked;
+      // the launch path never prompts).
+      void ensureReminderPermission().catch(() => {})
     } catch (e: any) {
       const kind = inviteErrorKind(e?.message)
       if (kind !== 'generic') setInviteProblem(kind)

@@ -1,7 +1,10 @@
 /**
  * App-lock screen (Phase 1 / WS2d). Two modes via ?mode=:
  *   - verify (default): gate the app. Auto-prompts biometrics if enabled, else a
- *     4-digit PIN. On success → unlock() and dismiss.
+ *     4-digit PIN. On success → unlock() and dismiss. Wrong PINs are throttled
+ *     (lib/appLockAttempts: 30 s after 5, 1 min after 7, 5 min after 9) and the
+ *     10th signs out; the count lives in the keychain so a kill doesn't reset it.
+ *     Biometrics still work during a lockout and reset the count.
  *   - set: create/replace the PIN (from settings). Enter twice to confirm.
  *
  * Uses a custom numeric pad (no PIN pad exists in the app). Tokenized for cream +
@@ -22,7 +25,18 @@ import { useAppLockStore } from '../store/useAppLockStore'
 import { signOut } from '../lib/signOut'
 import {
   verifyPin, setPin, clearPin, authenticateBiometric, isBiometricAvailable, biometricLabel,
+  readPinAttempts, writePinAttempts, resetPinAttempts,
 } from '../lib/appLock'
+import {
+  NO_PIN_ATTEMPTS, attemptsLeft, lockoutMsAfter, lockoutRemainingMs, recordPinFailure, MAX_PIN_ATTEMPTS,
+  type PinAttempts,
+} from '../lib/appLockAttempts'
+
+/** "0:25" / "4:59" for the lockout countdown. */
+function formatWait(ms: number): string {
+  const total = Math.ceil(ms / 1000)
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
+}
 
 const PIN_LENGTH = 4
 
@@ -45,6 +59,12 @@ export default function LockScreen() {
   const [error, setError] = useState(false)
   const [bioType, setBioType] = useState<'face' | 'fingerprint' | 'generic' | null>(null)
   const busy = useRef(false)
+  // Wrong-PIN throttle (verify mode). Read back from the keychain on open.
+  const [attempts, setAttempts] = useState<PinAttempts>(NO_PIN_ATTEMPTS)
+  const attemptsRef = useRef<PinAttempts>(NO_PIN_ATTEMPTS)
+  const [now, setNow] = useState(() => Date.now())
+  const signingOut = useRef(false)
+  const lockMs = isSet ? 0 : lockoutRemainingMs(attempts, now)
 
   const ink = diffuse ? dt.colors.ink : colors.text
   const inkMuted = diffuse ? dt.colors.ink3 : colors.textMuted
@@ -56,14 +76,53 @@ export default function LockScreen() {
     ? (firstPin ? t('lock_confirmPin') : t('lock_setPin'))
     : t('lock_enterPin')
 
+  // Works during a PIN lockout too; a success resets the wrong-PIN count.
   const tryBiometric = useCallback(async () => {
-    if (isSet || !biometricEnabled || busy.current) return
+    if (isSet || !biometricEnabled || busy.current || signingOut.current) return
     if (!(await isBiometricAvailable())) return
     busy.current = true
     const ok = await authenticateBiometric(t('lock_biometricPrompt'))
     busy.current = false
-    if (ok) unlock()
+    if (ok) {
+      attemptsRef.current = NO_PIN_ATTEMPTS
+      setAttempts(NO_PIN_ATTEMPTS)
+      await resetPinAttempts()
+      unlock()
+    }
   }, [isSet, biometricEnabled, unlock, t])
+
+  // Too many wrong PINs: sign out through the normal sign-out (clears the PIN and the account's
+  // local data) and say why.
+  const signOutForAttempts = useCallback(async () => {
+    if (signingOut.current) return
+    signingOut.current = true
+    Alert.alert(t('lock_tooManyTitle'), t('lock_tooManyBody', { count: MAX_PIN_ATTEMPTS }))
+    await clearPin().catch(() => {})
+    setEnabled(false)
+    unlock()
+    await signOut()
+  }, [setEnabled, unlock, t])
+
+  useEffect(() => {
+    if (isSet) return
+    let alive = true
+    void readPinAttempts().then((a) => {
+      if (!alive) return
+      attemptsRef.current = a
+      setAttempts(a)
+      setNow(Date.now())
+      // Killed the app on the 10th mistake before the sign-out finished.
+      if (a.failures >= MAX_PIN_ATTEMPTS) void signOutForAttempts()
+    })
+    return () => { alive = false }
+  }, [isSet, signOutForAttempts])
+
+  // Tick the countdown while locked out.
+  useEffect(() => {
+    if (lockMs <= 0) return
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [lockMs > 0]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isSet) {
@@ -97,10 +156,24 @@ export default function LockScreen() {
     }
     // verify mode
     if (await verifyPin(pin)) {
+      attemptsRef.current = NO_PIN_ATTEMPTS
+      setAttempts(NO_PIN_ATTEMPTS)
+      await resetPinAttempts()
       unlock()
-    } else {
-      fail()
+      return
     }
+    const at = Date.now()
+    const r = recordPinFailure(attemptsRef.current, at)
+    attemptsRef.current = r.state
+    setAttempts(r.state)
+    setNow(at)
+    await writePinAttempts(r.state)
+    if (r.signOut) {
+      setEntry('')
+      void signOutForAttempts()
+      return
+    }
+    fail()
   }
 
   function fail() {
@@ -110,7 +183,9 @@ export default function LockScreen() {
   }
 
   function press(digit: string) {
-    if (error || entry.length >= PIN_LENGTH) return
+    if (error || entry.length >= PIN_LENGTH || signingOut.current) return
+    // Locked out after too many wrong PINs: the pad waits (biometrics still work).
+    if (!isSet && lockoutRemainingMs(attemptsRef.current, Date.now()) > 0) return
     const next = entry + digit
     setEntry(next)
     if (next.length === PIN_LENGTH) setTimeout(() => commit(next), 120)
@@ -151,6 +226,18 @@ export default function LockScreen() {
             {t('lock_setSubtitle')}
           </DisplayItalic>
         )}
+
+        {/* Lockout countdown / attempts left before the sign-out (verify mode). */}
+        {!isSet && (lockMs > 0 || lockoutMsAfter(attempts.failures + 1) > 0) && attempts.failures > 0 ? (
+          <Text
+            accessibilityLiveRegion="polite"
+            style={[styles.attempts, { color: lockMs > 0 ? stickers.coral : inkMuted, fontFamily: diffuse ? diffuseFont.body : font.body }]}
+          >
+            {lockMs > 0
+              ? t('lock_lockedFor', { time: formatWait(lockMs) })
+              : t(attemptsLeft(attempts) === 1 ? 'lock_attemptsLeftOne' : 'lock_attemptsLeft', { count: attemptsLeft(attempts) })}
+          </Text>
+        ) : null}
 
         {/* PIN dots */}
         <View style={styles.dots}>
@@ -238,6 +325,7 @@ const styles = StyleSheet.create({
     width: KEY, height: KEY, alignItems: 'center', justifyContent: 'center',
   },
   padKeyText: { fontSize: 28 },
+  attempts: { marginTop: 10, fontSize: 14, textAlign: 'center' },
   forgot: { alignSelf: 'center', marginTop: 20, paddingVertical: 6, paddingHorizontal: 12 },
   forgotText: { fontSize: 13, textDecorationLine: 'underline' },
 })

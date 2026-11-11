@@ -20,6 +20,9 @@ import { buildReminderCycleConfig } from './cycleReminders'
 import { getCurrentWeekFromDueDate } from './pregnancyData'
 import { useCycleSettingsStore } from '../store/useCycleSettingsStore'
 import { parseLocalDate } from './localDate'
+import { journeyNotificationGates, pregnancyTimedNotificationsAllowed } from './journeyTransitions'
+import { useBehaviorStore } from '../store/useBehaviorStore'
+import { usePregnancyStore } from '../store/usePregnancyStore'
 import {
   activityGoalCopy, appointmentCopy, caregiverActivityCopy, channelActivityCopy, cycleQuietCopy,
   dailySummaryCopy, dueDateCopy, fertileWindowCopy, insightCopy, insightsCopy, kickCountCopy,
@@ -746,7 +749,11 @@ export async function generateChannelActivityNotifications(
 
 const WEEK_MILESTONES = new Set([4, 8, 12, 16, 20, 24, 28, 32, 36, 38, 40])
 
-export async function generatePregnancyNotifications(userId: string): Promise<number> {
+export async function generatePregnancyNotifications(
+  userId: string,
+  /** False past 42 weeks without a "baby arrived": no more week/due/kick/quiet nudges. */
+  timed = true,
+): Promise<number> {
   // Only run if user has pregnancy data
   const { count: pregCount } = await supabase
     .from('pregnancy_logs')
@@ -783,8 +790,12 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
     } catch {}
   }
 
+  // Past 42 weeks without a "baby arrived": stop the pregnancy-timed nudges (the home keeps
+  // offering "Baby arrived" instead of sitting at week 42 forever).
+  if (!pregnancyTimedNotificationsAllowed(dueDate)) timed = false
+
   // ── Week milestone notification ───────────────────────────────────────────
-  if (weekNumber && WEEK_MILESTONES.has(weekNumber)) {
+  if (timed && weekNumber && WEEK_MILESTONES.has(weekNumber)) {
     const dedupeKey = `pregnancy_week_${weekNumber}`
     const already = await alreadyNotifiedToday(userId, 'milestone', dedupeKey, 365)
     if (!already) {
@@ -798,7 +809,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
   }
 
   // ── Due date approaching ──────────────────────────────────────────────────
-  if (dueDate) {
+  if (timed && dueDate) {
     const daysToDue = Math.ceil((parseLocalDate(dueDate).getTime() - Date.now()) / 86400000)
     if ([14, 7, 3, 1, 0].includes(daysToDue)) {
       const dedupeKey = `pregnancy_due_${daysToDue}`
@@ -823,7 +834,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
     .limit(1)
     .maybeSingle()
 
-  if (lastLog) {
+  if (timed && lastLog) {
     const daysSince = Math.floor((Date.now() - parseLocalDate(lastLog.log_date).getTime()) / 86400000)
     if (daysSince >= 3) {
       const dedupeKey = 'pregnancy_missing'
@@ -864,7 +875,7 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
   }
 
   // ── Low kick count (week 28+) ─────────────────────────────────────────────
-  if (weekNumber && weekNumber >= 28) {
+  if (timed && weekNumber && weekNumber >= 28) {
     const sevenDaysAgo = toDateStr(new Date(Date.now() - 7 * 86400000))
     const { data: kickLogs } = await supabase
       .from('pregnancy_logs')
@@ -1026,6 +1037,12 @@ async function runNotificationEngineOnce(): Promise<number> {
     if (!session) return 0
 
     const userId = session.user.id
+    // A journey's nudges stop once it's ended (baby arrived, cycle tracking ended) — its logs
+    // stay, so "has pregnancy_logs" alone kept kick/quiet reminders coming forever.
+    const gates = journeyNotificationGates(
+      useBehaviorStore.getState().enrolledBehaviors,
+      usePregnancyStore.getState().dueDate,
+    )
 
     // Run all generators in parallel (they dedup independently)
     const results = await Promise.allSettled([
@@ -1038,8 +1055,8 @@ async function runNotificationEngineOnce(): Promise<number> {
       generateInsightNotifications(userId),
       generateAppointmentReminders(userId),
       generateChannelActivityNotifications(userId),
-      generatePregnancyNotifications(userId),
-      generateCycleNotifications(userId),
+      gates.pregnancy ? generatePregnancyNotifications(userId, gates.pregnancyTimed) : Promise.resolve(0),
+      gates.cycle ? generateCycleNotifications(userId) : Promise.resolve(0),
     ])
 
     const total = results.reduce((sum, r) => sum + (r.status === 'fulfilled' ? r.value : 0), 0)

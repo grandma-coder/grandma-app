@@ -35,6 +35,7 @@ import { searchCountries, countryByCode } from '../../lib/countries'
 import { useChildStore } from '../../store/useChildStore'
 import { toDateStr } from '../../lib/cycleLogic'
 import { supabase } from '../../lib/supabase'
+import { createChild } from '../../lib/createChild'
 import { LogSheet, SheetFooterAction } from '../../components/calendar/LogSheet'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { InkBackButton } from '../../components/ui/InkBackButton'
@@ -136,31 +137,6 @@ function formatAge(birthDate: string): string {
   const y = Math.floor(months / 12)
   const m = months % 12
   return m > 0 ? tNow('kp_pk_ageYM', { y, m }) : tNow(y > 1 ? 'kp_pk_ageYears' : 'kp_pk_ageYear', { y })
-}
-
-function mapDbChild(c: any): ChildWithRole {
-  return {
-    id: c.id,
-    parentId: c.parent_id,
-    name: c.name,
-    birthDate: c.birth_date ?? '',
-    weightKg: c.weight_kg ?? 0,
-    heightCm: c.height_cm ?? 0,
-    sex: c.sex ?? '',
-    bloodType: c.blood_type ?? '',
-    allergies: c.allergies ?? [],
-    medications: c.medications ?? [],
-    conditions: c.conditions ?? [],
-    dietaryRestrictions: c.dietary_restrictions ?? [],
-    preferredFoods: c.preferred_foods ?? [],
-    dislikedFoods: c.disliked_foods ?? [],
-    pediatrician: c.pediatrician ?? null,
-    notes: c.notes ?? '',
-    photoUrl: c.photo_url ?? null,
-    countryCode: c.country_code ?? 'US',
-    caregiverRole: 'parent',
-    permissions: { view: true, log_activity: true, chat: true },
-  }
 }
 
 // ─── Photo helpers (mirror app/onboarding/kids) ─────────────────────────────
@@ -1029,45 +1005,22 @@ function AddChildSheet({
 
       const pediatrician = pedName.trim() ? { name: pedName.trim(), phone: pedPhone.trim(), clinic: pedClinic.trim() } : null
 
-      const { data, error } = await supabase.from('children').insert({
-        parent_id: session.user.id,
-        name: name.trim(),
-        birth_date: birthDate,
-        sex: sex || null,
-        blood_type: bloodType || null,
+      let newChild = await createChild(session, {
+        name,
+        birthDate,
+        sex,
+        bloodType,
         allergies,
         medications,
         conditions,
-        dietary_restrictions: dietaryRestrictions,
-        preferred_foods: preferredFoods,
-        disliked_foods: dislikedFoods,
+        dietaryRestrictions,
+        preferredFoods,
+        dislikedFoods,
         pediatrician,
-        notes: notes.trim() || null,
-        country_code: countryCode,
-        photo_url: photoToStoreAtInsert(photo),
-      }).select().single()
-
-      if (error) throw error
-
-      // The parent's own child_caregivers link is what loads this child on the next launch (the
-      // parent_id fallback only runs when the user has no links at all). Onboarding writes it;
-      // this sheet didn't, so a second child vanished after a restart. No link → roll back.
-      const { error: linkError } = await supabase.from('child_caregivers').insert({
-        child_id: data.id,
-        user_id: session.user.id,
-        email: session.user.email,
-        role: 'parent',
-        status: 'accepted',
-        permissions: { view: true, log_activity: true, chat: true, edit_child: true, emergency: true },
-        invited_by: session.user.id,
-        accepted_at: new Date().toISOString(),
+        notes,
+        countryCode,
+        photoUrl: photoToStoreAtInsert(photo),
       })
-      if (linkError) {
-        await supabase.from('children').delete().eq('id', data.id)
-        throw linkError
-      }
-
-      let newChild = mapDbChild(data)
       // A freshly-picked local photo uploads now that we have the child id,
       // then we persist the returned storage path.
       if (isLocalPhotoUri(photo)) {

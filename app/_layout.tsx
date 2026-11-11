@@ -365,7 +365,9 @@ export default function RootLayout() {
         ),
         withTimeout(
           'behaviors query',
-          supabase.from('behaviors').select('type').eq('user_id', uid),
+          // `active` = false marks an ended journey (baby arrived, cycle tracking ended) — its
+          // logs stay, but it must not come back as an enrolled journey on a fresh install.
+          supabase.from('behaviors').select('type, active').eq('user_id', uid),
         ),
       ])
 
@@ -436,7 +438,7 @@ export default function RootLayout() {
         authLog(`[auth] behaviors found: ${dbBehaviors?.length ?? 0}`)
       }
       const serverTypes: ('pre-pregnancy' | 'pregnancy' | 'kids' | 'menopause')[] =
-        dbBehaviors?.map((b: any) => behaviorFromDbType(b.type)) ?? []
+        dbBehaviors?.filter((b: any) => b.active !== false).map((b: any) => behaviorFromDbType(b.type)) ?? []
       // Restore enrollment if the device has none, coerce the active mode into an
       // enrolled journey, and keep the journey switcher on that same journey.
       restoreJourneys(serverTypes)

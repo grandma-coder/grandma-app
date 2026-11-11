@@ -381,22 +381,26 @@ export async function setReaction(postId: string, type: ReactionType): Promise<R
 
 // ─── Memberships ───────────────────────────────────────────────────────────
 
-async function postSystemMessage(channelId: string, messageType: 'system_join' | 'system_leave'): Promise<void> {
+/** Best-effort join/leave line. Returns the new post id (null if it couldn't be written). */
+async function postSystemMessage(channelId: string, messageType: 'system_join' | 'system_leave'): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return
+  if (!session) return null
   const authorName = await getCurrentUserName()
   const content = messageType === 'system_join'
     ? `${authorName ?? 'Someone'} joined the channel`
     : `${authorName ?? 'Someone'} left the channel`
-  // Best-effort: the join/leave itself already succeeded.
-  const { error } = await supabase.from('channel_posts').insert({
+  const { data, error } = await supabase.from('channel_posts').insert({
     channel_id: channelId,
     author_id: session.user.id,
     author_name: authorName,
     content,
     message_type: messageType,
-  })
-  if (error) console.warn('[channels] system message failed:', error.message)
+  }).select('id').single()
+  if (error) {
+    console.warn('[channels] system message failed:', error.message)
+    return null
+  }
+  return (data as { id: string } | null)?.id ?? null
 }
 
 export async function joinChannel(channelId: string): Promise<void> {
@@ -416,14 +420,21 @@ export async function joinChannel(channelId: string): Promise<void> {
 export async function leaveChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  // Delete membership first — if it fails we don't want a "left the channel"
-  // message posted while the user is still a member (visible to everyone).
+  // Post the "left" line while still a member: private channels only accept posts from members
+  // (RLS), so posting after the delete would always fail there. If the leave itself then fails,
+  // take the line back down so nobody sees "left" for someone who is still in.
+  const leaveMsgId = await postSystemMessage(channelId, 'system_leave')
   const { error } = await supabase
     .from('channel_members')
     .delete()
     .eq('channel_id', channelId)
     .eq('user_id', session.user.id)
-  if (error) throw error
+  if (error) {
+    if (leaveMsgId) {
+      await supabase.from('channel_posts').delete().eq('id', leaveMsgId).eq('author_id', session.user.id)
+    }
+    throw error
+  }
   // Drop my old join request(s) for this channel. An approved row left behind
   // would auto-rejoin me (joinIfApproved) the next time I open the channel, and
   // a stale row blocks a fresh request (UNIQUE(channel_id, user_id)).
@@ -433,7 +444,6 @@ export async function leaveChannel(channelId: string): Promise<void> {
     .eq('channel_id', channelId)
     .eq('user_id', session.user.id)
   if (reqErr) console.warn('[channels] join-request cleanup failed:', reqErr.message)
-  await postSystemMessage(channelId, 'system_leave')
 }
 
 export async function isChannelMember(channelId: string): Promise<boolean> {
@@ -773,16 +783,14 @@ export async function transferChannelOwnership(channelId: string, newOwnerId: st
     throw new Error('Only the channel creator can transfer ownership')
   }
 
-  // Transfer ownership. Check the result: a rejected update (RLS) used to be
-  // ignored and the "transferred ownership" message was posted anyway, while the
-  // caller stayed the host.
-  const { data: moved, error: moveErr } = await supabase
-    .from('channels')
-    .update({ created_by: newOwnerId })
-    .eq('id', channelId)
-    .select('id')
+  // A direct UPDATE of channels.created_by can never pass RLS (the new row must still be owned by
+  // the caller) and is blocked for clients by a column guard. The RPC re-checks that the caller is
+  // the owner and the new owner is a member, then moves it (migration 20261110120000 §6).
+  const { error: moveErr } = await supabase.rpc('transfer_channel_ownership', {
+    p_channel_id: channelId,
+    p_new_owner: newOwnerId,
+  })
   if (moveErr) throw moveErr
-  if (Array.isArray(moved) && moved.length === 0) throw new Error('Ownership transfer was not applied')
 
   // Post system message
   const authorName = await getCurrentUserName()

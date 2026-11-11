@@ -39,8 +39,9 @@ interface CycleSettingsStore {
   setHydrated: (v: boolean) => void
 }
 
-// Clamp ranges match the cycle engine's own guards (cycleLogic clamps 21–60).
-export const CYCLE_LENGTH_RANGE = { min: 21, max: 45 }
+// Clamp ranges match the cycle engine's own guards (cycleLogic clamps 21–60). Some people have
+// steady 45–60-day cycles; capping at 45 told them they were late every cycle.
+export const CYCLE_LENGTH_RANGE = { min: 21, max: 60 }
 export const PERIOD_LENGTH_RANGE = { min: 1, max: 10 }
 export const LUTEAL_RANGE = { min: 9, max: 18 }
 

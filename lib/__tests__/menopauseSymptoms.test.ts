@@ -19,3 +19,19 @@ describe('menopauseSymptoms', () => {
     expect(resolveMenopauseSymptomId('totally unknown')).toBeNull()
   })
 })
+
+describe('seedMenopauseQuickLog — onboarding picks become the home dock pins', () => {
+  const { seedMenopauseQuickLog, MENOPAUSE_QUICK_LOG_MAX } = require('../menopauseSymptoms') as typeof import('../menopauseSymptoms')
+  const DEFAULTS = ['hot_flash', 'night_sweat', 'sleep']
+  it('no picks keep the defaults', () => {
+    expect(seedMenopauseQuickLog([], DEFAULTS)).toEqual(DEFAULTS)
+  })
+  it('picks replace the defaults, in catalog order, without duplicates or unknown ids', () => {
+    expect(seedMenopauseQuickLog(['brain_fog', 'hot_flash', 'hot_flash', 'nope'] as never, DEFAULTS)).toEqual(['hot_flash', 'brain_fog'])
+  })
+  it('never more than the dock holds', () => {
+    const all = ['hot_flash', 'night_sweat', 'sleep', 'fatigue', 'low_mood', 'anxiety', 'brain_fog', 'joint_pain', 'headache', 'palpitations', 'weight', 'vaginal_dryness', 'libido']
+    expect(seedMenopauseQuickLog(all as never, DEFAULTS)).toHaveLength(MENOPAUSE_QUICK_LOG_MAX)
+    expect(MENOPAUSE_QUICK_LOG_MAX).toBe(8)
+  })
+})

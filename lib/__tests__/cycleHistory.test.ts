@@ -11,8 +11,8 @@ describe('computeCycleHistory', () => {
   })
 
   it('keeps a skipped month out of the average', () => {
-    const h = computeCycleHistory([start('2026-06-01'), start('2026-06-29'), start('2026-08-24'), start('2026-09-21')])
-    // 28, 56 (missed log), 28 → average of the plausible ones
+    const h = computeCycleHistory([start('2026-06-01'), start('2026-06-29'), start('2026-09-07'), start('2026-10-05')])
+    // 28, 70 (missed log, over 60), 28 → average of the plausible ones
     expect(h.avg).toBe(28)
     expect(h.max).toBe(28)
   })

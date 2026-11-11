@@ -230,6 +230,9 @@ export default function NotificationsScreen() {
   function handleToggle(id: ToggleId) {
     // Before the saved prefs arrive, a tap would write the defaults over them.
     if (!hydrated) return
+    // Turning a notification ON is the moment to ask the OS (never at launch). Only while it
+    // hasn't been asked yet — after a "Don't allow" the row above links to Settings instead.
+    if (!valueOf(id) && permission === 'undetermined') void askPermission()
     if (!diffuse && id === 'cycle_predictions' && cycleEnrolled) {
       const next = !periodReminderOn
       // CycleHome's reminder sync watches this store and (re)schedules / cancels.

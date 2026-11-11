@@ -26,6 +26,8 @@ import {
   REMINDER_NOTIF_PREFIX,
   type Reminder,
 } from './reminders'
+import { journeyAlertIdsToCancel } from './journeyTransitions'
+import type { Behavior } from '../store/useBehaviorStore'
 
 export const REMINDER_CHANNEL_ID = 'reminders'
 
@@ -64,6 +66,18 @@ export function cancelAllReminderNotifications(): Promise<void> {
   return enqueue(async () => {
     const scheduled = await listScheduledLocalNotificationIds()
     for (const id of scheduled) if (id.startsWith(REMINDER_NOTIF_PREFIX)) await cancelLocalNotification(id)
+  }, undefined)
+}
+
+/**
+ * Cancel every on-device alert that belongs to a journey being ended (its personal reminders
+ * and, for cycle, the period reminder). Runs on the same queue as the syncs so a sync in flight
+ * can't re-schedule what was just cancelled.
+ */
+export function cancelJourneyAlerts(behavior: Behavior): Promise<void> {
+  return enqueue(async () => {
+    const scheduled = await listScheduledLocalNotificationIds()
+    for (const id of journeyAlertIdsToCancel(behavior, scheduled)) await cancelLocalNotification(id)
   }, undefined)
 }
 

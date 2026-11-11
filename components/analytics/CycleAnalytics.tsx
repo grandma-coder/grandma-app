@@ -761,7 +761,7 @@ function RecentCyclesCard({
 
   if (!diffuse) {
     const lens = closed.map((c) => c.lengthDays as number)
-    const BAR_CAP = 45 // visual cap — the printed number is always the real length
+    const BAR_CAP = 60 // visual cap (the longest counted cycle) — the printed number is always the real length
     return (
       <View style={[styles.siteCard, styles.recentCardSite, { backgroundColor: colors.surface, borderColor: colors.text, shadowColor: colors.text }]}>
         <Text style={[styles.siteEyebrow, { color: colors.textMuted }]}>{t('cycleAnalytics_recentCycles')}</Text>

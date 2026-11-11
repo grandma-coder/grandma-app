@@ -37,6 +37,9 @@ import { StickerChoice, MoreSection } from './QuickLogKit'
 import { useTranslation, t as translate } from '../../lib/i18n'
 import type { TranslationKeys } from '../../lib/i18n/keys'
 import { assertNotFuture, FutureDateError } from '../../lib/futureDate'
+import { positiveTestKey, shouldOfferPregnancyFromTest } from '../../lib/journeyTransitions'
+import { useBehaviorStore } from '../../store/useBehaviorStore'
+import { useJourneyTransitionStore } from '../../store/useJourneyTransitionStore'
 
 /** Alert text for a failed save: our own (translated) future-date message, else a calm generic
  *  line — never a raw English Supabase/network error. */
@@ -1378,6 +1381,28 @@ export function OvulationForm({
 }
 
 // ─── PregnancyTestForm ──────────────────────────────────────────────────────
+
+/**
+ * A positive test queues the gentle "start tracking your pregnancy?" sheet (JourneyTransitionHost
+ * shows it once this log sheet has closed). Once per test log; never when already pregnant.
+ */
+async function maybeOfferPregnancyTracking(date: string, value: string): Promise<void> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const key = positiveTestKey(session.user.id, date)
+    const offer = shouldOfferPregnancyFromTest({
+      value,
+      pregnancyEnrolled: useBehaviorStore.getState().enrolledBehaviors.includes('pregnancy'),
+      prompted: useJourneyTransitionStore.getState().promptedTests,
+      key,
+    })
+    if (offer) useJourneyTransitionStore.getState().offerPositiveTest(key, date)
+  } catch {
+    // The log is saved; the offer is only a nicety.
+  }
+}
+
 // Site look: the line gets darker — faded strip, half strip, full strip.
 const PREG_TEST_OPTIONS: { id: string; labelKey: keyof TranslationKeys; look: StackLook }[] = [
   { id: 'negative', labelKey: 'cycleLogForm_pregTest_negative', look: { faded: true } },
@@ -1406,6 +1431,7 @@ export function PregnancyTestForm({
     try {
       await replaceSingleLog(date, 'pregnancy_test', value)
       await invalidate()
+      await maybeOfferPregnancyTracking(date, value)
       onSaved()
     } catch (e: unknown) {
       Alert.alert(t('common_error'), saveErrorText(e))

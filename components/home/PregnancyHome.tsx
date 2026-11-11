@@ -59,6 +59,9 @@ import { dateLoc } from '../../lib/kpLocale'
 
 import { useConsumeWidgetIntent } from '../../store/useWidgetIntentStore'
 import { WidgetFruitCapture } from './pregnancy/WidgetFruitCapture'
+import { BabyArrivedCard } from '../journey/BabyArrivedCard'
+import { BabyArrivedSheet } from '../journey/BabyArrivedSheet'
+import { canOfferBabyArrived, isPastDueDate } from '../../lib/journeyTransitions'
 const SCREEN_W = Dimensions.get('window').width
 
 
@@ -233,6 +236,10 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
   const [detailWeek, setDetailWeek] = useState(weekNumber)
   const [apptDetail, setApptDetail] = useState<StandardAppointment | null>(null)
   const [birthGuideVisible, setBirthGuideVisible] = useState(false)
+  const [babyArrivedOpen, setBabyArrivedOpen] = useState(false)
+  // "Baby arrived" from week 37; past the due date it becomes the prominent card (owner only).
+  const offerBabyArrived = !caregiverView && canOfferBabyArrived(dueDate || null)
+  const pastDue = isPastDueDate(dueDate || null)
 
   const [userId, setUserId] = useState<string | undefined>(undefined)
   // The session lookup is async; until it resolves, the today-logs query runs
@@ -348,6 +355,13 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
         </View>
       )}
 
+      {/* Past the due date: "Baby arrived" leads the home until she confirms. */}
+      {offerBabyArrived && pastDue && (
+        <View style={[styles.section, { marginTop: 4, marginBottom: 20 }]}>
+          <BabyArrivedCard prominent onPress={() => setBabyArrivedOpen(true)} />
+        </View>
+      )}
+
       {/* 1. Hero Carousel — full-width, tappable */}
       {show('week-hero') && (
       <BabyHeroCarousel
@@ -355,6 +369,13 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
         daysToGo={daysToGo}
         onPressWeek={handleHeroPress}
       />
+      )}
+
+      {/* Week 37 → due date: a quiet "Has your baby arrived?" row under the hero. */}
+      {offerBabyArrived && !pastDue && (
+        <View style={[styles.section, { marginTop: 16 }]}>
+          <BabyArrivedCard prominent={false} onPress={() => setBabyArrivedOpen(true)} />
+        </View>
       )}
 
       {/* 2. Daily Message (Diffuse keeps it here; site look moves it below the shortcuts — calm order) */}
@@ -426,6 +447,8 @@ export function PregnancyHome({ topInset = 0, caregiverView }: PregnancyHomeProp
         currentWeek={weekNumber}
         onClose={() => setApptDetail(null)}
       />
+
+      <BabyArrivedSheet visible={babyArrivedOpen} onClose={() => setBabyArrivedOpen(false)} />
 
       {/* Birth guide modal */}
       <BirthGuideModal

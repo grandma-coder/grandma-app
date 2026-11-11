@@ -47,6 +47,7 @@ import { usePregnancyStore, type MoodType } from '../../../store/usePregnancySto
 import { useJourneyStore } from '../../../store/useJourneyStore'
 import { useConsentStore } from '../../../store/useConsentStore'
 import { useBehaviorStore } from '../../../store/useBehaviorStore'
+import { useJourneyTransitionStore } from '../../../store/useJourneyTransitionStore'
 import { isDevModeActive } from '../../../store/useDevStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
@@ -151,6 +152,8 @@ export default function PregnancyOnboarding() {
 
   const handleClose = useCallback(() => {
     store.clearAll()
+    // Started from a positive test but backed out: nothing to ask about cycle tracking.
+    useJourneyTransitionStore.getState().setAskKeepCycle(false)
     router.back()
   }, [])
 

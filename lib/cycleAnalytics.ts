@@ -99,8 +99,17 @@ export interface CycleHistory {
 
 /** Starts closer than this to the previous one are the same period logged twice. */
 const MIN_GAP_DAYS = 10
-/** Cycle lengths kept for the average; outside this they're missed logs or a skipped month. */
-const AVG_RANGE = { min: 15, max: 45 }  // matches the settings' cycle-length range
+/**
+ * Cycle lengths kept for the average; outside this they're missed logs or a skipped month.
+ * 45–60-day cycles are real for some people (the settings stepper goes to 60); a gap over 60 days
+ * is treated as a missed log.
+ */
+export const AVG_RANGE = { min: 15, max: 60 }
+
+/** A closed cycle whose length is believable (counts toward average, min/max and regularity). */
+export function isCountedCycleLength(n: number): boolean {
+  return n >= AVG_RANGE.min && n <= AVG_RANGE.max
+}
 /** A period_end further than this from its start is a stray log, not the end of that period. */
 const MAX_PERIOD_DAYS = 14
 
@@ -140,11 +149,11 @@ export function computeCycleHistory(logs: CycleLogRow[]): CycleHistory {
     return { startDate, endDate: toDateStr(endDate), lengthDays: length, periodEnd }
   })
 
-  // A missed month logs as one ~56-day cycle; leave such outliers out of the average/min/max.
+  // A missed log shows up as one 60+-day gap; leave such outliers out of the average/min/max.
   const closed = cycles
     .filter((c) => c.lengthDays !== null)
     .map((c) => c.lengthDays as number)
-    .filter((n) => n >= AVG_RANGE.min && n <= AVG_RANGE.max)
+    .filter(isCountedCycleLength)
   if (closed.length === 0) return { cycles, avg: null, min: null, max: null }
 
   const avg = Math.round(closed.reduce((a, b) => a + b, 0) / closed.length)
@@ -181,17 +190,16 @@ export interface Regularity {
   deviations: Array<{ cycleIdx: number; delta: number; lengthDays: number }>
 }
 
-export function useRegularity() {
-  const { data: history, ...rest } = useCycleHistory()
-  if (!history) return { ...rest, data: undefined }
-
+/**
+ * Share of counted cycles within ±2 days of the average. Gaps outside AVG_RANGE (a missed log)
+ * are neither regular nor irregular — they're left out, same as for the average.
+ */
+export function computeRegularity(history: CycleHistory): Regularity {
   const closed = history.cycles
     .map((c, idx) => ({ c, idx }))
-    .filter(({ c }) => c.lengthDays !== null)
+    .filter(({ c }) => c.lengthDays !== null && isCountedCycleLength(c.lengthDays))
 
-  if (closed.length < 3 || history.avg === null) {
-    return { ...rest, data: { percent: null, deviations: [] } satisfies Regularity }
-  }
+  if (closed.length < 3 || history.avg === null) return { percent: null, deviations: [] }
 
   const deviations = closed.map(({ c, idx }) => ({
     cycleIdx: idx + 1,
@@ -203,8 +211,13 @@ export function useRegularity() {
   // medical definition — ACOG tolerates ~7–9 days of cycle-to-cycle variation.
   const regularCount = deviations.filter((d) => d.delta <= 2).length
   const percent = Math.round((regularCount / closed.length) * 100)
+  return { percent, deviations }
+}
 
-  return { ...rest, data: { percent, deviations } satisfies Regularity }
+export function useRegularity() {
+  const { data: history, ...rest } = useCycleHistory()
+  const data = useMemo(() => (history ? computeRegularity(history) : undefined), [history])
+  return { ...rest, data }
 }
 
 // ─── PMS Stats ────────────────────────────────────────────────────────────

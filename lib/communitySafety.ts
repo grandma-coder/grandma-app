@@ -11,7 +11,8 @@
 
 import { supabase } from './supabase'
 
-export type ReportableType = 'channel_post' | 'post_comment' | 'garage_listing'
+// 'circle_post': report with authorId omitted — circles are anonymous and the DB stores NULL anyway.
+export type ReportableType = 'channel_post' | 'post_comment' | 'garage_listing' | 'circle_post'
 
 // Keys resolve via i18n (report_reason_*). Kept in sync with the migration's
 // CHECK constraint on content_reports.reason.
