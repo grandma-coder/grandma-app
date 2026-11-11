@@ -5,6 +5,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
+const SEAT_LIMIT_MESSAGE =
+  'This care circle is full. Ask the person who invited you to free up a seat, then try the link again.'
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -83,6 +86,20 @@ serve(async (req) => {
       })
     }
 
+    // Seat cap on the accept path: the invite-time check (enforce_seat_limit_on_insert) can be
+    // stale by now. The DB trigger child_caregivers_seat_limit_on_accept is the real gate
+    // (atomic, per-owner lock); this pre-check only returns a clear error before writing. If the
+    // RPC isn't deployed yet, fall through to the trigger.
+    if (invite.role !== 'parent') {
+      const { data: full, error: seatErr } = await supabase.rpc('caregiver_accept_exceeds_seats', {
+        p_invited_by: invite.invited_by,
+        p_user_id: user.id,
+        p_row_id: invite.id,
+      })
+      if (seatErr) console.warn('[accept-invite] seat pre-check unavailable:', seatErr.message)
+      else if (full === true) throw new Error(SEAT_LIMIT_MESSAGE)
+    }
+
     // Ensure profile exists — without overwriting an existing account's role: a mum who accepts a
     // co-parent/family invite must stay 'parent' (ignoreDuplicates leaves existing rows untouched).
     await supabase
@@ -99,7 +116,10 @@ serve(async (req) => {
       })
       .eq('id', invite.id)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      if ((updateError.message ?? '').includes('seat_limit_exceeded')) throw new Error(SEAT_LIMIT_MESSAGE)
+      throw updateError
+    }
 
     // One invite can cover several children (care-circle writes one row per child, same inviter +
     // email, one token each) but only one link is shared — accept the live sibling rows too, or the
