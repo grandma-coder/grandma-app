@@ -47,8 +47,10 @@ export function PollCard({ postId }: { postId: string }) {
     setVoting(true)
     try {
       await castVote(poll.id, optionId)
-      load()
+    } catch {
+      // Closed meanwhile / network — the reload below shows the real state.
     } finally {
+      load()
       setVoting(false)
     }
   }

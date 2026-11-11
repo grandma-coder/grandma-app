@@ -9,6 +9,7 @@
  *      · WHAT TO PREPARE (action cards with colored icon squares)
  */
 
+import { getTrimester } from '../../../lib/pregnancyWeeks'
 import React, { useEffect, useState } from 'react'
 import {
   View,
@@ -51,11 +52,8 @@ interface Props {
   onClose: () => void
 }
 
-function getTrimester(week: number): 1 | 2 | 3 {
-  if (week <= 13) return 1
-  if (week <= 26) return 2
-  return 3
-}
+// Trimester boundaries come from the shared helper (ACOG: 14–27 is the 2nd) so week 27
+// doesn't read "3rd trimester" here while the calendar, analytics and widget say 2nd.
 
 interface HeroPalette {
   bg: string

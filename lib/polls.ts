@@ -51,6 +51,13 @@ export async function createPoll(params: {
   // rendering still show something meaningful.
   const post = await sendMessage(params.channelId, `📊 ${params.question}`)
 
+  // If the poll or its options can't be saved, take the feed message back down —
+  // otherwise a bare "📊 question" with no poll attached stays in the channel.
+  // Deleting the post cascades to a half-created poll (polls.post_id ON DELETE CASCADE).
+  const rollback = async () => {
+    await supabase.from('channel_posts').delete().eq('id', post.id).eq('author_id', session.user.id)
+  }
+
   const { data: poll, error: pollErr } = await supabase
     .from('polls')
     .insert({
@@ -61,12 +68,18 @@ export async function createPoll(params: {
     })
     .select('id')
     .single()
-  if (pollErr) throw pollErr
+  if (pollErr || !poll) {
+    await rollback()
+    throw pollErr ?? new Error('Poll could not be created')
+  }
 
   const { error: optErr } = await supabase.from('poll_options').insert(
     opts.map((label, i) => ({ poll_id: poll.id, label, position: i }))
   )
-  if (optErr) throw optErr
+  if (optErr) {
+    await rollback()
+    throw optErr
+  }
 
   return poll.id
 }
@@ -124,25 +137,31 @@ export async function castVote(pollId: string, optionId: string): Promise<string
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 
-  const { data: existing } = await supabase
+  const { data: existing, error: readErr } = await supabase
     .from('poll_votes')
     .select('id, option_id')
     .eq('poll_id', pollId)
     .eq('user_id', session.user.id)
     .maybeSingle()
+  if (readErr) throw readErr
 
+  // Writes check their error (supabase-js resolves on RLS errors, e.g. a vote
+  // switch on a poll that has since closed) so the card can resync.
   if (existing) {
     if (existing.option_id === optionId) {
-      await supabase.from('poll_votes').delete().eq('id', existing.id)
+      const { error } = await supabase.from('poll_votes').delete().eq('id', existing.id)
+      if (error) throw error
       return null
     }
-    await supabase.from('poll_votes').update({ option_id: optionId }).eq('id', existing.id)
+    const { error } = await supabase.from('poll_votes').update({ option_id: optionId }).eq('id', existing.id)
+    if (error) throw error
     return optionId
   }
   const { error } = await supabase
     .from('poll_votes')
     .insert({ poll_id: pollId, option_id: optionId, user_id: session.user.id })
-  if (error) throw error
+  // 23505 = a double tap already cast this vote.
+  if (error && (error as any).code !== '23505') throw error
   return optionId
 }
 

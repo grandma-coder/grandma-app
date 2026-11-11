@@ -329,10 +329,12 @@ export async function toggleReaction(postId: string): Promise<boolean> {
   if (error) throw error
 
   if (existing) {
-    await supabase.from('post_reactions').delete().eq('id', existing.id)
+    const { error: delErr } = await supabase.from('post_reactions').delete().eq('id', existing.id)
+    if (delErr) throw delErr
     return false
   } else {
-    await supabase.from('post_reactions').insert({ post_id: postId, user_id: session.user.id })
+    const { error: insErr } = await supabase.from('post_reactions').insert({ post_id: postId, user_id: session.user.id })
+    if (insErr && (insErr as any).code !== '23505') throw insErr
     return true
   }
 }
@@ -355,15 +357,23 @@ export async function setReaction(postId: string, type: ReactionType): Promise<R
     .maybeSingle()
   if (error) throw error
 
+  // Every write checks its error: supabase-js resolves on RLS/DB errors, and the
+  // screen only resyncs its optimistic count when this throws.
   if (existing) {
     if (existing.reaction === type) {
-      await supabase.from('post_reactions').delete().eq('id', existing.id)
+      const { error: delErr } = await supabase.from('post_reactions').delete().eq('id', existing.id)
+      if (delErr) throw delErr
       return null
     }
-    await supabase.from('post_reactions').update({ reaction: type }).eq('id', existing.id)
+    const { error: updErr } = await supabase.from('post_reactions').update({ reaction: type }).eq('id', existing.id)
+    if (updErr) throw updErr
     return type
   }
-  await supabase.from('post_reactions').insert({ post_id: postId, user_id: session.user.id, reaction: type })
+  const { error: insErr } = await supabase
+    .from('post_reactions')
+    .insert({ post_id: postId, user_id: session.user.id, reaction: type })
+  // 23505 = a double tap already inserted it — the reaction exists, which is what we wanted.
+  if (insErr && (insErr as any).code !== '23505') throw insErr
   return type
 }
 
@@ -410,6 +420,14 @@ export async function leaveChannel(channelId: string): Promise<void> {
     .eq('channel_id', channelId)
     .eq('user_id', session.user.id)
   if (error) throw error
+  // Drop my old join request(s) for this channel. An approved row left behind
+  // would auto-rejoin me (joinIfApproved) the next time I open the channel, and
+  // a stale row blocks a fresh request (UNIQUE(channel_id, user_id)).
+  await supabase
+    .from('channel_requests')
+    .delete()
+    .eq('channel_id', channelId)
+    .eq('user_id', session.user.id)
   await postSystemMessage(channelId, 'system_leave')
 }
 
@@ -745,11 +763,16 @@ export async function transferChannelOwnership(channelId: string, newOwnerId: st
     throw new Error('Only the channel creator can transfer ownership')
   }
 
-  // Transfer ownership
-  await supabase
+  // Transfer ownership. Check the result: a rejected update (RLS) used to be
+  // ignored and the "transferred ownership" message was posted anyway, while the
+  // caller stayed the host.
+  const { data: moved, error: moveErr } = await supabase
     .from('channels')
     .update({ created_by: newOwnerId })
     .eq('id', channelId)
+    .select('id')
+  if (moveErr) throw moveErr
+  if (Array.isArray(moved) && moved.length === 0) throw new Error('Ownership transfer was not applied')
 
   // Post system message
   const authorName = await getCurrentUserName()
@@ -884,14 +907,40 @@ export async function notifyMentions(
 export async function requestToJoinChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
-  const { error } = await supabase.from('channel_requests').insert({
+  const insert = () => supabase.from('channel_requests').insert({
     channel_id: channelId,
     user_id: session.user.id,
   })
-  if (error) {
-    if (error.code === '23505') throw new Error('You already have a pending request')
-    throw error
-  }
+  const { error } = await insert()
+  if (!error) return
+  if (error.code !== '23505') throw error
+
+  // UNIQUE(channel_id, user_id): one row per user ever. A denied (or stale
+  // approved) row used to block every later request with a misleading error.
+  // Only a still-pending row is a real "already requested".
+  const prev = await getMyRequestStatus(channelId)
+  if (!prev || prev.status === 'pending') throw new Error('You already have a pending request')
+  const { error: delErr } = await supabase
+    .from('channel_requests')
+    .delete()
+    .eq('id', prev.id)
+    .eq('user_id', session.user.id)
+  if (delErr) throw delErr
+  const { error: retryErr } = await insert()
+  if (retryErr) throw retryErr
+}
+
+/**
+ * Private-channel approval lands here. The host can't insert a membership row
+ * for someone else (channel_members RLS: user_id = auth.uid()), so approval
+ * only flips the request; the requester joins themselves the next time they
+ * open the channel. Returns true when it joined.
+ */
+export async function joinIfApproved(channelId: string): Promise<boolean> {
+  const req = await getMyRequestStatus(channelId)
+  if (req?.status !== 'approved') return false
+  await joinChannel(channelId)
+  return true
 }
 
 export async function getMyRequestStatus(channelId: string): Promise<ChannelRequest | null> {
@@ -932,48 +981,36 @@ export async function getPendingRequests(channelId: string): Promise<ChannelRequ
   })) as ChannelRequest[]
 }
 
-export async function approveRequest(requestId: string, channelId: string, userId: string): Promise<void> {
+/**
+ * Host approves a private-channel request. Only the request row changes here:
+ * RLS lets a user insert only THEIR OWN channel_members / channel_posts rows, so
+ * the old member insert + "X was approved" post (authored as the requester)
+ * were silently rejected — the request read "approved" but the person was never
+ * added. The requester now joins via joinIfApproved() (which also posts the
+ * normal "joined" line). `channelId` / `userId` kept for the call sites.
+ */
+export async function approveRequest(requestId: string, _channelId: string, _userId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
 
-  // Update request status
-  await supabase.from('channel_requests').update({
+  const { data, error } = await supabase.from('channel_requests').update({
     status: 'approved',
     resolved_at: new Date().toISOString(),
     resolved_by: session.user.id,
-  }).eq('id', requestId)
-
-  // Add user as member
-  await supabase.from('channel_members').insert({
-    channel_id: channelId,
-    user_id: userId,
-  })
-
-  // Post system message
-  const { data: profile } = await supabase
-    .from('profiles_public')
-    .select('name')
-    .eq('user_id', userId)
-    .single()
-  const userName = profile?.name ?? 'Someone'
-  const authorName = await getCurrentUserName()
-  await supabase.from('channel_posts').insert({
-    channel_id: channelId,
-    author_id: userId,
-    author_name: userName,
-    content: `${userName} was approved to join by ${authorName ?? 'the host'}`,
-    message_type: 'system_join',
-  })
+  }).eq('id', requestId).select('id')
+  if (error) throw error
+  if (Array.isArray(data) && data.length === 0) throw new Error('Request could not be approved')
 }
 
 export async function denyRequest(requestId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
-  await supabase.from('channel_requests').update({
+  const { error } = await supabase.from('channel_requests').update({
     status: 'denied',
     resolved_at: new Date().toISOString(),
     resolved_by: session.user.id,
   }).eq('id', requestId)
+  if (error) throw error
 }
 
 export async function cancelRequest(channelId: string): Promise<void> {

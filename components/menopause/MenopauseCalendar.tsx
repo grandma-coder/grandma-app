@@ -34,6 +34,8 @@ import { SiteSticker } from '../stickers/SiteSticker'
 import { useMenoPalette, STICKER_SHADOW } from './menoPalette'
 import { logTypeBlob, symptomStickerKey } from './menopauseIcons'
 import { isFutureDate } from '../../lib/futureDate'
+import { lastPeriodAfterDelete } from '../../lib/menopauseStage'
+import { supabase } from '../../lib/supabase'
 
 const COPY = {
   get loggedThisDay() { return tNow('meno_c_logged_this_day') },
@@ -78,6 +80,26 @@ function entrySubtitle(row: MenopauseLogRow): string | null {
   // The same word the log form shows for that level ("Forte"), never a 4/5 grade.
   if (row.severity != null) return tNow(`meno_f_sev_${Math.min(5, Math.max(1, Math.round(row.severity)))}` as Parameters<typeof tNow>[0])
   return null
+}
+
+/**
+ * Delete one day's entry. Deleting a period that had become the stored last-period date (older
+ * builds wrote each logged period there) rolls that date back too, or the "months since last
+ * period" counter stays stuck on a period that was removed.
+ */
+async function removeLog(row: MenopauseLogRow, all: MenopauseLogRow[]): Promise<void> {
+  await deleteMenopauseLog(row.date, row.type)
+  if (row.type !== 'period') return
+  const store = useMenopauseStore.getState()
+  const next = lastPeriodAfterDelete(store.lastPeriodDate, row.date, all)
+  if (next === store.lastPeriodDate) return
+  store.setLastPeriodDate(next)
+  // Mirror to profiles, or the next fresh-install boot restores the deleted date. Best-effort.
+  const { data } = await supabase.auth.getSession()
+  const userId = data.session?.user.id
+  if (!userId) return
+  const { error } = await supabase.from('profiles').upsert({ id: userId, last_period_date: next }, { onConflict: 'id' })
+  if (error) console.warn('[menopause] profiles last_period_date rollback failed:', error.message)
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -221,7 +243,7 @@ export function MenopauseCalendar() {
                           onPress={() => Alert.alert(tNow('meno_c_deleteTitle'), tNow('meno_c_deleteBody', { label }), [
                             { text: tNow('common_cancel'), style: 'cancel' },
                             { text: tNow('common_delete'), style: 'destructive', onPress: () => {
-                              deleteMenopauseLog(row.date, row.type).catch(() => Alert.alert(tNow('common_error'), tNow('common_checkConnection')))
+                              removeLog(row, rows ?? []).catch(() => Alert.alert(tNow('common_error'), tNow('common_checkConnection')))
                             } },
                           ])}
                         >

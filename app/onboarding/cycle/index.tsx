@@ -50,7 +50,7 @@ import {
   type TempUnit,
 } from '../../../store/useCycleOnboardingStore'
 import { supabase } from '../../../lib/supabase'
-import { getCycleInfo, toDateStr } from '../../../lib/cycleLogic'
+import { getCycleInfo, getDaysLate, toDateStr } from '../../../lib/cycleLogic'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { useModeStore } from '../../../store/useModeStore'
 import { useJourneyStore } from '../../../store/useJourneyStore'
@@ -367,7 +367,9 @@ function StepLastPeriod({
       {diffuse ? (
         <DiffuseDotCalendar
           value={isoToDate(date)}
-          onChange={(d) => setDate(dateToIso(d))}
+          // No future days (the light look's picker caps at today): a future start enters the
+          // history and the home counts cycle days from a date that hasn't happened.
+          onChange={(d) => { const iso = dateToIso(d); if (iso <= dateToIso(new Date())) setDate(iso) }}
           minimumDate={new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)}
           accent={diffuseFields.pre.accent}
         />
@@ -457,7 +459,7 @@ function StepCycleLength({
       ) : (
         <>
           {!unknown && (
-            <SiteStepper value={cycleLength ?? 28} onChange={setCycleLength} min={18} max={60} unit={t('cycleOnboarding_days')} tone={modeSoft} />
+            <SiteStepper value={cycleLength ?? 28} onChange={setCycleLength} min={CYCLE_LENGTH_RANGE.min} max={CYCLE_LENGTH_RANGE.max} unit={t('cycleOnboarding_days')} tone={modeSoft} />
           )}
           <SiteChoice label={t('cycleOnboarding_iDontKnow')} selected={unknown} onPress={() => setUnknown(!unknown)} tone={modeSoft} sticker="cloud" style={stepStyles.unknownChip} />
 
@@ -875,15 +877,25 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
   const lastPeriod = useCycleOnboardingStore((s) => s.lastPeriodDate)
   const cycleLen = useCycleOnboardingStore((s) => s.cycleLength)
   const periodDur = useCycleOnboardingStore((s) => s.periodDuration)
+  const lengthUnknown = useCycleOnboardingStore((s) => s.cycleLengthUnknown)
   const ttc = useCycleOnboardingStore((s) => s.tryingToConceive)
 
   const prediction = useMemo(() => {
     if (!lastPeriod) return null
     try {
-      const info = getCycleInfo(
-        { lastPeriodStart: lastPeriod, cycleLength: cycleLen ?? 28, periodLength: periodDur ?? 5, lutealPhase: 14 },
-        toDateStr(new Date()),
-      )
+      // Same config the home will use on first open: the settings store gets the CLAMPED cycle
+      // length (or none for "I don't know" → 28), so a 50-day answer predicted day 50 here but
+      // day 45 on the home. And a last period further back than one cycle makes the home say
+      // "late" — don't promise a next-period date here that the home contradicts.
+      const cfg = {
+        lastPeriodStart: lastPeriod,
+        cycleLength: lengthUnknown || !cycleLen ? 28 : clamp(cycleLen, CYCLE_LENGTH_RANGE.min, CYCLE_LENGTH_RANGE.max),
+        periodLength: periodDur ? clamp(periodDur, PERIOD_LENGTH_RANGE.min, PERIOD_LENGTH_RANGE.max) : 5,
+        lutealPhase: 14,
+      }
+      const today = toDateStr(new Date())
+      if (getDaysLate(cfg, today) > 0) return null
+      const info = getCycleInfo(cfg, today)
       const fmt = (iso: string) => {
         const d = new Date(iso + 'T12:00:00')
         return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })
@@ -899,7 +911,7 @@ function CompletionScreen({ onFinish, saving = false }: { onFinish: () => void; 
         nextPeriod: fmt(info.nextPeriodDate),
       }
     } catch { return null }
-  }, [lastPeriod, cycleLen, periodDur])
+  }, [lastPeriod, cycleLen, lengthUnknown, periodDur])
 
   return (
     <View style={[completeStyles.root, { backgroundColor: colors.bg }]}>

@@ -10,3 +10,36 @@ describe('parseLocalDate', () => {
     expect(parseLocalDate('2026-11-01T12:30:00Z').toISOString()).toBe('2026-11-01T12:30:00.000Z')
   })
 })
+
+import { getAgeMonths, getFeedingStage } from '../../store/useGoalsStore'
+
+describe('kids goals age (store/useGoalsStore)', () => {
+  it('counts completed months, not calendar-month changes', () => {
+    jest.useFakeTimers().setSystemTime(new Date(2026, 10, 10, 9, 0))
+    try {
+      // Born Oct 25 → 16 days old on Nov 10, not "1 month".
+      expect(getAgeMonths('2026-10-25')).toBe(0)
+      // Born May 31 → 5 months on Nov 10: still the milk-only stage, not "mixed".
+      expect(getFeedingStage('2026-05-31')).toBe('liquid')
+      expect(getAgeMonths('')).toBe(24)
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+})
+
+import { fullMonthsBetween } from '../localDate'
+
+describe('fullMonthsBetween', () => {
+  const d = (y: number, m: number, day: number) => new Date(y, m - 1, day)
+  it('only counts a month once its day is reached', () => {
+    expect(fullMonthsBetween(d(2026, 10, 25), d(2026, 11, 10))).toBe(0)
+    expect(fullMonthsBetween(d(2026, 10, 25), d(2026, 11, 25))).toBe(1)
+    expect(fullMonthsBetween(d(2025, 11, 25), d(2026, 11, 24))).toBe(11)
+    expect(fullMonthsBetween(d(2025, 11, 25), d(2026, 11, 25))).toBe(12)
+  })
+  it('treats the last day of a shorter month as a full month', () => {
+    expect(fullMonthsBetween(d(2026, 1, 31), d(2026, 2, 28))).toBe(1)
+    expect(fullMonthsBetween(d(2026, 1, 31), d(2026, 2, 27))).toBe(0)
+  })
+})

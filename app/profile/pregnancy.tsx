@@ -45,7 +45,8 @@ import { useTranslation, translations, t as tNow, type TranslationKey } from '..
 import { BrandedLoader } from '../../components/ui/BrandedLoader'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useJourneyStore } from '../../store/useJourneyStore'
-import { getCurrentWeekFromDueDate } from '../../lib/pregnancyData'
+import { getCurrentWeekFromDueDate, dueDateFromLmp } from '../../lib/pregnancyData'
+import { getTrimester } from '../../lib/pregnancyWeeks'
 import { supabase } from '../../lib/supabase'
 import { getDaysToGo } from '../../lib/pregnancyData'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
@@ -80,6 +81,12 @@ interface BirthPreferences {
   lmpDate?: string            // ISO YYYY-MM-DD — last menstrual period
   conceptionType?: string     // Spontaneous / IVF / IUI / Other
   rhFactor?: string           // Positive / Negative / Unknown
+  // The baby-to-be. Kept here, not on a `children` row: there is no child row during pregnancy,
+  // and the oldest child (an older sibling) is NOT this baby.
+  babyName?: string
+  babySex?: string
+  lastScanWeek?: string
+  babyPosition?: 'cephalic' | 'breech' | 'transverse' | 'unknown'
 }
 
 // ─── Diffuse-aware theme accessor ───────────────────────────────────────────────
@@ -115,14 +122,6 @@ const TRIMESTER_LABEL = (week: number): TranslationKey => {
   if (week <= 13) return 'sw1_pp_tri1'
   if (week <= 27) return 'sw1_pp_tri2'
   return 'sw1_pp_tri3'
-}
-
-/** Naegele's rule: EDD = LMP + 280 days. Returns ISO YYYY-MM-DD. */
-function dueDateFromLmp(lmpIso: string): string {
-  const lmp = new Date(lmpIso + 'T00:00:00')
-  if (Number.isNaN(lmp.getTime())) return ''
-  const due = new Date(lmp.getTime() + 280 * 24 * 60 * 60 * 1000)
-  return `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}`
 }
 
 interface ProfileData {
@@ -836,6 +835,7 @@ export default function PregnancyProfileScreen() {
     : storedWeek
   const parentName = useJourneyStore((s) => s.parentName) ?? ''
   const babyNameStore = useJourneyStore((s) => s.babyName) ?? ''
+  const setJourneyBabyName = useJourneyStore((s) => s.setBabyName)
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -854,7 +854,6 @@ export default function PregnancyProfileScreen() {
     lastScanWeek: '',
     position: 'unknown',
   })
-  const [childId, setChildId] = useState<string | null>(null)
   const [currentWeight, setCurrentWeight] = useState<string>('')
   const weightUnit = useUnitsStore((u) => u.weightUnit)
   const wheelWeightOptions = weightUnit === 'lb' ? WEIGHT_OPTIONS_LB : WEIGHT_OPTIONS
@@ -917,6 +916,14 @@ export default function PregnancyProfileScreen() {
     meta.dueDate = iso
     meta.weekNumber = getCurrentWeekFromDueDate(iso)
 
+    // profiles.due_date is what a fresh install / second device restores the due date from
+    // (app/_layout). Left at the onboarding value, a changed due date reverted there.
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .update({ due_date: iso })
+      .eq('id', userId)
+    if (profileErr) throw profileErr
+
     if (existing?.id) {
       const { error } = await supabase
         .from('pregnancy_logs')
@@ -958,7 +965,7 @@ export default function PregnancyProfileScreen() {
   }
 
   const trimester: number | null =
-    weekNumber == null ? null : weekNumber <= 13 ? 1 : weekNumber <= 26 ? 2 : 3
+    weekNumber == null ? null : getTrimester(weekNumber)
   const daysToGo = dueDate ? getDaysToGo(dueDate) : null
 
   useEffect(() => {
@@ -975,6 +982,12 @@ export default function PregnancyProfileScreen() {
 
         if (profileRow) {
           const bp = (profileRow.birth_preferences as BirthPreferences) ?? {}
+          setBaby((prev) => ({
+            name: bp.babyName ?? prev.name,
+            sex: bp.babySex ?? prev.sex,
+            lastScanWeek: bp.lastScanWeek ?? prev.lastScanWeek,
+            position: bp.babyPosition ?? prev.position,
+          }))
           setProfile({
             name: (profileRow.name as string | null) ?? parentName,
             bloodType: (profileRow.blood_type as string | null) ?? '',
@@ -1002,23 +1015,6 @@ export default function PregnancyProfileScreen() {
               setJourneyWeekNumber(getCurrentWeekFromDueDate(meta.dueDate))
             }
           } catch { /* ignore */ }
-        }
-
-        const { data: childRow } = await supabase
-          .from('children')
-          .select('id, name, baby_position')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: true })
-          .limit(1)
-          .maybeSingle()
-
-        if (childRow) {
-          setChildId(childRow.id as string)
-          setBaby((prev) => ({
-            ...prev,
-            name: (childRow.name as string | null) ?? babyNameStore,
-            position: (childRow.baby_position as BabyData['position'] | null) ?? 'unknown',
-          }))
         }
 
         // Latest weight log for this user
@@ -1113,22 +1109,11 @@ export default function PregnancyProfileScreen() {
     }
   }
 
-  async function saveBabyField(field: string, value: string) {
-    if (!childId) return
-    setSaving(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const { error } = await supabase
-        .from('children')
-        .update({ [field]: value })
-        .eq('id', childId)
-      if (error) throw error
-    } catch (e: unknown) {
-      Alert.alert(t('common_error'), t('common_saveFailed'))
-    } finally {
-      setSaving(false)
-    }
+  // The baby fields used to write to the user's OLDEST `children` row: with no child the edit was
+  // silently dropped, with an older sibling it renamed that child. Sex / last scan never saved.
+  function saveBabyField(updates: Pick<BirthPreferences, 'babyName' | 'babySex' | 'lastScanWeek' | 'babyPosition'>) {
+    if (updates.babyName !== undefined) setJourneyBabyName(updates.babyName || null)
+    return saveBirthPreferences(updates)
   }
 
   if (loading) {
@@ -1531,7 +1516,7 @@ export default function PregnancyProfileScreen() {
               label: t('sw1_pp_babyName'), value: baby.name,
               onSave: (v) => {
                 setBaby((b) => ({ ...b, name: v }))
-                void saveBabyField('name', v)
+                void saveBabyField({ babyName: v })
               },
             })}
           />
@@ -1542,7 +1527,10 @@ export default function PregnancyProfileScreen() {
               label: t('sw1_pp_babySex'),
               value: baby.sex,
               options: SEX_OPTIONS,
-              onSave: (v) => setBaby((b) => ({ ...b, sex: v })),
+              onSave: (v) => {
+                setBaby((b) => ({ ...b, sex: v }))
+                void saveBabyField({ babySex: v })
+              },
             })}
           />
           <InfoRow
@@ -1557,7 +1545,7 @@ export default function PregnancyProfileScreen() {
                   ? (v as BabyData['position'])
                   : 'unknown'
                 setBaby((b) => ({ ...b, position: pos }))
-                void saveBabyField('baby_position', pos)
+                void saveBabyField({ babyPosition: pos })
               },
             })}
           />
@@ -1569,7 +1557,10 @@ export default function PregnancyProfileScreen() {
               value: baby.lastScanWeek || '20',
               options: SCAN_WEEK_OPTIONS,
               unit: '',
-              onSave: (v) => setBaby((b) => ({ ...b, lastScanWeek: v })),
+              onSave: (v) => {
+                setBaby((b) => ({ ...b, lastScanWeek: v }))
+                void saveBabyField({ lastScanWeek: v })
+              },
             })}
           />
         </SectionCard>
@@ -1777,7 +1768,8 @@ export default function PregnancyProfileScreen() {
           setLmpPickerOpen(false)
           void saveLmpDate(iso)
         }}
-        minimumDate={new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 50)}
+        // LMP 42 weeks back at most (= a due date two weeks past, week 42).
+        minimumDate={new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 42)}
         maximumDate={new Date()}
       />
 
@@ -1788,8 +1780,10 @@ export default function PregnancyProfileScreen() {
         onChange={setDraftDueDate}
         onClose={() => setDueDatePickerOpen(false)}
         onSave={() => applyDueDate(draftDueDate)}
-        minimumDate={new Date(Date.now() - 1000 * 60 * 60 * 24 * 7 * 42)}
-        maximumDate={new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 42)}
+        // Same window the weeks can show: 42w0d (two weeks past) … 280 days away (week 1, as in
+        // onboarding). 42 weeks out gave "week 1 — 294 days to go"; 42 weeks back pinned week 42.
+        minimumDate={new Date(Date.now() - 1000 * 60 * 60 * 24 * 14)}
+        maximumDate={new Date(Date.now() + 1000 * 60 * 60 * 24 * 280)}
       />
 
       <PaperAlert

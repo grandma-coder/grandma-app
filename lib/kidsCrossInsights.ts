@@ -1,4 +1,5 @@
 import { normalizeSleepQuality } from './sleepQuality'
+import { parseDurationMinutes } from './kidsHandoff'
 // lib/kidsCrossInsights.ts — pure cross-log pattern engine (no supabase/react-query/store deps)
 //
 // Takes already-fetched `child_logs` rows and returns zero or more ranked,
@@ -82,13 +83,24 @@ const MIN_SLEEP_MOOD_HITS = 3
 const MIN_FOOD_REACTIONS = 2
 const SHORT_SLEEP_HOURS = 8 // toddler-ish; tune per age in a later pass
 
-function isShortSleepNight(log: ChildLog): boolean {
-  const v = asRecord(parseValue(log.value))
-  if (!v) return false
-  const duration = parseFloat(String(v.duration ?? ''))
-  const isShort = !isNaN(duration) && duration < SHORT_SLEEP_HOURS
-  const isPoor = normalizeSleepQuality(v.quality) === 'poor'
-  return isShort || isPoor
+/**
+ * Dates whose sleep was short (all sessions that day summed — a nap alone is not a short night)
+ * or rated poor. Durations go through the shared parser: parseFloat read "1h 30m" as 1h.
+ */
+function shortSleepDates(logs: ChildLog[]): Set<string> {
+  const hoursByDate = new Map<string, number>()
+  const poor = new Set<string>()
+  for (const log of logs) {
+    if (log.type !== 'sleep') continue
+    const v = asRecord(parseValue(log.value))
+    if (!v) continue
+    const mins = parseDurationMinutes(v.duration, 'h')
+    if (mins != null) hoursByDate.set(log.date, (hoursByDate.get(log.date) ?? 0) + mins / 60)
+    if (normalizeSleepQuality(v.quality) === 'poor') poor.add(log.date)
+  }
+  const out = new Set(poor)
+  hoursByDate.forEach((h, date) => { if (h < SHORT_SLEEP_HOURS) out.add(date) })
+  return out
 }
 
 /** A mood value may be a bare string (`'cranky'`) or a JSON object (`{ mood: 'cranky' }`). */
@@ -105,9 +117,7 @@ function isCrankyMood(log: ChildLog): boolean {
 }
 
 function computeSleepMoodInsight(logs: ChildLog[]): CrossInsight | null {
-  const shortNights = new Set(
-    logs.filter((l) => l.type === 'sleep' && isShortSleepNight(l)).map((l) => l.date),
-  )
+  const shortNights = shortSleepDates(logs)
   const crankyDays = new Set(
     logs.filter((l) => l.type === 'mood' && isCrankyMood(l)).map((l) => l.date),
   )

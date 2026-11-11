@@ -94,11 +94,15 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
 export async function getNotificationPrefs(): Promise<NotificationPrefs> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return DEFAULT_NOTIFICATION_PREFS
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('notification_prefs')
     .eq('id', session.user.id)
     .single()
+  // A failed read is NOT "no prefs saved": answering with the defaults (daily reminder ON) made a
+  // launch on a bad connection re-schedule the reminder the user had switched off, and let the
+  // settings screen save the defaults over their choices. Callers catch and leave things as they are.
+  if (error && error.code !== 'PGRST116') throw new Error(error.message)
   const stored = (data as { notification_prefs?: Partial<NotificationPrefs> } | null)?.notification_prefs
   return { ...DEFAULT_NOTIFICATION_PREFS, ...(stored ?? {}) }
 }
@@ -251,10 +255,31 @@ export async function registerPushToken(): Promise<string | null> {
       },
       { onConflict: 'user_id,token' }
     )
+    registeredToken = { userId: session.user.id, token }
     return token
   } catch {
     // Best-effort — never block app launch on push registration.
     return null
+  }
+}
+
+/** The (account, token) pair this app process registered — removed again on sign-out. */
+let registeredToken: { userId: string; token: string } | null = null
+
+/**
+ * Sign-out: detach this device from the account's push_tokens. Without it the row outlived the
+ * session, so the signed-out account's remote pushes (care circle, community, command center) kept
+ * landing on this phone — including after someone else signed in on it. Must run while the session
+ * is still valid (RLS: owner-only delete). Best-effort, never prompts, never throws.
+ */
+export async function unregisterPushToken(): Promise<void> {
+  const reg = registeredToken
+  if (!reg) return
+  try {
+    const { error } = await supabase.from('push_tokens').delete().eq('user_id', reg.userId).eq('token', reg.token)
+    if (!error) registeredToken = null
+  } catch {
+    // offline — the row stays; it is replaced/cleaned on the next registration
   }
 }
 

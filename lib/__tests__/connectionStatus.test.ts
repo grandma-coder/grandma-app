@@ -18,6 +18,11 @@ describe('isNetworkError', () => {
     expect(isNetworkError(new Error('The request timed out.'))).toBe(true)
   })
 
+  it('matches a read cut off by the 12s read timeout (supabase-js reports it as an AbortError)', () => {
+    expect(isNetworkError({ message: 'AbortError: Aborted', hint: 'Request was aborted (timeout or manual cancellation)', code: '' })).toBe(true)
+    expect(isNetworkError({ message: 'AbortError: The user aborted a request.', code: '' })).toBe(true)
+  })
+
   it('ignores app and permission errors', () => {
     expect(isNetworkError({ message: 'new row violates row-level security policy', code: '42501' })).toBe(false)
     expect(isNetworkError(new Error('Not signed in'))).toBe(false)

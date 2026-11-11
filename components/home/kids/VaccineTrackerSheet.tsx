@@ -79,7 +79,9 @@ export function VaccineTrackerSheet({
         .eq('child_id', child.id)
         .eq('type', 'vaccine')
         .order('date', { ascending: false })
-        .limit(50)
+        // Dose counts drive done/overdue: a school-age child passes 50 doses (yearly flu
+        // included), and a cap of 50 dropped the earliest ones, flagging given doses overdue.
+        .limit(1000)
       if (!data) return []
       return (data as any[]).map((r) => ({
         id: r.id,

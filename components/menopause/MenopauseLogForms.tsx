@@ -8,7 +8,7 @@
  *    by the 5 groups) → severity 1–5 via StepSlider → optional note → insert a
  *    `menopause_logs` row via saveMenopauseLog.
  *  - MenopausePeriodForm — (peri only) pick a flow level → insert a `period`
- *    event AND update last_period_date (profiles + useMenopauseStore).
+ *    event (the counter reads the newest logged period; see latestPeriodDate).
  *
  * Design: tokens-only, dual-variant (useMenoPalette). Ember mode color via
  * getModeColor('menopause') (current) / getDiffuseAccent('menopause') (Diffuse).
@@ -46,8 +46,6 @@ import {
   menopauseSymptomLabel,
   type MenopauseSymptomId,
 } from '../../lib/menopauseSymptoms'
-import { supabase } from '../../lib/supabase'
-import { useMenopauseStore } from '../../store/useMenopauseStore'
 import { useMenoPalette, STICKER_SHADOW, type MenoPalette } from './menoPalette'
 import { GROUP_META, GROUP_ORDER, GROUP_STICKER, menopauseGroupLabel, symptomBlob, symptomStickerKey } from './menopauseIcons'
 import { useTheme } from '../../constants/theme'
@@ -331,24 +329,10 @@ export function MenopausePeriodForm({ onSaved, logDate }: { onSaved: () => void;
     setSaving(true)
     const date = logDate ?? toDateStr(new Date())
     try {
+      // The logged row alone moves the "months since last period" counter: every reader takes
+      // latestPeriodDate(rows, stored). The stored date stays the user's own answer (onboarding /
+      // settings), so deleting this log later falls back to it instead of sticking to this day.
       await saveMenopauseLog({ date, type: 'period', value: flow })
-      // A logged period updates the "months since last period" counter only when
-      // it's the NEWEST known period start — backfilling an older day via the
-      // calendar must not regress the counter. ISO 'YYYY-MM-DD' compares lexically.
-      const current = useMenopauseStore.getState().lastPeriodDate
-      if (!current || date >= current) {
-        useMenopauseStore.getState().setLastPeriodDate(date)
-        const { data } = await supabase.auth.getSession()
-        const userId = data.session?.user.id
-        if (userId) {
-          // upsert (not update) — a menopause-first user may have no profiles row
-          // yet, and .update() would silently match 0 rows. Best-effort mirror.
-          const { error: profErr } = await supabase
-            .from('profiles')
-            .upsert({ id: userId, last_period_date: date }, { onConflict: 'id' })
-          if (profErr) console.warn('[menopause] profiles last_period_date write failed:', profErr.message)
-        }
-      }
       onSaved()
     } catch (e) {
       setSaving(false)

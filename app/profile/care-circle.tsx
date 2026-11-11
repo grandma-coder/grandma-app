@@ -554,10 +554,16 @@ export default function CareCircleScreen() {
         text: action,
         onPress: async () => {
           try {
-            for (const id of member.rowIds) {
-              const newPerms = { ...member.permissions, _paused: !isPaused }
-              const { error } = await supabase.from('child_caregivers').update({ permissions: newPerms }).eq('id', id)
+            // Each row keeps its OWN permissions: a member can have different grants per child, and
+            // spreading the first row's object onto every row widened (or narrowed) the others.
+            const { data: rows, error: readErr } = await supabase
+              .from('child_caregivers').select('id, permissions').in('id', member.rowIds)
+            if (readErr) throw readErr
+            for (const row of (rows ?? []) as { id: string; permissions: Record<string, unknown> | null }[]) {
+              const newPerms = { ...(row.permissions ?? {}), _paused: !isPaused }
+              const { data, error } = await supabase.from('child_caregivers').update({ permissions: newPerms }).eq('id', row.id).select('id')
               if (error) throw error
+              if (!data?.length) throw new Error(t('common_tryAgain'))
             }
           } catch (e: any) {
             Alert.alert(isPaused ? t('app_cc_couldntActivate') : t('app_cc_couldntPause'), e?.message ?? t('common_tryAgain'))
@@ -578,8 +584,9 @@ export default function CareCircleScreen() {
     setPendingRemove(null)
     try {
       for (const id of member.rowIds) {
-        const { error } = await supabase.from('child_caregivers').update({ status: 'revoked' }).eq('id', id)
+        const { data, error } = await supabase.from('child_caregivers').update({ status: 'revoked' }).eq('id', id).select('id')
         if (error) throw error
+        if (!data?.length) throw new Error(t('common_tryAgain'))
       }
     } catch (e: any) {
       Alert.alert(t('app_cc_couldntRemove'), e?.message ?? t('common_tryAgain'))
@@ -636,10 +643,14 @@ export default function CareCircleScreen() {
       const safeRole = ['parent', 'nanny', 'family'].includes(dbRole) ? dbRole : member.role
 
       for (const id of member.rowIds) {
-        await supabase.from('child_caregivers').update({
+        // Surface failures: a silently dropped write left e.g. a removed "log activity" grant in place
+        // while the owner saw the edit as saved.
+        const { data, error } = await supabase.from('child_caregivers').update({
           role: safeRole,
           permissions: permObj,
-        }).eq('id', id)
+        }).eq('id', id).select('id')
+        if (error) throw error
+        if (!data?.length) throw new Error(t('common_tryAgain'))
       }
 
       loadMembers()
@@ -648,8 +659,43 @@ export default function CareCircleScreen() {
     }
   }
 
-  function resendInvite(member: CareCircleMember) {
-    const token = member.invite_token ?? ''
+  /**
+   * A live token for this member's pending invite. Tokens expire after 7 days and re-sending the old
+   * one only got the invitee an error — an expired row is retired ('expired') and re-issued
+   * ('pending'), which makes the DB token trigger mint a fresh token + window.
+   */
+  async function liveInviteToken(member: CareCircleMember): Promise<string | null> {
+    const read = () => supabase
+      .from('child_caregivers')
+      .select('id, invite_token, invite_token_expires_at')
+      .in('id', member.rowIds)
+      .eq('status', 'pending')
+    const { data: rows, error } = await read()
+    if (error) throw error
+    const now = Date.now()
+    const isLive = (r: { invite_token: string | null; invite_token_expires_at: string | null }) =>
+      !!r.invite_token && (!r.invite_token_expires_at || new Date(r.invite_token_expires_at).getTime() > now)
+    const stale = (rows ?? []).filter((r) => !isLive(r))
+    if (stale.length === 0) return rows?.[0]?.invite_token ?? null
+    for (const r of stale) {
+      const { error: e1 } = await supabase.from('child_caregivers').update({ status: 'expired' }).eq('id', r.id)
+      if (e1) throw e1
+      const { error: e2 } = await supabase.from('child_caregivers').update({ status: 'pending' }).eq('id', r.id)
+      if (e2) throw e2
+    }
+    const { data: fresh, error: freshErr } = await read()
+    if (freshErr) throw freshErr
+    return fresh?.find(isLive)?.invite_token ?? null
+  }
+
+  async function resendInvite(member: CareCircleMember) {
+    let token = member.invite_token ?? ''
+    try {
+      token = (await liveInviteToken(member)) ?? token
+    } catch (e: any) {
+      Alert.alert(t('common_error'), e?.message ?? t('common_tryAgain'))
+      return
+    }
     const inviteLink = `grandma-app://accept-invite?token=${token}`
     const msg = t('app_cc_inviteMsg', { name: member.displayName || t('app_cc_there'), link: inviteLink })
 
@@ -1532,15 +1578,20 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
       for (const childId of selectedChildren) {
         const { data: existing } = await supabase
           .from('child_caregivers')
-          .select('id')
+          .select('id, status')
           .eq('child_id', childId)
           .eq('email', email)
-          .single()
+          .maybeSingle()
 
         if (existing) {
-          const { error: updateErr } = await supabase.from('child_caregivers').update({
-            role: safeRole, status: 'pending', permissions: permObj,
-          }).eq('id', existing.id)
+          // Someone already in the circle for this child: update their grant but leave them accepted —
+          // flipping the row back to 'pending' cut their access until they re-accepted a new link.
+          const keepAccepted = existing.status === 'accepted'
+          const { error: updateErr } = await supabase.from('child_caregivers').update(
+            keepAccepted
+              ? { role: safeRole, permissions: permObj }
+              : { role: safeRole, status: 'pending', permissions: permObj },
+          ).eq('id', existing.id)
           if (updateErr) throw updateErr
           insertedAny = true
         } else {
@@ -1556,15 +1607,31 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
       if (!insertedAny) throw new Error(t('app_cc_noChildrenSelected'))
 
       // Get token for invite link
-      const { data: tokenRow } = await supabase
+      // Only a live pending row of THIS invite has a usable token — an older revoked/accepted row for
+      // the same email has a NULL token, and picking it produced a dead "?token=" link.
+      const { data: tokenRows, error: tokenErr } = await supabase
         .from('child_caregivers')
         .select('invite_token')
         .eq('email', email)
         .eq('invited_by', session.user.id)
+        .eq('status', 'pending')
+        .in('child_id', selectedChildren)
+        .not('invite_token', 'is', null)
         .limit(1)
-        .single()
+      if (tokenErr) throw tokenErr
 
-      const token = tokenRow?.invite_token ?? ''
+      const token: string = tokenRows?.[0]?.invite_token ?? ''
+      if (!token) {
+        // Everyone selected was already in the circle — their access was updated, nothing to send.
+        toast.show({
+          title: t('app_cc_inviteSentTitle'),
+          message: t('app_cc_inviteSentMsg', { name: name.trim() || t('app_cc_caregiver') }),
+          autoDismiss: 2600,
+        })
+        reset()
+        onSaved()
+        return
+      }
       const inviteLink = `grandma-app://accept-invite?token=${token}`
       const msg = t('app_cc_inviteMsg', { name: name.trim() || t('app_cc_there'), link: inviteLink })
 

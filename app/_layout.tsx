@@ -15,7 +15,7 @@ import { AnimatedSplash } from '../components/ui/AnimatedSplash'
 import { RootErrorScreen } from '../components/ui/RootErrorScreen'
 import '../lib/fontDefaults' // first: default Hanken on StyleSheet text styles
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Text as RNText, TextInput as RNTextInput, AppState, View, StyleSheet } from 'react-native'
+import { Text as RNText, TextInput as RNTextInput, AppState, View, StyleSheet, Alert } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import * as Font from 'expo-font'
@@ -92,6 +92,12 @@ import type { ChildWithRole, CaregiverPermissions } from '../types'
 import { queryClient } from '../lib/queryClient'
 import { registerUserDataReloader } from '../lib/userDataReload'
 import { consumePendingInvite } from '../lib/pendingInvite'
+import { clearLocalAccountData, registerLocalSignOutHandler } from '../lib/signOut'
+import { claimDeviceAccount } from '../lib/accountSwitch'
+import { parseAuthRedirect } from '../lib/authRedirect'
+import { authErrorText } from '../lib/authError'
+import { t as translate } from '../lib/i18n'
+import * as Linking from 'expo-linking'
 import { font, useTheme, useDiffuseTheme } from '../constants/theme'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import {
@@ -313,6 +319,17 @@ export default function RootLayout() {
       // Truncate the uid — don't emit full auth UUIDs in production logs.
       authLog(`[auth] loadUserData start #${callId} uid:`, uid.slice(0, 8))
 
+      // A different account than the one this device's local data belongs to (the previous
+      // session ended without signOut(): expired/revoked token, global sign-out elsewhere). Its
+      // journeys, due date, children, PIN and reminders are still in the stores — and
+      // restoreJourneys below keeps local enrollment over the server's — so clear them first.
+      if (await claimDeviceAccount(uid)) {
+        console.warn('[auth] different account than last time on this device — clearing its local data')
+        setHasChildren(false)
+        await clearLocalAccountData().catch((e) => console.warn('[auth] local data clear failed:', e))
+      }
+      if (cancelled) return
+
       // The three independent queries (profile, child_caregivers, behaviors)
       // fire in parallel. If one hangs, it doesn't block the others — each
       // has its own 6s timeout. Children-fallback still depends on the
@@ -515,6 +532,73 @@ export default function RootLayout() {
       syncBadgesFromSupabase().catch(() => {})
     }
 
+    /** Drop the session state; the route guard then sends the user to welcome. */
+    function markSignedOut() {
+      setSession(null)
+      // Clear flags so signing back in starts from a fresh load state.
+      setRecoveryMode(false)
+      recoveryLinkPending = false
+      inFlightUid = null
+      setHasChildren(false)
+      clearCaregiver()
+      setLoadFailed(false)
+      setLoading(false)
+      // Session gone without signOut() (expired/revoked token, global sign-out elsewhere):
+      // the home-screen widgets and shortcuts must not keep this account's data.
+      void clearWidgets()
+    }
+    // signOut() calls this itself — when supabase.auth.signOut() fails offline no SIGNED_OUT fires.
+    registerLocalSignOutHandler(markSignedOut)
+
+    // ─── Email links (password reset) ─────────────────────────────────────
+    // detectSessionInUrl is off (React Native), so nothing consumed the reset email's
+    // grandma-app://auth/reset#access_token=…&type=recovery link: it opened an unmatched route,
+    // the guard bounced to welcome, and the user could never set a new password. Establish the
+    // session from the link here. setSession() emits SIGNED_IN (not PASSWORD_RECOVERY), so the
+    // listener is told to treat the next SIGNED_IN as the recovery.
+    let recoveryLinkPending = false
+    function enterRecovery() {
+      recoveryLinkPending = false
+      setRecoveryMode(true)
+      setLoading(false)
+      router.replace('/(auth)/reset-password')
+    }
+    async function handleAuthLink(url: string | null) {
+      const link = parseAuthRedirect(url)
+      if (!link || cancelled) return
+      try {
+        if (link.kind === 'error') {
+          if (link.isRecovery) {
+            Alert.alert(translate('auth_couldntUpdatePassword'), authErrorText({ message: link.description ?? '' }))
+            router.replace('/(auth)/forgot-password')
+          }
+          return
+        }
+        if (link.isRecovery) {
+          // Hold the guard before the session lands so it can't route the recovery session to (tabs).
+          recoveryLinkPending = true
+          setRecoveryMode(true)
+        }
+        const { error } =
+          link.kind === 'session'
+            ? await supabase.auth.setSession({ access_token: link.accessToken, refresh_token: link.refreshToken })
+            : link.kind === 'otp'
+              ? await supabase.auth.verifyOtp({ token_hash: link.tokenHash, type: link.type as 'recovery' })
+              : await supabase.auth.exchangeCodeForSession(link.code)
+        if (error) throw error
+      } catch (e) {
+        recoveryLinkPending = false
+        setRecoveryMode(false)
+        console.warn('[auth] email link could not be used:', e)
+        if (link.isRecovery) {
+          Alert.alert(translate('auth_couldntUpdatePassword'), authErrorText(e))
+          router.replace('/(auth)/forgot-password')
+        }
+      }
+    }
+    void Linking.getInitialURL().then(handleAuthLink).catch(() => {})
+    const linkSub = Linking.addEventListener('url', ({ url }) => { void handleAuthLink(url) })
+
     registerUserDataReloader(async () => {
       const { data: { session: current } } = await supabase.auth.getSession()
       if (!current || cancelled) return
@@ -531,25 +615,14 @@ export default function RootLayout() {
         // and fires PASSWORD_RECOVERY. Route to the reset screen and stop —
         // do NOT run loadUserData / let the route guard send the user to (tabs),
         // or they'd never get the chance to set a new password.
-        if (event === 'PASSWORD_RECOVERY') {
-          setRecoveryMode(true)
-          setLoading(false)
-          router.replace('/(auth)/reset-password')
+        if (event === 'PASSWORD_RECOVERY' || (recoveryLinkPending && event === 'SIGNED_IN' && newSession)) {
+          enterRecovery()
           return
         }
 
         if (event === 'SIGNED_OUT' || !newSession) {
           authLog('[auth] no session — unblock loading, route guard will send to /(auth)/welcome')
-          // Clear flags so signing back in starts from a fresh load state.
-          setRecoveryMode(false)
-          inFlightUid = null
-          setHasChildren(false)
-          clearCaregiver()
-          setLoadFailed(false)
-          setLoading(false)
-          // Session gone without signOut() (expired/revoked token, global sign-out elsewhere):
-          // the home-screen widgets and shortcuts must not keep this account's data.
-          void clearWidgets()
+          markSignedOut()
           return
         }
 
@@ -603,6 +676,8 @@ export default function RootLayout() {
     return () => {
       cancelled = true
       registerUserDataReloader(null)
+      registerLocalSignOutHandler(null)
+      linkSub.remove()
       clearTimeout(safety)
       subscription.unsubscribe()
     }

@@ -8,9 +8,9 @@
 
 import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { supabase } from './supabase'
+import { supabase, fetchAllRows } from './supabase'
 import { useModeStore } from '../store/useModeStore'
-import { getCycleInfo, toDateStr, type CyclePhase, type CycleCalendarInput } from './cycleLogic'
+import { getCycleInfo, getDaysLate, phaseOnCycleDay, toDateStr, type CyclePhase, type CycleCalendarInput } from './cycleLogic'
 import {
   getChecklistItems,
   getChecklistTitle,
@@ -56,14 +56,15 @@ async function fetchCycleLogs(): Promise<CycleLogRow[]> {
   const session = sessionData.session
   if (!session) return []
 
-  const { data, error } = await supabase
-    .from('cycle_logs')
-    .select('id, user_id, date, type, value, notes, created_at')
-    .eq('user_id', session.user.id)
-    .order('date', { ascending: true })
-
-  if (error) throw error
-  return (data ?? []) as CycleLogRow[]
+  // Paged: a single select stops at 1000 rows, and oldest-first that dropped the newest logs.
+  return fetchAllRows<CycleLogRow>(() =>
+    supabase
+      .from('cycle_logs')
+      .select('id, user_id, date, type, value, notes, created_at')
+      .eq('user_id', session.user.id)
+      .order('date', { ascending: true })
+      .order('id', { ascending: true }),
+  )
 }
 
 /** Base hook — all 5 stat hooks read the same cached list. */
@@ -235,19 +236,18 @@ export interface PMSStats {
   avgDaysBeforePeriod: { min: number; max: number } | null
 }
 
-/**
- * Phase boundaries, mirrored EXACTLY from `getCycleInfo` in cycleLogic.ts
- * (periodLength=5, lutealPhase=14 app defaults) so a symptom logged on a
- * given cycle day is tagged the same phase the live cycle ring would show.
- */
-function phaseForCycleDay(cycleDay: number, cycleLength: number): CyclePhase {
-  const periodLength = 5
-  const lutealPhase = 14
-  const ovulationDay = cycleLength - lutealPhase
-  if (cycleDay <= periodLength) return 'menstruation'
-  if (cycleDay < ovulationDay - 1) return 'follicular'
-  if (cycleDay <= ovulationDay + 1) return 'ovulation'
-  return 'luteal'
+/** Period / luteal settings the PMS phase tagging uses (defaults = the app defaults). */
+export interface PhaseSettings {
+  periodLength: number
+  lutealPhase: number
+}
+const DEFAULT_PHASE_SETTINGS: PhaseSettings = { periodLength: 5, lutealPhase: 14 }
+
+/** Local YYYY-MM-DD `days` after `date` (calendar days, so DST's 23/25h days don't shift it). */
+function addLocalDays(date: string, days: number): string {
+  const d = new Date(date + 'T12:00:00')
+  d.setDate(d.getDate() + days)
+  return toDateStr(d)
 }
 
 /** Local Date-math day difference on 'YYYY-MM-DD' strings (daysBetween isn't exported from cycleLogic.ts). */
@@ -271,7 +271,11 @@ function findCycleForDate(history: CycleHistory, logDate: string): Cycle | null 
   return null
 }
 
-export function computePMSStats(logs: CycleLogRow[], history: CycleHistory): PMSStats {
+export function computePMSStats(
+  logs: CycleLogRow[],
+  history: CycleHistory,
+  settings: PhaseSettings = DEFAULT_PHASE_SETTINGS,
+): PMSStats {
   const symptomLogs = logs.filter((l) => l.type === 'symptom')
 
   // Top symptoms — split comma-separated values (SymptomsForm saves them joined),
@@ -291,7 +295,11 @@ export function computePMSStats(logs: CycleLogRow[], history: CycleHistory): PMS
     if (cycle) {
       const cycleLength = cycle.lengthDays ?? history.avg ?? 28
       const cycleDay = daysBetweenDates(cycle.startDate, log.date) + 1
-      phase = phaseForCycleDay(cycleDay, cycleLength)
+      // Past the expected length of the open cycle the period is late: no phase to tag (the home
+      // and calendar pause there too), and "days before period" would come out negative.
+      const late = cycle.lengthDays === null && cycleDay > cycleLength
+      // Same phase math (and clamping) as the ring, with the user's period / luteal settings.
+      if (!late) phase = phaseOnCycleDay(cycleDay, cycleLength, settings.periodLength, settings.lutealPhase)
       if (phase === 'luteal') {
         lutealDaysBeforePeriod.push(cycleLength - cycleDay + 1)
       }
@@ -349,12 +357,12 @@ export function computePMSStats(logs: CycleLogRow[], history: CycleHistory): PMS
 
   let totalPmsDays = 0
   for (const cycle of closedCycles) {
-    const end = new Date(cycle.endDate as string + 'T00:00:00')
-    const pmsStart = new Date(end.getTime() - 6 * 86400000) // last 7 days inclusive
+    const end = cycle.endDate as string
+    // Last 7 days inclusive, by calendar date: subtracting 6×24h dropped the first day across DST.
+    const pmsStart = addLocalDays(end, -6)
     const pmsSet = new Set<string>()
     for (const log of symptomLogs) {
-      const d = new Date(log.date + 'T00:00:00')
-      if (d >= pmsStart && d <= end) pmsSet.add(log.date)
+      if (log.date >= pmsStart && log.date <= end) pmsSet.add(log.date)
     }
     totalPmsDays += pmsSet.size
   }
@@ -366,6 +374,8 @@ export function computePMSStats(logs: CycleLogRow[], history: CycleHistory): PMS
 
 export function usePMSStats() {
   const logsQuery = useCycleLogs()
+  const periodLength = useCycleSettingsStore((s) => s.periodLength)
+  const lutealPhase = useCycleSettingsStore((s) => s.lutealPhase)
   const historyResult = useCycleHistory()
   const isLoading = logsQuery.isLoading || historyResult.isLoading
   const error = logsQuery.error ?? historyResult.error
@@ -373,7 +383,7 @@ export function usePMSStats() {
     return { data: undefined, isLoading, error }
   }
   return {
-    data: computePMSStats(logsQuery.data, historyResult.data),
+    data: computePMSStats(logsQuery.data, historyResult.data, { periodLength, lutealPhase }),
     isLoading,
     error,
   }
@@ -392,33 +402,35 @@ function formatFromCycleDay(cycleStart: string, dayOffset: number): string {
   return toDateStr(d)
 }
 
-export function useFertileWindow() {
-  const { data: history, ...rest } = useCycleHistory()
-  const settings = useCycleSettingsStore()
-  if (!history || history.cycles.length === 0) {
-    return { ...rest, data: { current: null, history: [] } satisfies FertileWindow }
-  }
+/** Settings the fertile-window / intercourse reads use (the subset of useCycleSettingsStore). */
+export interface WindowSettings {
+  cycleLength: number | null
+  periodLength: number
+  lutealPhase: number
+}
 
-  // Same config as the home (declared settings win over the measured average), and anchored on the
-  // CURRENT cycle: anchoring on the last logged start left a past window with daysLeft 0 once that
-  // cycle had ended without a new log.
+/**
+ * Same config as the home (declared settings win over the measured average), anchored on the
+ * CURRENT cycle: anchoring on the last logged start left a past window with daysLeft 0 once that
+ * cycle had ended without a new log. While the period is late there is no current window — the
+ * home and calendar pause estimates until a new period is logged, so this does too.
+ */
+export function computeFertileWindow(history: CycleHistory, settings: WindowSettings, today: string): FertileWindow {
+  if (history.cycles.length === 0) return { current: null, history: [] }
+
   const avgLen = settings.cycleLength ?? history.avg ?? 28
-  const today = toDateStr(new Date())
   const latestCycle = history.cycles[history.cycles.length - 1]
+  const config = { lastPeriodStart: latestCycle.startDate, cycleLength: avgLen, periodLength: settings.periodLength, lutealPhase: settings.lutealPhase }
 
-  const info = getCycleInfo(
-    { lastPeriodStart: latestCycle.startDate, cycleLength: avgLen, periodLength: settings.periodLength, lutealPhase: settings.lutealPhase },
-    today
-  )
-  const currentCycleStart = formatFromCycleDay(info.ovulationDate, -(info.ovulationDay - 1))
-
-  const currentStart = formatFromCycleDay(currentCycleStart, info.fertileStart - 1)
-  const currentEnd = formatFromCycleDay(currentCycleStart, info.fertileEnd - 1)
-  const todayD = new Date(today + 'T00:00:00')
-  const endD = new Date(currentEnd + 'T00:00:00')
-  const daysLeft = Math.max(0, Math.round((endD.getTime() - todayD.getTime()) / 86400000))
-
-  const current = { start: currentStart, end: currentEnd, daysLeft }
+  let current: FertileWindow['current'] = null
+  if (getDaysLate(config, today) === 0) {
+    const info = getCycleInfo(config, today)
+    const currentCycleStart = formatFromCycleDay(info.ovulationDate, -(info.ovulationDay - 1))
+    const currentStart = formatFromCycleDay(currentCycleStart, info.fertileStart - 1)
+    const currentEnd = formatFromCycleDay(currentCycleStart, info.fertileEnd - 1)
+    const daysLeft = Math.max(0, dayDiff(today, currentEnd))
+    current = { start: currentStart, end: currentEnd, daysLeft }
+  }
 
   const pastWindows = history.cycles
     .slice(-4, -1) // last 3 closed cycles
@@ -429,7 +441,14 @@ export function useFertileWindow() {
       cycleIdx: history.cycles.indexOf(c) + 1,
     }))
 
-  return { ...rest, data: { current, history: pastWindows } satisfies FertileWindow }
+  return { current, history: pastWindows }
+}
+
+export function useFertileWindow() {
+  const { data: history, ...rest } = useCycleHistory()
+  const settings = useCycleSettingsStore()
+  if (!history) return { ...rest, data: { current: null, history: [] } satisfies FertileWindow }
+  return { ...rest, data: computeFertileWindow(history, settings, toDateStr(new Date())) }
 }
 
 // ─── Mood Stats ───────────────────────────────────────────────────────────
@@ -609,31 +628,34 @@ export interface IntercourseStats {
   recent: Array<{ date: string; protectedSex: boolean; inFertile: boolean }>
 }
 
-export function computeIntercourseStats(logs: CycleLogRow[], history: CycleHistory): IntercourseStats {
+export function computeIntercourseStats(
+  logs: CycleLogRow[],
+  history: CycleHistory,
+  settings: WindowSettings = useCycleSettingsStore.getState(),
+  today: string = toDateStr(new Date()),
+): IntercourseStats {
   const empty: IntercourseStats = { thisCycleCount: 0, inFertileWindow: 0, recent: [] }
   const latest = history.cycles[history.cycles.length - 1]
   if (!latest) return empty
-  const start = new Date(latest.startDate + 'T00:00:00')
-  const settings = useCycleSettingsStore.getState()
+  const start = latest.startDate
   const avgLen = settings.cycleLength ?? history.avg ?? 28
 
   const info = getCycleInfo(
     { lastPeriodStart: latest.startDate, cycleLength: avgLen, periodLength: settings.periodLength, lutealPhase: settings.lutealPhase },
-    toDateStr(new Date()),
+    today,
   )
-  const fertileStartDate = new Date(start.getTime() + (info.fertileStart - 1) * 86400000)
-  const fertileEndDate = new Date(start.getTime() + (info.fertileEnd - 1) * 86400000)
+  // Calendar-date bounds: start + n×24h landed at 01:00 after a spring-forward change, so a mark
+  // on the window's first day (local midnight) read as outside it.
+  const fertileStart = addLocalDays(start, info.fertileStart - 1)
+  const fertileEnd = addLocalDays(start, info.fertileEnd - 1)
 
   const marks = logs
     .filter((l) => l.type === 'intercourse')
     .map((l) => ({ date: l.date, protectedSex: l.value === 'protected' }))
     .sort((a, b) => a.date.localeCompare(b.date))
 
-  const thisCycle = marks.filter((m) => new Date(m.date + 'T00:00:00') >= start)
-  const withFertile = thisCycle.map((m) => {
-    const d = new Date(m.date + 'T00:00:00')
-    return { ...m, inFertile: d >= fertileStartDate && d <= fertileEndDate }
-  })
+  const thisCycle = marks.filter((m) => m.date >= start)
+  const withFertile = thisCycle.map((m) => ({ ...m, inFertile: m.date >= fertileStart && m.date <= fertileEnd }))
 
   return {
     thisCycleCount: withFertile.length,

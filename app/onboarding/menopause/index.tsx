@@ -60,6 +60,7 @@ import { useBehaviorStore } from '../../../store/useBehaviorStore'
 import { supabase } from '../../../lib/supabase'
 import { useJourneyStore } from '../../../store/useJourneyStore'
 import { isDevModeActive } from '../../../store/useDevStore'
+import { isFutureDate } from '../../../lib/futureDate'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import type { MenopauseStage } from '../../../lib/menopauseStage'
 import { menopauseGroupLabel } from '../../../components/menopause/menopauseIcons'
@@ -443,7 +444,9 @@ function StepLastPeriod({
         // matching the cycle/kids date steps). The Continue gate still requires a pick.
         <DiffuseDotCalendar
           value={isoToDate(date || null)}
-          onChange={(d) => setDate(dateToIso(d))}
+          // No maximumDate on this calendar: ignore future picks, or the counter starts at a period
+          // that hasn't happened (the light DatePickerField caps at today).
+          onChange={(d) => { const iso = dateToIso(d); if (!isFutureDate(iso)) setDate(iso) }}
           accent={pal.accent}
         />
       ) : (

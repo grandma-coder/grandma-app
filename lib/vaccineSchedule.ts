@@ -11,8 +11,7 @@
  * components that render this data live in
  * `components/home/kids/VaccineScheduleTree.tsx`.
  */
-import { parseLocalDate } from './localDate'
-import { getAgeMonths } from '../store/useGoalsStore'
+import { childAgeMonths } from './childAge'
 import { dateLoc } from './kpLocale'
 import { t as tNow, type TranslationKey } from './i18n'
 
@@ -433,7 +432,7 @@ export function buildVaccineScheduleTree(
   countryCode: string = 'US',
 ): AgeMilestone[] {
   if (!birthDate) return []
-  const ageMonths = getAgeMonths(birthDate)
+  const ageMonths = childAgeMonths(birthDate) ?? 0
   const schedule = getScheduleForCountry(countryCode).entries
   const milestoneMap = new Map<number, AgeMilestone>()
 
@@ -542,15 +541,13 @@ export interface UpcomingVaccine {
 }
 
 export function monthsSince(dateStr: string): number {
-  const d = parseLocalDate(dateStr)
-  if (Number.isNaN(d.getTime())) return Infinity
-  const now = new Date()
-  return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth())
+  // Completed months since the dose (day-aware), so a dose 12 months + 20 days ago isn't "13".
+  return childAgeMonths(dateStr) ?? Infinity
 }
 
 export function getNextDueVaccines(birthDate: string, givenVaccines: HealthRecord[], countryCode: string = 'US'): UpcomingVaccine[] {
   if (!birthDate) return []
-  const ageMonths = getAgeMonths(birthDate)
+  const ageMonths = childAgeMonths(birthDate) ?? 0
   const result: UpcomingVaccine[] = []
   const resolved = getScheduleForCountry(countryCode)
   // Reference-mode (uncatalogued country): show the schedule in the sheet, but

@@ -34,7 +34,8 @@ describe('buildMenopauseReport', () => {
     const m = buildMenopauseReport({ rows: ROWS, stage: 'peri', lastPeriodDate: '2026-06-15' }, ctx('30'))
     expect(Object.fromEntries(m.facts.map((f) => [f.label, f.value]))).toMatchObject({
       report_meno_stage: 'report_meno_stage_peri',
-      report_meno_monthsSince: '4',
+      // The period logged on 30 Oct is newer than the stored 15 Jun date — same date the home uses.
+      report_meno_monthsSince: '0',
     })
 
     const symptoms = section(m, 'symptoms')
@@ -62,5 +63,15 @@ describe('buildMenopauseReport', () => {
   it('"all" includes older entries', () => {
     const m = buildMenopauseReport({ rows: ROWS, stage: 'post', lastPeriodDate: null }, ctx('all'))
     expect(section(m, 'vasomotor').count).toBe(5)
+  })
+
+  it('months since last period uses the newest logged period, like the home counter', () => {
+    const rows = [row('2026-09-01', 'period', null)]
+    const m = buildMenopauseReport({ rows, stage: 'peri', lastPeriodDate: '2026-01-15' }, ctx('30'))
+    const facts = Object.fromEntries(m.facts.map((f) => [f.label, f.value]))
+    expect(facts.report_meno_monthsSince).toBe('2')
+    expect(facts.report_meno_lastPeriod).toContain('2026')
+    expect(facts.report_meno_lastPeriod).toContain('1')
+    expect(facts.report_meno_lastPeriod).not.toContain('15')
   })
 })

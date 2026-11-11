@@ -32,6 +32,7 @@ import {
   type HealthHistoryData,
 } from '../../../lib/vaccineSchedule'
 import { useKidsExamInsights } from '../../../lib/examData'
+import { childAgeMonths } from '../../../lib/childAge'
 
 const SW = Dimensions.get('window').width
 
@@ -115,7 +116,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
               if (Number.isFinite(cm) && cm > 0) heightPts.push({ ageMonths, value: cm, date: g.date })
             }
           }
-          const ageMonths = (new Date().getFullYear() - birth.getFullYear()) * 12 + (new Date().getMonth() - birth.getMonth())
+          const ageMonths = childAgeMonths(child.birthDate) ?? 0
           const chartWidth = SW - 64
           return (
             <View style={{ gap: 12, marginTop: 4 }}>
@@ -281,9 +282,7 @@ export function HealthTrackerSheet({ visible, onClose, child, childColor, health
               if (Number.isFinite(cm) && cm > 0) heightPts.push({ ageMonths, value: cm, date: g.date })
             }
           }
-          const ageMonths =
-            (new Date().getFullYear() - birth.getFullYear()) * 12 +
-            (new Date().getMonth() - birth.getMonth())
+          const ageMonths = childAgeMonths(child.birthDate) ?? 0
           const chartWidth = SW - 64
           return (
             <View style={{ gap: 12, marginTop: 4 }}>

@@ -5,7 +5,7 @@
  * Persist to Supabase child_logs table.
  */
 
-import { parseLocalDate } from '../../lib/localDate'
+import { childAgeMonths as ageMonthsOf } from '../../lib/childAge'
 import { dateLoc } from '../../lib/kpLocale'
 import { clockLabel, hourLabel } from '../../lib/timeFormat'
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactElement, type ReactNode, type ComponentProps } from 'react'
@@ -533,6 +533,9 @@ export async function updateChildLog(
   notes?: string | null,
   photos?: string[],
   date?: string,
+  /** The form's child picker and event type stay editable in edit mode — persist them, or a
+   *  log "moved" to another child / re-typed (temperature → vaccine) silently stays put. */
+  move?: { childId?: string; type?: string },
 ) {
   if (date) assertNotFuture(date)
   const { error } = await supabase
@@ -542,6 +545,8 @@ export async function updateChildLog(
       notes: notes ?? null,
       ...(photos ? { photos } : {}),
       ...(date ? { date } : {}),
+      ...(move?.childId ? { child_id: move.childId } : {}),
+      ...(move?.type ? { type: move.type } : {}),
     })
     .eq('id', id)
   if (error) throw error
@@ -1266,11 +1271,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
   // Derive child age in months for AI context — improves portion estimation
   const childAgeMonths = useMemo(() => {
     const c = children.find((x) => x.id === childId) ?? activeChild
-    if (!c?.birthDate) return undefined
-    const d = parseLocalDate(c.birthDate)
-    if (isNaN(d.getTime())) return undefined
-    const now = new Date()
-    return Math.max(0, (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()))
+    return ageMonthsOf(c?.birthDate) ?? undefined
   }, [children, childId, activeChild])
 
   // Apply routine prefill when it changes
@@ -1633,7 +1634,7 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         } else {
           value = JSON.stringify({ feedType: 'bottle', time: startTime, amount: amount || undefined, ...routineMeta })
         }
-        await updateChildLog(editLog.id, tagWithRoutine(value, prefill) ?? value, feedType === 'solids' ? (description || null) : null, finalPhotos.length ? finalPhotos : undefined, logDate)
+        await updateChildLog(editLog.id, tagWithRoutine(value, prefill) ?? value, feedType === 'solids' ? (description || null) : null, finalPhotos.length ? finalPhotos : undefined, logDate, { childId })
         onSaved()
         return
       }
@@ -2681,7 +2682,7 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
       const value = JSON.stringify(valueObj)
       const taggedValue = tagWithRoutine(value, prefill) ?? value
       if (editLog) {
-        await updateChildLog(editLog.id, taggedValue, notes || null, undefined, logDate)
+        await updateChildLog(editLog.id, taggedValue, notes || null, undefined, logDate, { childId })
         onSaved()
         return
       }
@@ -2916,7 +2917,7 @@ export function HealthEventForm({ onSaved, initialDate, prefill, onSkip, editLog
           : (trimmedValue || eventType)
       const tagged = tagWithRoutine(finalValue, prefill) ?? finalValue
       if (editLog) {
-        await updateChildLog(editLog.id, tagged, notes || null, undefined, logDate)
+        await updateChildLog(editLog.id, tagged, notes || null, undefined, logDate, { childId, type: logType })
         onSaved()
         return
       }
@@ -3079,7 +3080,7 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
         ? JSON.stringify({ mood, routineId: prefill.routineId, routineName: prefill.name ?? undefined })
         : mood
       if (editLog) {
-        await updateChildLog(editLog.id, wrappedValue, notes || null, undefined, logDate)
+        await updateChildLog(editLog.id, wrappedValue, notes || null, undefined, logDate, { childId })
         onSaved()
         return
       }
@@ -3409,7 +3410,7 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       })
       const tagged = tagWithRoutine(value, prefill) ?? value
       if (editLog) {
-        await updateChildLog(editLog.id, tagged, notes || null, undefined, logDate)
+        await updateChildLog(editLog.id, tagged, notes || null, undefined, logDate, { childId })
         onSaved()
         return
       }
@@ -3628,7 +3629,7 @@ export function DiaperForm({ onSaved, initialDate, editLog }: { onSaved: () => v
       }
       const uploadedPhotos = upload.urls.length ? upload.urls : undefined
       if (editLog) {
-        await updateChildLog(editLog.id, value, notes || null, uploadedPhotos, logDate)
+        await updateChildLog(editLog.id, value, notes || null, uploadedPhotos, logDate, { childId })
         onSaved()
         return
       }

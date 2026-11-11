@@ -90,3 +90,26 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 })
+
+/** PostgREST returns at most this many rows per request (Supabase's default `max_rows`). */
+const PAGE_SIZE = 1000
+
+/**
+ * Every row of a query, page by page. A plain select stops at the server's 1000-row cap without
+ * an error, and for "all my logs, oldest first" queries the rows dropped are the NEWEST — a
+ * months-long tracker's analytics and reports froze at the cut-off. `makeQuery` must return a
+ * fresh, fully filtered and ordered builder each call (include a unique tiebreaker such as `id`
+ * in the order so pages don't overlap). Throws the first error rather than returning a partial list.
+ */
+export async function fetchAllRows<T>(
+  makeQuery: () => { range: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }> },
+): Promise<T[]> {
+  const out: T[] = []
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await makeQuery().range(from, from + PAGE_SIZE - 1)
+    if (error) throw error
+    const page = data ?? []
+    out.push(...page)
+    if (page.length < PAGE_SIZE) return out
+  }
+}

@@ -55,6 +55,7 @@ import { AvatarView, AvatarPickerModal, isIconAvatar } from '../../components/ui
 import { PHOTO_BUCKETS } from '../../lib/photoSigning'
 import type { ChildWithRole } from '../../types'
 import { parseLocalDate } from '../../lib/localDate'
+import { childAgeMonths } from '../../lib/childAge'
 import { AfterTransition } from '../../components/ui/AfterTransition'
 
 // ─── Theme (Diffuse-aware) ──────────────────────────────────────────────────
@@ -129,9 +130,7 @@ const COMMON_MEDICATIONS = [
 
 function formatAge(birthDate: string): string {
   if (!birthDate) return ''
-  const born = parseLocalDate(birthDate)
-  const now = new Date()
-  const months = (now.getFullYear() - born.getFullYear()) * 12 + (now.getMonth() - born.getMonth())
+  const months = childAgeMonths(birthDate) ?? 0
   if (months < 1) return tNow('kids_home_age_newborn')
   if (months < 12) return tNow('kp_pk_ageMonths', { n: months })
   const y = Math.floor(months / 12)

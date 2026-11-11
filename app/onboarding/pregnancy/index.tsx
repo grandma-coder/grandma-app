@@ -51,6 +51,7 @@ import { isDevModeActive } from '../../../store/useDevStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
 import { toDateStr } from '../../../lib/cycleLogic'
+import { getCurrentWeekFromDueDate, getDaysToGo } from '../../../lib/pregnancyData'
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -114,20 +115,10 @@ function dateToIso(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
-function calcWeekNumber(dueDateStr: string): number {
-  const due = new Date(dueDateStr + 'T00:00:00')
-  const now = new Date()
-  const diffMs = due.getTime() - now.getTime()
-  const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-  const week = 40 - Math.ceil(daysLeft / 7)
-  return Math.max(1, Math.min(42, week))
-}
-
-function daysUntil(dueDateStr: string): number {
-  const due = new Date(dueDateStr + 'T00:00:00')
-  const now = new Date()
-  return Math.max(0, Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-}
+// Same whole-calendar-day math as the home / calendar / widget (a ceil of a ms difference
+// drifted a day across a clock change near midnight).
+const calcWeekNumber = (dueDateStr: string): number => getCurrentWeekFromDueDate(dueDateStr)
+const daysUntil = (dueDateStr: string): number => getDaysToGo(dueDateStr)
 
 // ─── Main Component ────────────────────────────────────────────────────────
 

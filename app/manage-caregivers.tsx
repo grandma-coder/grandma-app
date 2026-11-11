@@ -163,10 +163,17 @@ export default function ManageCaregivers() {
     const id = pendingRevoke
     if (!id) return
     setPendingRevoke(null)
-    await supabase
+    // Only mark it revoked once the DB says so: an ignored error (offline, RLS matching 0 rows)
+    // showed "revoked" while the caregiver kept full access.
+    const { data, error } = await supabase
       .from('child_caregivers')
       .update({ status: 'revoked' })
       .eq('id', id)
+      .select('id')
+    if (error || !data?.length) {
+      Alert.alert(t('common_error'), t('common_checkConnection'))
+      return
+    }
     setCaregivers((prev) => prev.map((c) => c.id === id ? { ...c, status: 'revoked' } : c))
   }
 

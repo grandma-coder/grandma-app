@@ -30,11 +30,27 @@ describe('applyWidgetLink', () => {
     expect(useModeStore.getState().mode).toBe('kids')
     expect(useWidgetIntentStore.getState().pending).toBeNull()
   })
-  it('unknown child keeps the current child but still opens kids', () => {
+  it('unknown child keeps the current child, opens kids, but no sheet (would log on the wrong child)', () => {
     useBehaviorStore.setState({ enrolledBehaviors: ['kids'], currentBehavior: 'kids' })
     useChildStore.setState({ children: [kid('c1')], activeChild: kid('c1') })
     expect(applyWidgetLink({ journey: 'kids', mode: 'kids', type: 'feeding', childId: 'gone' })).toBe('journey')
     expect(useChildStore.getState().activeChild?.id).toBe('c1')
+    expect(useWidgetIntentStore.getState().pending).toBeNull()
+  })
+  it('view-only caregiver child: switches to the child but opens no log sheet', () => {
+    useBehaviorStore.setState({ enrolledBehaviors: ['kids'], currentBehavior: 'kids' })
+    const viewer = { id: 'c3', caregiverRole: 'family', permissions: { view: true, log_activity: false } } as never
+    useChildStore.setState({ children: [kid('c1'), viewer], activeChild: kid('c1') })
+    expect(applyWidgetLink({ journey: 'kids', mode: 'kids', type: 'feeding', childId: 'c3' })).toBe('journey')
+    expect(useChildStore.getState().activeChild?.id).toBe('c3')
+    expect(useWidgetIntentStore.getState().pending).toBeNull()
+  })
+  it('caregiver child with log_activity still opens the sheet', () => {
+    useBehaviorStore.setState({ enrolledBehaviors: ['kids'], currentBehavior: 'kids' })
+    const nanny = { id: 'c4', caregiverRole: 'nanny', permissions: { view: true, log_activity: true } } as never
+    useChildStore.setState({ children: [nanny], activeChild: nanny })
+    applyWidgetLink({ journey: 'kids', mode: 'kids', type: 'sleep', childId: 'c4' })
+    expect(useWidgetIntentStore.getState().take('kids')).toBe('sleep')
   })
   it('home link sets no intent', () => {
     useBehaviorStore.setState({ enrolledBehaviors: ['pregnancy'], currentBehavior: 'pregnancy' })

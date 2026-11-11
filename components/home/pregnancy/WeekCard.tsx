@@ -10,6 +10,7 @@
  * Background color cycles through 5 palettes (purple, cream, peach, coral, green).
  */
 
+import { getTrimester } from '../../../lib/pregnancyWeeks'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { WeekRuler } from './WeekRuler'
 import { BabyIllustration } from './babyIllustrations'
@@ -22,11 +23,8 @@ import { dateLoc } from '../../../lib/kpLocale'
 import { useLanguageStore } from '../../../store/useLanguageStore'
 import type { TranslationKey } from '../../../lib/i18n'
 
-function getTrimester(week: number): 1 | 2 | 3 {
-  if (week <= 13) return 1
-  if (week <= 26) return 2
-  return 3
-}
+// Trimester boundaries come from the shared helper (ACOG: 14–27 is the 2nd) so week 27
+// doesn't read "3rd trimester" here while the calendar, analytics and widget say 2nd.
 
 // Per-language trimester word/number that fits that language's heroLabel template.
 const TRI_KEYS = ['preg_triOrdinal_1', 'preg_triOrdinal_2', 'preg_triOrdinal_3'] as const

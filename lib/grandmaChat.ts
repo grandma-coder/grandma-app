@@ -63,7 +63,14 @@ export async function sendGrandmaMessage(
       const suggestions: string[] = data.suggestions ?? []
       if (reply) return { reply, suggestions }
     }
+    // A deliberate refusal (switched off / signed out) must not be retried on nana-chat — that
+    // would only double the round trip and, for the kill switch, hit the same 403 again.
+    if (error) {
+      const status = (error as { context?: { status?: number } }).context?.status
+      if (status === 401 || status === 403) throw new GrandmaRefusal(await errorDetail(error))
+    }
   } catch (err) {
+    if (err instanceof GrandmaRefusal) throw new Error(err.message)
     if (__DEV__) console.warn('[grandmaChat] grandma-chat failed, falling back to nana-chat:', err)
   }
 
@@ -80,8 +87,21 @@ export async function sendGrandmaMessage(
   })
 
   if (error) throw error
-  return {
-    reply: data?.reply ?? 'Grandma is thinking...',
-    suggestions: [],
+  // No reply is a failure — surfacing a placeholder as Grandma's answer left a dead bubble in the chat.
+  if (typeof data?.reply !== 'string' || !data.reply) throw new Error('No response from Grandma')
+  return { reply: data.reply, suggestions: [] }
+}
+
+class GrandmaRefusal extends Error {}
+
+/** The edge function's own `error` field, dug out of a FunctionsHttpError (falls back to its message). */
+async function errorDetail(error: unknown): Promise<string> {
+  const fallback = (error as { message?: string })?.message ?? 'grandma-chat failed'
+  try {
+    const ctx = (error as { context?: { json?: () => Promise<{ error?: string }> } }).context
+    const body = typeof ctx?.json === 'function' ? await ctx.json() : null
+    return body?.error ?? fallback
+  } catch {
+    return fallback
   }
 }

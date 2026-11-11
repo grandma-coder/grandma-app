@@ -192,3 +192,22 @@ describe('computeCrossInsights — general behavior', () => {
     expect(out.every((i) => i.severity === 'watch')).toBe(true)
   })
 })
+
+describe('computeCrossInsights — naps are not short nights', () => {
+  it('a good 11h night plus a 1h 30m nap is not a short-sleep day', () => {
+    const logs = ['2026-07-01', '2026-07-03', '2026-07-05'].flatMap((d) => [
+      log(d, 'sleep', JSON.stringify({ duration: '11h', quality: 'good' })),
+      { ...log(d, 'sleep', JSON.stringify({ duration: '1h 30m', quality: 'good' })), id: d + 'nap' },
+      log(nextDay(d), 'mood', 'cranky'),
+    ])
+    expect(computeCrossInsights(logs, 18).some((i) => i.kind === 'sleep_mood')).toBe(false)
+  })
+
+  it('reads "6h 30m" as 6.5h (short), not by its leading number only', () => {
+    const logs = ['2026-07-01', '2026-07-03', '2026-07-05'].flatMap((d) => [
+      log(d, 'sleep', JSON.stringify({ duration: '6h 30m', quality: 'good' })),
+      log(nextDay(d), 'mood', 'cranky'),
+    ])
+    expect(computeCrossInsights(logs, 18).some((i) => i.kind === 'sleep_mood')).toBe(true)
+  })
+})

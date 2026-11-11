@@ -3,7 +3,7 @@
  * and transforms them into chart-ready structures for KidsAnalytics.
  */
 
-import { parseLocalDate } from './localDate'
+import { childAgeMonths } from './childAge'
 import { shortDayMonth } from './timeFormat'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
@@ -320,16 +320,15 @@ function buildNutritionData(
   }
 }
 
-function buildSleepData(logs: ChildLog[], dates: string[], labels: string[]): SleepData {
-  const sleepLogs = logs.filter((l) => l.type === 'sleep')
+export function buildSleepData(logs: ChildLog[], dates: string[], labels: string[]): SleepData {
+  // Selected window only — the fetch reaches back ≥30 days for growth context.
+  const sleepLogs = logs.filter((l) => l.type === 'sleep' && dates.includes(l.date))
   if (sleepLogs.length === 0) {
     return { dailyHours: Array.from({ length: dates.length }, () => 0), qualityCounts: { great: 0, good: 0, restless: 0, poor: 0 }, weekLabels: labels, avgHours: 0, hasData: false }
   }
 
   const dailyHours = new Array(dates.length).fill(0)
   const qualityCounts = { great: 0, good: 0, restless: 0, poor: 0 }
-  let totalHours = 0
-  let sleepDays = 0
 
   for (const log of sleepLogs) {
     const val = asRecord(parseValue(log.value))
@@ -340,8 +339,6 @@ function buildSleepData(logs: ChildLog[], dates: string[], labels: string[]): Sl
       if (dayIdx !== -1) {
         dailyHours[dayIdx] += hours
       }
-      totalHours += hours
-      sleepDays++
 
       const q = normalizeSleepQuality(val.quality)
       if (q === 'great') qualityCounts.great++
@@ -351,17 +348,23 @@ function buildSleepData(logs: ChildLog[], dates: string[], labels: string[]): Sl
     }
   }
 
+  // Hours per logged day in the window ("h/day"): a night plus naps is one day, not several
+  // sessions — dividing by the number of logs read a 14.5h day as ~3.6h.
+  const loggedDays = dailyHours.filter((h) => h > 0)
+  const avgHours = loggedDays.length > 0 ? loggedDays.reduce((a, b) => a + b, 0) / loggedDays.length : 0
+
   return {
     dailyHours,
     qualityCounts,
     weekLabels: labels,
-    avgHours: sleepDays > 0 ? totalHours / sleepDays : 0,
+    avgHours,
     hasData: true,
   }
 }
 
 export function buildMoodData(logs: ChildLog[], dates: string[], labels: string[]): MoodData {
-  const moodLogs = logs.filter((l) => l.type === 'mood')
+  // Selected window only — the fetch reaches back ≥30 days for growth context.
+  const moodLogs = logs.filter((l) => l.type === 'mood' && dates.includes(l.date))
   if (moodLogs.length === 0) {
     return { dailyCounts: {}, dominantMoods: [], weekLabels: labels, hasData: false }
   }
@@ -578,8 +581,10 @@ function buildGrowthData(logs: ChildLog[]): GrowthData {
   return { weights, heights, heads, hasData: weights.length > 0 || heights.length > 0 || heads.length > 0 }
 }
 
-function buildDiaperData(logs: ChildLog[], dates: string[], labels: string[]): DiaperData {
-  const diaperLogs = logs.filter((l) => l.type === 'diaper')
+export function buildDiaperData(logs: ChildLog[], dates: string[], labels: string[]): DiaperData {
+  // Selected window only — the fetch reaches back ≥30 days, so a 7-day view counted a month of
+  // diapers (and its green stools) as "this week".
+  const diaperLogs = logs.filter((l) => l.type === 'diaper' && dates.includes(l.date))
   if (diaperLogs.length === 0) {
     return { dailyCounts: Array.from({ length: dates.length }, () => 0), typeCounts: { pee: 0, poop: 0, mixed: 0 }, colorCounts: {}, weekLabels: labels, totalCount: 0, hasData: false }
   }
@@ -608,7 +613,7 @@ function buildDiaperData(logs: ChildLog[], dates: string[], labels: string[]): D
 }
 
 function buildRoutineComplianceData(logs: ChildLog[], dates: string[], labels: string[]): RoutineComplianceData {
-  const skippedLogs = logs.filter((l) => l.type === 'skipped')
+  const skippedLogs = logs.filter((l) => l.type === 'skipped' && dates.includes(l.date))
   if (skippedLogs.length === 0) {
     return { weeklySkips: Array.from({ length: dates.length }, () => 0), totalSkips: 0, skipRate: 0, mostSkipped: [], weekLabels: labels, hasData: false }
   }
@@ -784,12 +789,7 @@ export function useKidsAnalytics(
       // Used to pick the right nutrition scoring mode (milk / mixed / solids).
       const selectedChild = childId === 'all' ? null : children.find((c) => c.id === childId)
       const ageMonths = selectedChild?.birthDate
-        ? (() => {
-            const d = parseLocalDate(selectedChild.birthDate)
-            if (isNaN(d.getTime())) return 24
-            const now = new Date()
-            return Math.max(0, (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()))
-          })()
+        ? childAgeMonths(selectedChild.birthDate) ?? 24
         : 24
 
       const nutrition = buildNutritionData(allLogs, dates, labels, ageMonths)
@@ -1434,7 +1434,7 @@ export function usePregnancyWeightByWeek(userId: string, dueDate: string | null)
         const w = parseFloat(r.value ?? '0')
         if (!w || isNaN(w)) continue
         const logged = new Date(r.log_date + 'T00:00:00')
-        const days = Math.floor((logged.getTime() - conception.getTime()) / 86_400_000)
+        const days = Math.round((logged.getTime() - conception.getTime()) / 86_400_000) // round: a DST day is 23h/25h
         const week = Math.max(0, Math.min(42, Math.floor(days / 7)))
         out.push({ week, weight: w })
       }

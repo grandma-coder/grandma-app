@@ -194,6 +194,16 @@ function clampSettings(cycleLength: number, periodLength: number, lutealPhase: n
   return { cycleLength: len, periodLength, lutealPhase: Math.min(lutealPhase, len - periodLength - 1) }
 }
 
+/**
+ * Phase of one 1-based cycle day under the same clamping getCycleInfo applies (cycle 21–60,
+ * ovulation after the period). Surfaces that draw a whole cycle (ring dots, PMS tagging) use this
+ * so they never disagree with the day panel when settings combine a short cycle with a long period.
+ */
+export function phaseOnCycleDay(cycleDay: number, cycleLength: number, periodLength: number, lutealPhase: number): CyclePhase {
+  const c = clampSettings(cycleLength, periodLength, lutealPhase)
+  return phaseForCycleDay(cycleDay, c.cycleLength, c.periodLength, c.lutealPhase).phase
+}
+
 /** Phase math for one 1-based cycle day. Inputs are already clamped (see clampSettings). */
 function phaseForCycleDay(cycleDay: number, cycleLength: number, periodLength: number, lutealPhase: number): DayPhase {
   // Ovulation typically happens cycleLength - lutealPhase days after period start
@@ -432,8 +442,12 @@ function calendarDay(
   }
 }
 
-/** Bleeding days for a cycle: the logged end when there is a believable one, else the setting. */
-function periodLengthFor(cycle: CycleSpan, fallback: number): number {
+/**
+ * Bleeding days for a cycle: the logged end when there is a believable one, else the setting.
+ * The home / analytics config uses this for the current cycle so a logged period end moves the
+ * ring and day panel the same way it moves the calendar.
+ */
+export function periodLengthFor(cycle: Pick<CycleSpan, 'startDate' | 'periodEnd'>, fallback: number): number {
   if (!cycle.periodEnd) return fallback
   const n = daysBetween(cycle.startDate, cycle.periodEnd) + 1
   return n >= 1 && n <= 15 ? n : fallback

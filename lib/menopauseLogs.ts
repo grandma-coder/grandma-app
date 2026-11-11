@@ -29,24 +29,32 @@ export async function saveMenopauseLog(input: {
   const { data: s } = await supabase.auth.getSession()
   const userId = s.session?.user.id
   if (!userId) throw new Error('Not authenticated')
-  if (!MULTI_PER_DAY.has(input.type)) {
+  // Insert the new row FIRST, then drop the day's older rows of this type. Deleting first meant a
+  // failed insert (offline, timeout) lost the entry being edited.
+  const { data: inserted, error } = await supabase
+    .from('menopause_logs')
+    .insert({
+      user_id: userId,
+      date: input.date,
+      type: input.type,
+      value: input.value ?? null,
+      severity: input.severity ?? null,
+      notes: input.notes ?? null,
+    })
+    .select('id')
+    .single()
+  if (error) throw error
+  if (!MULTI_PER_DAY.has(input.type) && inserted?.id) {
     const { error: delError } = await supabase
       .from('menopause_logs')
       .delete()
       .eq('user_id', userId)
       .eq('date', input.date)
       .eq('type', input.type)
-    if (delError) throw delError
+      .neq('id', inserted.id)
+    // The new entry is saved; a leftover older row is cleared by the next save of this day + type.
+    if (delError) console.warn('[menopause] replacing the previous entry failed:', delError.message)
   }
-  const { error } = await supabase.from('menopause_logs').insert({
-    user_id: userId,
-    date: input.date,
-    type: input.type,
-    value: input.value ?? null,
-    severity: input.severity ?? null,
-    notes: input.notes ?? null,
-  })
-  if (error) throw error
   invalidateMenopauseLogQueries()
 }
 

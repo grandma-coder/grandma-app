@@ -14,6 +14,15 @@ import { PillButton } from '../components/ui/PillButton'
 import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
 import { useGrandmaChatEnabled } from '../store/useFeatureFlags'
 import { reloadUserData } from '../lib/userDataReload'
+import { functionErrorMessage, inviteErrorKind, type InviteErrorKind } from '../lib/pendingInvite'
+import type { TranslationKey } from '../lib/i18n'
+
+const INVITE_ERROR_KEY: Record<Exclude<InviteErrorKind, 'generic'>, TranslationKey> = {
+  expired: 'acceptInvite_errExpired',
+  wrongAccount: 'acceptInvite_errWrongAccount',
+  used: 'acceptInvite_errUsed',
+  invalid: 'acceptInvite_errInvalid',
+}
 
 type PermGlyph = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
 
@@ -68,6 +77,9 @@ export default function AcceptInvite() {
   const [childName, setChildName] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [grantedPerms, setGrantedPerms] = useState<string[] | null>(null)
+  // Set when the preview already knows this invite can't be accepted by this account (expired,
+  // sent to another email, used, revoked) — shown instead of an Accept button that would only fail.
+  const [inviteProblem, setInviteProblem] = useState<Exclude<InviteErrorKind, 'generic'> | null>(null)
 
   // Gate on session — the accept-invite edge function requires a JWT.
   // Preserve the token through sign-in via a query param so the user
@@ -88,9 +100,14 @@ export default function AcceptInvite() {
       // runs the same server-side token+email validation, returns no PHI).
       if (token) {
         try {
-          const { data } = await supabase.functions.invoke('accept-invite', {
+          const { data, error } = await supabase.functions.invoke('accept-invite', {
             body: { token, preview: true },
           })
+          if (error) {
+            const kind = inviteErrorKind(await functionErrorMessage(error))
+            if (!cancelled && kind !== 'generic') setInviteProblem(kind)
+            return
+          }
           if (!cancelled && data?.permissions) {
             const perms = Object.entries(data.permissions)
               .filter(([k, v]) => !k.startsWith('_') && v === true)
@@ -126,7 +143,7 @@ export default function AcceptInvite() {
         body: { token },
       })
 
-      if (error) throw new Error(error.message)
+      if (error) throw new Error(await functionErrorMessage(error))
       if (data?.error) throw new Error(data.error)
 
       setChildName(data.childName)
@@ -135,7 +152,9 @@ export default function AcceptInvite() {
       await reloadUserData().catch(() => {})
       setAccepted(true)
     } catch (e: any) {
-      Alert.alert(t('acceptInvite_errorTitle'), t('error_generic'))
+      const kind = inviteErrorKind(e?.message)
+      if (kind !== 'generic') setInviteProblem(kind)
+      Alert.alert(t('acceptInvite_errorTitle'), kind === 'generic' ? t('error_generic') : t(INVITE_ERROR_KEY[kind]))
     } finally {
       setLoading(false)
     }
@@ -210,9 +229,10 @@ export default function AcceptInvite() {
         diffuse && { color: dt.colors.ink, fontFamily: diffuseFont.display, fontWeight: '400' },
       ]}>{t('acceptInvite_title')}</Text>
       <Text style={[styles.subtitle, diffuse && { color: dt.colors.ink3, fontFamily: diffuseFont.body }]}>
-        {t('acceptInvite_subtitle')}
+        {inviteProblem ? t(INVITE_ERROR_KEY[inviteProblem]) : t('acceptInvite_subtitle')}
       </Text>
 
+      {!inviteProblem && (<>
       <View style={[
         diffuse ? styles.permissionsCard : styles.siteRows,
         diffuse && { backgroundColor: dt.colors.surface, borderColor: dt.colors.line },
@@ -263,6 +283,8 @@ export default function AcceptInvite() {
       ) : (
         <PillButton variant="ink" label={t('acceptInvite_acceptBtn')} onPress={handleAccept} disabled={loading} loading={loading} style={{ width: '100%' }} />
       )}
+
+      </>)}
 
       <Pressable onPress={() => router.back()} style={styles.declineButton}>
         <Text style={[

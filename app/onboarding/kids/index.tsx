@@ -58,6 +58,7 @@ import { provisionChildSpace } from '../../../lib/skeletonSync'
 import { isDevModeActive } from '../../../store/useDevStore'
 import { useOnboardingComplete } from '../../../hooks/useOnboardingComplete'
 import { supabase } from '../../../lib/supabase'
+import { childAgeMonths } from '../../../lib/childAge'
 import type { ChildWithRole } from '../../../types'
 
 // ─── Step types ────────────────────────────────────────────────────────────
@@ -751,9 +752,7 @@ function formatAge(birthDate: string): string {
   // Force local-time parsing — `new Date('YYYY-MM-DD')` parses as UTC midnight,
   // which lands on the prior calendar day in negative-UTC-offset timezones and
   // throws the age off by a day/month.
-  const born = new Date(birthDate.length === 10 ? birthDate + 'T00:00:00' : birthDate)
-  const now = new Date()
-  const months = (now.getFullYear() - born.getFullYear()) * 12 + (now.getMonth() - born.getMonth())
+  const months = childAgeMonths(birthDate) ?? 0
   if (months < 1) return tNow('kids_home_age_newborn')
   if (months < 12) return months === 1 ? tNow('sw2_ob_ageMonth1') : tNow('sw2_ob_ageMonths', { n: months })
   const years = Math.floor(months / 12)

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { parseLocalDate } from '../lib/localDate'
+import { childAgeMonths } from '../lib/childAge'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../lib/supabase'
@@ -8,10 +8,9 @@ import { supabase } from '../lib/supabase'
 
 /** Get age in months from birth date */
 export function getAgeMonths(birthDate: string): number {
-  if (!birthDate) return 24 // default to toddler if unknown
-  const now = new Date()
-  const birth = parseLocalDate(birthDate)
-  return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+  // Completed months (day-aware): plain year/month subtraction made a baby born May 31 "6
+  // months" on Nov 1, switching feeding stage and goals a month early.
+  return childAgeMonths(birthDate) ?? 24 // default to toddler if unknown
 }
 
 /**

@@ -61,3 +61,29 @@ describe('neutral status labels (no clinical verdicts)', () => {
     expect(vaccineMilestoneBadge('future', 0, 5).key).toBe('kids_home_vaccine_badge_ahead')
   })
 })
+
+describe('vaccine due/overdue uses completed months (day-aware age)', () => {
+  afterEach(() => jest.useRealTimers())
+
+  it('a 3-month-old born on the 31st is not yet overdue for the 2-month doses', () => {
+    // Born Jan 31 → on May 1 she is 3 months old (Apr 30), not 4.
+    jest.useFakeTimers({ now: new Date(2026, 4, 1, 9, 0) })
+    const tree = buildVaccineScheduleTree('2026-01-31', [], 'US')
+    const two = tree.find((m) => m.monthMin === 2)!
+    const dtap = two.vaccines.find((v) => v.name === 'DTaP')!
+    expect(dtap.status).toBe('upcoming')
+    const next = getNextDueVaccines('2026-01-31', [], 'US').find((v) => v.name === 'DTaP')!
+    expect(next.overdue).toBe(false)
+  })
+
+  it('annual dose given 12 months and 20 days ago is due, not overdue', () => {
+    // Flu given 2025-10-25; on 2026-11-14 that is 12 full months, not 13.
+    jest.useFakeTimers({ now: new Date(2026, 10, 14, 9, 0) })
+    const given = [{ id: 'f1', type: 'vaccine', value: 'Influenza', notes: '', date: '2025-10-25' }]
+    const tree = buildVaccineScheduleTree('2023-01-10', given, 'US')
+    const flu = tree.flatMap((m) => m.vaccines).find((v) => v.name === 'Influenza' && v.status !== 'done')
+    const next = getNextDueVaccines('2023-01-10', given, 'US').find((v) => v.name === 'Influenza')
+    expect(next?.overdue).toBe(false)
+    if (flu) expect(flu.status).not.toBe('overdue')
+  })
+})

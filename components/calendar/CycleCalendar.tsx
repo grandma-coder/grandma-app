@@ -16,7 +16,7 @@ import { router } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTheme, useDiffuseTheme, getModeColorSoft } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
-import { getCycleCalendarDay, toDateStr, type CycleConfig, type CycleCalendarInput } from '../../lib/cycleLogic'
+import { getCycleCalendarDay, periodLengthFor, toDateStr, type CycleConfig, type CycleCalendarInput } from '../../lib/cycleLogic'
 import { useCycleCalendarInput, useCycleHistory } from '../../lib/cycleAnalytics'
 import { useCycleSettingsStore } from '../../store/useCycleSettingsStore'
 import { isFutureDate } from '../../lib/futureDate'
@@ -73,7 +73,7 @@ export function CycleCalendar() {
     const latest = history?.cycles[history.cycles.length - 1]
     const cycleLength = cs.cycleLength ?? history?.avg ?? 28
     if (latest) {
-      return { lastPeriodStart: latest.startDate, cycleLength, periodLength: cs.periodLength, lutealPhase: cs.lutealPhase }
+      return { lastPeriodStart: latest.startDate, cycleLength, periodLength: periodLengthFor(latest, cs.periodLength), lutealPhase: cs.lutealPhase }
     }
     // Light look with no period logged: no invented anchor.
     if (!diffuse && history && history.cycles.length === 0) {

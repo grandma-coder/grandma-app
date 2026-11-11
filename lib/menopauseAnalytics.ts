@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { supabase } from './supabase'
+import { supabase, fetchAllRows } from './supabase'
 import { resolveMenopauseSymptomId } from './menopauseSymptoms'
 
 export interface MenopauseLogRow { date: string; type: string; value: string | null; severity: number | null; notes?: string | null }
@@ -40,13 +40,15 @@ export function useMenopauseLogs() {
       const { data: s } = await supabase.auth.getSession()
       const userId = s.session?.user.id
       if (!userId) return []
-      const { data, error } = await supabase
-        .from('menopause_logs')
-        .select('date, type, value, severity, notes')
-        .eq('user_id', userId)
-        .order('date', { ascending: true })
-      if (error) throw error
-      return data ?? []
+      // Paged: a single select stops at 1000 rows, and oldest-first that dropped the newest logs.
+      return fetchAllRows<MenopauseLogRow>(() =>
+        supabase
+          .from('menopause_logs')
+          .select('date, type, value, severity, notes')
+          .eq('user_id', userId)
+          .order('date', { ascending: true })
+          .order('id', { ascending: true }),
+      )
     },
   })
 }

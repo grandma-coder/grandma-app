@@ -4119,6 +4119,10 @@ export interface TranslationKeys {
   preg_calendar_trimesterShort: string
   acceptInvite_permEditChild: string
   acceptInvite_permEmergency: string
+  acceptInvite_errExpired: string
+  acceptInvite_errWrongAccount: string
+  acceptInvite_errUsed: string
+  acceptInvite_errInvalid: string
   manageCaregivers_linkInvite: string
   careCircle_seatsFullTitle: string
   careCircle_seatsFullBody: string

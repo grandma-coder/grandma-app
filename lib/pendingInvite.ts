@@ -25,3 +25,33 @@ export function consumePendingInvite(): string | null {
 export function hasPendingInvite(): boolean {
   return pendingInviteToken !== null
 }
+
+/**
+ * Why accepting an invite failed, in terms the invitee can act on (ask for a new link, switch
+ * account…). Matches the accept-invite edge function's error strings; anything else is generic.
+ */
+export type InviteErrorKind = 'expired' | 'wrongAccount' | 'used' | 'invalid' | 'generic'
+
+export function inviteErrorKind(message: string | null | undefined): InviteErrorKind {
+  const m = (message ?? '').toLowerCase()
+  if (m.includes('expired')) return 'expired'
+  if (m.includes('different email')) return 'wrongAccount'
+  if (m.includes('already been accepted')) return 'used'
+  if (m.includes('revoked') || m.includes('invite not found')) return 'invalid'
+  return 'generic'
+}
+
+/**
+ * supabase.functions.invoke reports a non-2xx as a generic "non-2xx status code" error and hides
+ * the function's own `{ error }` body in `error.context`. Dig it out; fall back to the message.
+ */
+export async function functionErrorMessage(error: unknown): Promise<string> {
+  const fallback = (error as { message?: string } | null)?.message ?? ''
+  try {
+    const ctx = (error as { context?: { json?: () => Promise<{ error?: unknown }> } } | null)?.context
+    const body = typeof ctx?.json === 'function' ? await ctx.json() : null
+    return typeof body?.error === 'string' ? body.error : fallback
+  } catch {
+    return fallback
+  }
+}

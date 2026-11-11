@@ -51,7 +51,7 @@ function buildBuckets(byDay: Record<string, DayCounts>): Bucket[] {
   const t0 = new Date(keys[0] + 'T00:00:00').getTime()
   const weeks = new Map<number, DayCounts>()
   for (const k of keys) {
-    const w = Math.floor((new Date(k + 'T00:00:00').getTime() - t0) / DAY_MS / 7)
+    const w = Math.floor(Math.round((new Date(k + 'T00:00:00').getTime() - t0) / DAY_MS) / 7)
     const cur = weeks.get(w) ?? { pee: 0, poop: 0, mixed: 0 }
     cur.pee += byDay[k].pee; cur.poop += byDay[k].poop; cur.mixed += byDay[k].mixed
     weeks.set(w, cur)

@@ -199,6 +199,16 @@ export function MenopauseHome() {
     }
   }
 
+  // A widget / deep-link log intent opens the matching sheet for today. Must run before the
+  // hydration gate below: a hook after that early return changes the hook count when the store
+  // rehydrates, and React throws ("Rendered more hooks than during the previous render").
+  useConsumeWidgetIntent('menopause', (type) => {
+    setLogDate(null)
+    if (type === 'period') { setActiveSheet('period'); return }
+    setPendingSymptom(type as MenopauseSymptomId)
+    setActiveSheet('symptom')
+  })
+
   // Hydration gate — never render store-derived UI (stage / months / offer)
   // before AsyncStorage rehydrates, or the home flashes a null stage first.
   if (!hydrated) {
@@ -235,7 +245,6 @@ export function MenopauseHome() {
 
   // Quick-log chip → straight to the compact severity form for that symptom.
   const openSymptom = (id: MenopauseSymptomId) => { setLogDate(null); setPendingSymptom(id); setActiveSheet('symptom') }
-  useConsumeWidgetIntent('menopause', (t) => (t === 'period' ? setActiveSheet('period') : openSymptom(t as MenopauseSymptomId)))
   // "More" and a week-strip tap open the tile grid (cycle LogActivitySheet parity).
   const openMore = () => { setGridDate(null); setGridOpen(true) }
   const openLogForDate = (date: string) => { if (isFutureDate(date)) return; setGridDate(date); setGridOpen(true) }

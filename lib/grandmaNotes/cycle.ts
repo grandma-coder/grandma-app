@@ -11,7 +11,9 @@ import type { GrandmaLetter, NoteCandidate, NoteKey, Translate } from './types'
 export interface CycleNoteInput {
   history: CycleHistory | null | undefined
   /** From getCycleInfo(config, today) — only meaningful when history has a period. */
-  info: { cycleDay: number; phase: CyclePhase; daysUntilPeriod: number } | null
+  info: { cycleDay: number; phase: CyclePhase; daysUntilPeriod: number; cycleLength?: number } | null
+  /** Days past the expected period (getDaysLate). > 0 → the info above is an invented next cycle. */
+  daysLate?: number
   pms?: PMSStats | null
   mood?: MoodStats | null
   bbt?: BBTStats | null
@@ -45,14 +47,25 @@ export function buildCycleNote(input: CycleNoteInput, t: Translate): GrandmaLett
   const phase = t(`gn_phaseCap_${info.phase}` as NoteKey)
   const c: NoteCandidate[] = []
 
+  // Late period: getCycleInfo has already wrapped into a predicted new cycle ("day 5, next period in
+  // 24 days") while the home says the period is late. Say what the home says.
+  const daysLate = input.daysLate ?? 0
+  const late = daysLate > 0 && info.cycleLength != null
+
   // Where you are today — always useful, rarely the most informative.
-  c.push({
-    id: 'today', area: 'fertile', sticker: 'flower', weight: 4.5,
-    title: t('gn_cycle_day_title', { day: info.cycleDay }),
-    body: info.daysUntilPeriod <= 1
-      ? t('gn_cycle_day_soon_body', { phase })
-      : t('gn_cycle_day_body', { phase, days: info.daysUntilPeriod }),
-  })
+  c.push(late
+    ? {
+        id: 'today', area: 'fertile', sticker: 'flower', weight: 4.5,
+        title: t('gn_cycle_day_title', { day: (info.cycleLength as number) + daysLate }),
+        body: daysLate === 1 ? t('cycleHome_late_titleOne') : t('cycleHome_late_title', { count: daysLate }),
+      }
+    : {
+        id: 'today', area: 'fertile', sticker: 'flower', weight: 4.5,
+        title: t('gn_cycle_day_title', { day: info.cycleDay }),
+        body: info.daysUntilPeriod <= 1
+          ? t('gn_cycle_day_soon_body', { phase })
+          : t('gn_cycle_day_body', { phase, days: info.daysUntilPeriod }),
+      })
 
   // Length range over recent closed cycles.
   const recent = closed.slice(-6)
@@ -109,6 +122,6 @@ export function buildCycleNote(input: CycleNoteInput, t: Translate): GrandmaLett
   return {
     intro: closed.length === 0 ? t('gn_intro_quiet') : t('gn_intro_noticed'),
     notes,
-    suggestion: { text: t(PHASE_SUGGESTION[info.phase]) },
+    suggestion: { text: t(late ? 'gn_sug_cycle_log' : PHASE_SUGGESTION[info.phase]) },
   }
 }

@@ -176,8 +176,7 @@ function getGrowthLeap(birthDate: string) {
 
 function formatAge(bd: string): string {
   if (!bd) return ''
-  const b = parseLocalDate(bd), n = new Date()
-  const m = (n.getFullYear() - b.getFullYear()) * 12 + (n.getMonth() - b.getMonth())
+  const m = childAgeMonths(bd) ?? 0
   if (m < 1) return tNow('kids_home_age_newborn')
   if (m < 12) return tNow('kp_kh_ageMo', { n: m })
   const y = Math.floor(m / 12), r = m % 12
@@ -226,6 +225,7 @@ import { parseDurationMinutes } from '../../lib/kidsHandoff'
 import { normalizeSleepQuality } from '../../lib/sleepQuality'
 import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { parseLocalDate } from '../../lib/localDate'
+import { childAgeMonths } from '../../lib/childAge'
 import { SheetModal } from '../ui/SheetModal'
 import { CenterModal } from '../ui/CenterModal'
 import { RemindersPanel, type PanelDraft } from './reminders/RemindersPanel'
@@ -548,15 +548,25 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
   // Scheduled vaccine appointments: key = `${childId}:${vaccineKey}`, value = ISO date string
   const [scheduledVaccines, setScheduledVaccines] = useState<Record<string, string>>({})
 
+  // Latest request wins: switching child A → B while A's fetch is in flight must not paint A's
+  // vaccines under B.
+  const healthReqRef = useRef(0)
   async function loadHealthHistory(childId: string) {
-    const { data } = await supabase
-      .from('child_logs')
-      .select('id, type, value, notes, date')
-      .eq('child_id', childId)
-      .in('type', ['vaccine', 'medicine', 'temperature', 'growth', 'milestone'])
-      .order('date', { ascending: false })
-      .limit(50)
-    if (!data) return
+    const req = ++healthReqRef.current
+    const cols = 'id, type, value, notes, date'
+    // Vaccines are fetched on their own, uncapped: dose counts drive the schedule, and a shared
+    // 50-row cap let a fever week of temperature/medicine logs push early doses out — given
+    // vaccines then showed as overdue.
+    const [vacc, rest] = await Promise.all([
+      supabase.from('child_logs').select(cols).eq('child_id', childId).eq('type', 'vaccine')
+        .order('date', { ascending: false }).limit(1000),
+      supabase.from('child_logs').select(cols).eq('child_id', childId)
+        .in('type', ['medicine', 'temperature', 'growth', 'milestone'])
+        .order('date', { ascending: false }).limit(50),
+    ])
+    if (req !== healthReqRef.current) return
+    if (vacc.error || rest.error || !vacc.data || !rest.data) return
+    const data = [...vacc.data, ...rest.data]
     const records: HealthRecord[] = (data as any[]).map((r) => ({
       id: r.id,
       type: r.type,
@@ -1148,6 +1158,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
   // state ("Tap to log" / "No goal set"). Later reloads (focus, range change)
   // keep showing the current numbers.
   const [rangeLoadedFor, setRangeLoadedFor] = useState<string | null>(null)
+  const rangeReqRef = useRef(0)
 
   useEffect(() => {
     if (child) loadRangeData(child, dateRange, customRange)
@@ -1163,6 +1174,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
   }, [child?.id, dateRange, customRange]))
 
   async function loadRangeData(c: ChildWithRole, range: DateRange, custom?: { start: Date; end: Date }) {
+    const req = ++rangeReqRef.current
     const { startDate, endDate, days } = getDateRange(range, custom)
     const g = getGoals(c.id, c.birthDate)
     const calTarget = g.calories
@@ -1191,6 +1203,9 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       .eq('child_id', c.id)
       .gte('date', fetchStart)
       .order('created_at', { ascending: false })
+    // A newer load (child switch, range change) started while this one was in flight — drop it
+    // so child A's numbers never land under child B.
+    if (req !== rangeReqRef.current) return
 
     // Normalize all log dates to YYYY-MM-DD strings
     const logs = ((data ?? []) as any[]).map((l) => ({ ...l, date: toDateStr(l.date) }))
@@ -1420,7 +1435,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
       if (log.type === 'sleep') {
         let val: any = log.value
         try { val = typeof val === 'string' ? JSON.parse(val) : val } catch {}
-        const hours = typeof val === 'object' && val ? (parseFloat(val.duration) || 0) : 0
+        // Same parser as the range totals: parseFloat read a "45m" nap as 45 hours and "8h 30m" as 8.
+        const hours = typeof val === 'object' && val ? (parseDurationMinutes(val.duration) ?? 0) / 60 : 0
         dailySleep[dayIdx] += hours
       }
       if (log.type === 'food' || log.type === 'feeding') {

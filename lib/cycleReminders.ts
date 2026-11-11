@@ -14,7 +14,7 @@
 
 import { useEffect, useRef } from 'react'
 import { AppState } from 'react-native'
-import { getCycleInfo, toDateStr, type CycleConfig } from './cycleLogic'
+import { getCycleInfo, periodLengthFor, toDateStr, type CycleConfig } from './cycleLogic'
 import { useCycleHistory, type CycleHistory } from './cycleAnalytics'
 import { cancelLocalNotification, scheduleLocalNotificationAt } from './pushNotifications'
 import { t } from './i18n'
@@ -82,7 +82,8 @@ export function buildReminderCycleConfig(
   return {
     lastPeriodStart: latest.startDate,
     cycleLength: settings.cycleLength ?? history.avg ?? 28,
-    periodLength: settings.periodLength,
+    // A logged period end for the current cycle wins over the setting (the calendar does the same).
+    periodLength: periodLengthFor(latest, settings.periodLength),
     lutealPhase: settings.lutealPhase,
   }
 }

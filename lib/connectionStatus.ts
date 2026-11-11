@@ -14,7 +14,10 @@ export const useConnectionStore = create<{ trouble: boolean; setTrouble: (v: boo
   setTrouble: (trouble) => set({ trouble }),
 }))
 
-const NETWORK_PATTERN = /network request failed|failed to fetch|fetch failed|timed out|timeout|network error|internet connection appears to be offline/i
+// `aborterror`: the only reads the app aborts are the 12s read timeouts in lib/supabase.ts — a
+// stalled connection, reported by supabase-js as "AbortError: Aborted" — which is exactly when
+// the banner should show.
+const NETWORK_PATTERN = /network request failed|failed to fetch|fetch failed|timed out|timeout|network error|internet connection appears to be offline|aborterror/i
 
 /** True for transport failures (RN fetch, supabase-js wrapping them); false for app/RLS errors. */
 export function isNetworkError(err: unknown): boolean {

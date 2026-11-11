@@ -75,6 +75,17 @@ export function getDaysToGo(dueDate: string, now: Date = new Date()): number {
   return Math.max(0, Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)))
 }
 
+/** Naegele's rule: EDD = LMP + 280 days. Returns ISO YYYY-MM-DD ('' for an invalid LMP). */
+export function dueDateFromLmp(lmpIso: string): string {
+  const lmp = new Date(lmpIso + 'T00:00:00')
+  if (Number.isNaN(lmp.getTime())) return ''
+  // Calendar days, not 280×24h of ms — across an autumn clock change that landed on 23:00 the
+  // day before and set the due date (and every week boundary) one day early.
+  const due = new Date(lmp)
+  due.setDate(due.getDate() + 280)
+  return `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}`
+}
+
 /**
  * Current pregnancy week derived from due date.
  * EDD is reached at week 40, so weeks-to-go subtracts from 40.

@@ -42,9 +42,13 @@ function ageMonthsAt(birthISO: string, atISO: string): number {
   return (a.getFullYear() - b.getFullYear()) * 12 + (a.getMonth() - b.getMonth()) + (a.getDate() - b.getDate()) / 30
 }
 
-function ageLabel(birthISO: string, t: (k: TranslationKey, p?: Record<string, string | number>) => string): string {
+function localToday(): string {
   const now = new Date()
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
+function ageLabel(birthISO: string, t: (k: TranslationKey, p?: Record<string, string | number>) => string): string {
+  const today = localToday()
   const months = Math.floor(ageMonthsAt(birthISO, today))
   if (months < 1) return t('childReport_ageNewborn')
   if (months < 24) return t('childReport_ageMonths', { m: months })
@@ -169,7 +173,8 @@ export default function ChildReportScreen() {
         vaccines: vaccines.map((v) => ({ ...v, date: v.date ? formatReportDate(v.date, language) : '' })),
         feedingSummary,
         sleepSummary,
-        generatedOn: formatReportDate(new Date().toISOString(), language),
+        // Local day — toISOString() is UTC, so an evening report in the Americas was dated tomorrow.
+        generatedOn: formatReportDate(localToday(), language),
         t,
         rtl: isRtl(language),
       }

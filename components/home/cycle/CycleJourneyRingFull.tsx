@@ -25,7 +25,7 @@ import { useTranslation } from '../../../lib/i18n'
 import { appIntlLocale } from '../../../lib/cycleLogForms'
 import type { TranslationKey } from '../../../lib/i18n'
 import {
-  getCycleInfo, toDateStr,
+  getCycleInfo, phaseOnCycleDay, toDateStr,
   type CycleConfig, type CyclePhase,
 } from '../../../lib/cycleLogic'
 import { DaySticker, DayCharacter } from './dayStickers'
@@ -82,15 +82,13 @@ const ANCHOR_DEG = 270
 const ANCHOR_ROT = ANCHOR_DEG + 90
 
 // ─── Phase helpers ──────────────────────────────────────────────────────────
+// The engine's own phase math (with its clamping): a private copy here skipped the "ovulation after
+// the period" clamp, so e.g. cycle 21 + period 7 drew different phases on the dots than the day panel.
 function getPhaseForDay(
   day: number,
   cfg: { cycleLength: number; periodLength: number; lutealPhase: number },
 ): CyclePhase {
-  const ovulationDay = cfg.cycleLength - cfg.lutealPhase
-  if (day <= cfg.periodLength) return 'menstruation'
-  if (day < ovulationDay - 1) return 'follicular'
-  if (day <= ovulationDay + 1) return 'ovulation'
-  return 'luteal'
+  return phaseOnCycleDay(day, cfg.cycleLength, cfg.periodLength, cfg.lutealPhase)
 }
 
 function phaseTint(phase: CyclePhase, stickers: ReturnType<typeof useTheme>['stickers']): string {

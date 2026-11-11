@@ -38,3 +38,18 @@ export function latestPeriodDate(rows: { type: string; date: string }[], stored:
   for (const r of rows) if (r.type === 'period' && (!best || r.date > best)) best = r.date
   return best
 }
+
+/**
+ * The stored last-period date after a logged period on `deletedDate` is removed. When that log
+ * had become the stored date (older builds wrote every newer logged period into the store), keep
+ * the newest OTHER logged period, else nothing — never the deleted day, or the counter sticks to
+ * a period that didn't happen. Any other stored date is left alone.
+ */
+export function lastPeriodAfterDelete(
+  stored: string | null,
+  deletedDate: string,
+  rows: { type: string; date: string }[],
+): string | null {
+  if (stored !== deletedDate) return stored
+  return latestPeriodDate(rows.filter((r) => r.date !== deletedDate), null)
+}

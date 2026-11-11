@@ -1515,7 +1515,9 @@ export function KidsCalendar() {
 
   // ── Fetch logs for visible month ────────────────────────────────────────
 
+  const fetchReqRef = useRef(0)
   const fetchLogs = useCallback(async () => {
+    const req = ++fetchReqRef.current
     const childIds = selectedChildId === 'all'
       ? children.map((c) => c.id)
       : [selectedChildId]
@@ -1530,19 +1532,20 @@ export function KidsCalendar() {
     try {
       // Fetch prev + current + next month so week strips that span month boundaries
       // (e.g. Apr 27–May 3) render with their full data.
-      const startYear = month - 1 < 0 ? year - 1 : year
-      const startMonth = month - 1 < 0 ? 12 : month
-      const endYear = month + 2 > 12 ? year + 1 : year
-      const endMonth = month + 2 > 12 ? 1 : month + 2
-      const startDate = `${startYear}-${String(startMonth).padStart(2, '0')}-01`
+      // `month` is 0-based; the old 1-based arithmetic ended at the 1st of NEXT month, so a week
+      // strip running into next month (May 31–Jun 6) showed those days empty.
+      const startDate = toDateStr(new Date(year, month - 1, 1))
+      const endDate = toDateStr(new Date(year, month + 2, 1))
 
       const { data, error } = await supabase
         .from('child_logs')
         .select('id, child_id, date, type, value, notes, photos, created_at, logged_by')
         .in('child_id', childIds)
         .gte('date', startDate)
-        .lt('date', `${endYear}-${String(endMonth).padStart(2, '0')}-01`)
+        .lt('date', endDate)
         .order('created_at', { ascending: true })
+      // Child or month switched while this was in flight — a newer fetch owns the state.
+      if (req !== fetchReqRef.current) return
 
       if (!error && data) {
         setMonthLogs(data as ChildLog[])

@@ -81,6 +81,7 @@ import {
   notifyMentions,
   requestToJoinChannel,
   getMyRequestStatus,
+  joinIfApproved,
   transferChannelOwnership,
   getChannelMembers,
   type ChannelPost,
@@ -202,6 +203,14 @@ export default function ChannelChat() {
       // Check private channel request status
       const ch = allChannels.find((c) => c.id === id)
       if (ch?.channelType === 'private' && !member) {
+        // The host approved my request → join myself now (the host can't add
+        // me: channel_members RLS only allows inserting your own row).
+        if (await joinIfApproved(id).catch(() => false)) {
+          setIsMember(true)
+          setMyRequest(null)
+          setMessages(await fetchMessages(id))
+          return
+        }
         const req = await getMyRequestStatus(id)
         setMyRequest(req)
       } else {
@@ -1089,7 +1098,9 @@ export default function ChannelChat() {
       >
         <FlatList
           ref={flatListRef}
-          data={messages}
+          // A private channel's messages are for members only. (UX only — channel_posts
+          // RLS doesn't check membership yet; see the community sweep report.)
+          data={channel?.channelType === 'private' && !isMember ? [] : messages}
           keyExtractor={(m) => m.id}
           contentContainerStyle={[
             styles.messagesList,

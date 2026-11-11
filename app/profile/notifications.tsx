@@ -186,7 +186,8 @@ export default function NotificationsScreen() {
     const granted = await requestNotificationPermission()
     setPermission(granted ? 'granted' : await getNotificationPermissionStatus())
     // Now that alerts can be delivered, schedule the local ones from the saved prefs.
-    if (granted) void saveNotificationPrefs(prefs)
+    // (only once the saved prefs are loaded — before that `prefs` is the defaults)
+    if (granted && hydrated) void saveNotificationPrefs(prefs)
   }
   const mode = useModeStore((s) => s.mode)
   const accent = diffuse ? getDiffuseAccent(mode, dt.isDark) : getModeColor(mode, isDark)
@@ -202,7 +203,8 @@ export default function NotificationsScreen() {
     let alive = true
     getNotificationPrefs()
       .then((p) => { if (alive) { setPrefs(p); setHydrated(true) } })
-      .catch(() => { if (alive) setHydrated(true) })
+      // Saved prefs couldn't be read: stay un-hydrated so a tap can't write the defaults over them.
+      .catch(() => { if (alive) Alert.alert(t('common_error'), t('common_checkConnection')) })
     return () => { alive = false }
   }, [])
 

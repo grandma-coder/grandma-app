@@ -31,6 +31,8 @@ import { AnalyticsHeader } from './shared/AnalyticsHeader'
 import { Moon, Burst, Flower, Heart, Drop, Star } from '../ui/Stickers'
 import {
   getCycleInfo,
+  getDaysLate,
+  periodLengthFor,
   toDateStr,
   type CycleConfig,
   type CyclePhase,
@@ -166,7 +168,7 @@ export function CycleAnalytics() {
     const latest = history?.cycles[history.cycles.length - 1]
     const cycleLength = declaredLength ?? history?.avg ?? 28
     if (latest) {
-      return { lastPeriodStart: latest.startDate, cycleLength, periodLength, lutealPhase }
+      return { lastPeriodStart: latest.startDate, cycleLength, periodLength: periodLengthFor(latest, periodLength), lutealPhase }
     }
     const d = new Date()
     d.setDate(d.getDate() - 10)
@@ -175,6 +177,9 @@ export function CycleAnalytics() {
 
   const hasData = (history?.cycles.length ?? 0) > 0
   const info = useMemo(() => getCycleInfo(cycleConfig, toDateStr(new Date())), [cycleConfig])
+  // Past the expected start with no new period: `info` has wrapped into an invented next cycle.
+  // The home and calendar pause estimates there, so the fertile chip and Grandma's note do too.
+  const daysLate = hasData ? getDaysLate(cycleConfig, toDateStr(new Date())) : 0
   const voice = {
     word: t(PHASE_VOICE_KEYS[info.phase].word),
     line: t(PHASE_VOICE_KEYS[info.phase].line),
@@ -212,6 +217,8 @@ export function CycleAnalytics() {
   // read a fertile-window countdown off it (light look) — ask for a period instead.
   const fertileSub = !hasData && !diffuse
     ? t('cycleInsights_lock_period')
+    : daysLate > 0
+      ? t('cycleAnalytics_noWindowYet')
     : info.daysUntilOvulation > 0
       ? t('cycleAnalytics_fertileSub_opensIn', { d: info.daysUntilOvulation })
       : info.isFertile
@@ -246,10 +253,11 @@ export function CycleAnalytics() {
   const notesLetter = useMemo(() => (diffuse ? null : buildCycleNote({
     history,
     info: hasData ? info : null,
+    daysLate,
     pms,
     mood,
     bbt,
-  }, t)), [diffuse, history, hasData, info, pms, mood, bbt, t])
+  }, t)), [diffuse, history, hasData, info, daysLate, pms, mood, bbt, t])
 
   if (!diffuse && firstLoad) {
     return (
@@ -746,7 +754,9 @@ function RecentCyclesCard({
   }
 
   const currentDay = open
-    ? Math.max(1, Math.floor((today.getTime() - new Date(open.startDate + 'T00:00:00').getTime()) / 86400000) + 1)
+    // Midnight to midnight, rounded: now − start floored lost a day in the first hour after a
+    // spring-forward change (and disagreed with the home's cycle day).
+    ? Math.max(1, Math.round((new Date(toDateStr(today) + 'T00:00:00').getTime() - new Date(open.startDate + 'T00:00:00').getTime()) / 86400000) + 1)
     : null
 
   if (!diffuse) {

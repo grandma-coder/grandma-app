@@ -13,7 +13,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useIsDiffuse, useScrollBottomInset } from '../ui/diffuse/DiffuseKit'
-import { getCycleInfo, getDaysLate, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
+import { getCycleInfo, getDaysLate, periodLengthFor, toDateStr, type CycleConfig, type CyclePhase } from '../../lib/cycleLogic'
 import type { CaregiverView } from '../../lib/caregiverPermissions'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
 import { useCycleReminderSync } from '../../lib/cycleReminders'
@@ -101,7 +101,8 @@ export function CycleHome({ caregiverView }: CycleHomeProps = {}) {
     const periodLength = cycleSettings.periodLength
     const lutealPhase = cycleSettings.lutealPhase
     if (latest) {
-      return { lastPeriodStart: latest.startDate, cycleLength, periodLength, lutealPhase }
+      // A logged period end for this cycle wins over the setting — the calendar already shows it.
+      return { lastPeriodStart: latest.startDate, cycleLength, periodLength: periodLengthFor(latest, periodLength), lutealPhase }
     }
     // Light look with no period logged: no anchor, so phases/predictions stay empty (the ring is
     // replaced by FirstPeriodCard). Diffuse keeps its old 10-days-ago placeholder untouched.

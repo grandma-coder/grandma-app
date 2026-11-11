@@ -5,7 +5,7 @@ import { queryClient } from './queryClient'
 import { resetUserStores, USER_STORE_PERSIST } from './resetUserStores'
 import { clearPin } from './appLock'
 import { cancelAllReminderNotifications } from './reminderNotifications'
-import { cancelLocalNotification, cancelLocalSchedules } from './pushNotifications'
+import { cancelLocalNotification, cancelLocalSchedules, unregisterPushToken } from './pushNotifications'
 import { PERIOD_REMINDER_ID } from './cycleReminders'
 import { clearWidgets } from './widgets/publish'
 
@@ -59,22 +59,25 @@ async function forceClearAuthStorage(): Promise<void> {
   }
 }
 
-export async function signOut(scope: Scope = 'local'): Promise<void> {
-  // supabase.auth.signOut() can hang on a flaky network because it tries
-  // to invalidate the session server-side. Race it against a 4s timeout
-  // so the user can always sign out, then brute-force the storage.
-  try {
-    await Promise.race([
-      supabase.auth.signOut({ scope }),
-      new Promise<void>((resolve) => setTimeout(resolve, 4000)),
-    ])
-  } catch (e) {
-    console.warn('[signOut] supabase.auth.signOut failed (will force-clear):', e)
-  }
+let localSignOutHandler: (() => void) | null = null
 
-  // Always clear the stored token even if the network call failed.
-  await forceClearAuthStorage()
+/**
+ * The root layout registers how it drops its session state. signOut() calls it itself: when
+ * supabase.auth.signOut() fails or times out (offline, flaky network) no SIGNED_OUT event fires,
+ * so the layout kept the old session while every store was reset — and its route guard sent this
+ * "signed-in user with no journeys" into onboarding/consent instead of the welcome screen.
+ */
+export function registerLocalSignOutHandler(fn: (() => void) | null): void {
+  localSignOutHandler = fn
+}
 
+/**
+ * Remove everything this device holds for the signed-in account: query cache, every user-data
+ * store (memory + disk), the app-lock PIN, scheduled local notifications and the home-screen
+ * widgets. Used by signOut() and by the boot path when a different account signs in after a
+ * session ended without signOut() (expired/revoked token).
+ */
+export async function clearLocalAccountData(): Promise<void> {
   queryClient.clear()
 
   // Wipe the persisted keys, then reset the live stores: clearing storage alone left the previous
@@ -95,6 +98,34 @@ export async function signOut(scope: Scope = 'local'): Promise<void> {
   await cancelLocalNotification(PERIOD_REMINDER_ID).catch(() => {})
   // Home-screen widgets and icon shortcuts: back to "Sign in to Grandma".
   await clearWidgets()
+}
+
+export async function signOut(scope: Scope = 'local'): Promise<void> {
+  // Detach this phone from the account's remote push while the session can still authorize it.
+  await Promise.race([
+    unregisterPushToken(),
+    new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+  ])
+
+  // supabase.auth.signOut() can hang on a flaky network because it tries
+  // to invalidate the session server-side. Race it against a 4s timeout
+  // so the user can always sign out, then brute-force the storage.
+  try {
+    await Promise.race([
+      supabase.auth.signOut({ scope }),
+      new Promise<void>((resolve) => setTimeout(resolve, 4000)),
+    ])
+  } catch (e) {
+    console.warn('[signOut] supabase.auth.signOut failed (will force-clear):', e)
+  }
+
+  // Always clear the stored token even if the network call failed.
+  await forceClearAuthStorage()
+
+  await clearLocalAccountData()
+
+  // Drop the root layout's session even if supabase never emitted SIGNED_OUT.
+  localSignOutHandler?.()
 
   router.replace('/(auth)/welcome')
 }

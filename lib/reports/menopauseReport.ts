@@ -10,7 +10,7 @@
 
 import { computeSymptomStats, type MenopauseLogRow } from '../menopauseAnalytics'
 import { menopauseSymptomLabel, resolveMenopauseSymptomId, type MenopauseSymptomId } from '../menopauseSymptoms'
-import { monthsSinceDate, type MenopauseStage } from '../menopauseStage'
+import { latestPeriodDate, monthsSinceDate, type MenopauseStage } from '../menopauseStage'
 import {
   average, capRows, formatReportDate, formatReportNumber, inPeriod, isRtl, isoDay,
   labelFor, periodStart, reportLabels,
@@ -135,10 +135,13 @@ export function buildMenopauseReport(input: MenopauseReportInput, ctx: ReportCon
     },
   })
 
-  const months = monthsSinceDate(input.lastPeriodDate, today)
+  // Newest logged period or the stored date, whichever is later — the date the home counter,
+  // analytics and widget use (all rows, not just the report window).
+  const lastPeriod = latestPeriodDate(input.rows, input.lastPeriodDate)
+  const months = monthsSinceDate(lastPeriod, today)
   const facts = [
     ...(input.stage ? [{ label: t('report_meno_stage'), value: t(`report_meno_stage_${input.stage}` as const) }] : []),
-    ...(input.lastPeriodDate ? [{ label: t('report_meno_lastPeriod'), value: d(input.lastPeriodDate) }] : []),
+    ...(lastPeriod ? [{ label: t('report_meno_lastPeriod'), value: d(lastPeriod) }] : []),
     ...(months != null ? [{ label: t('report_meno_monthsSince'), value: String(months) }] : []),
   ]
 

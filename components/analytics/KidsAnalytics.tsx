@@ -160,6 +160,7 @@ import { InsightsDisclaimer } from './shared/InsightsDisclaimer'
 import { Skeleton, SkeletonRing } from '../ui/Skeleton'
 import { SkeletonStatRows } from './shared/AnalyticsSkeleton'
 import { parseLocalDate } from '../../lib/localDate'
+import { childAgeMonths } from '../../lib/childAge'
 import { SheetModal } from '../ui/SheetModal'
 import { CenterModal } from '../ui/CenterModal'
 
@@ -359,9 +360,7 @@ const MOOD_EMOJI: Record<string, string> = {
 // ─── Age Helpers ───────────────────────────────────────────────────────────
 
 function getAgeMonths(birthDate: string): number {
-  const bd = parseLocalDate(birthDate)
-  const now = new Date()
-  return Math.max(0, (now.getFullYear() - bd.getFullYear()) * 12 + (now.getMonth() - bd.getMonth()))
+  return childAgeMonths(birthDate) ?? 0
 }
 
 function activityGuide(ageMonths: number): { emoji: string; label: string; pct: number; tip: string }[] {
@@ -645,7 +644,9 @@ function getHealthTips(
     // Denominator was hardcoded to 7 even when the window was 30 days,
     // which made the "low diaper count" tip trigger constantly on long
     // ranges. Use the actual day count from dailyCounts.
-    const windowDays = Math.max(1, analytics.diaper.dailyCounts.length)
+    // Per LOGGED day: a newborn with 10 diapers on each of 3 logged days in a 7-day view read
+    // 4.3/day and got the low-diaper hydration warning.
+    const windowDays = Math.max(1, analytics.diaper.dailyCounts.filter((c) => c > 0).length)
     const avgPerDay = numLoc(totalCount / windowDays, 1, 1)
     const poopPct = totalCount > 0 ? Math.round((typeCounts.poop + typeCounts.mixed) / totalCount * 100) : 0
     if (ageMonths < 6 && totalCount / windowDays < 6) {
@@ -790,7 +791,8 @@ function getNeutralHealthTips(
   // ── Diapers
   if (analytics.diaper.hasData) {
     const { totalCount } = analytics.diaper
-    const windowDays = Math.max(1, analytics.diaper.dailyCounts.length)
+    // Per LOGGED day (see getHealthTips) — unlogged days aren't zero-diaper days.
+    const windowDays = Math.max(1, analytics.diaper.dailyCounts.filter((c) => c > 0).length)
     const avgPerDay = fmt1(totalCount / windowDays)
     const green = analytics.diaper.colorCounts['green'] ?? 0
     if (ageMonths < 6 && totalCount / windowDays < 6) {
@@ -876,8 +878,9 @@ function buildGrandmaContext(
   if (analytics.diaper.hasData) {
     const { totalCount, typeCounts } = analytics.diaper
     const windowDays = Math.max(1, analytics.diaper.dailyCounts.length)
+    const loggedDays = Math.max(1, analytics.diaper.dailyCounts.filter((c) => c > 0).length)
     const windowLabel = windowDays === 7 ? 'this week' : `last ${windowDays} days`
-    lines.push(`Diapers: ${totalCount} ${windowLabel} (${typeCounts.pee} pee, ${typeCounts.poop} poop, ${typeCounts.mixed} mixed) — avg ${numLoc(totalCount / windowDays, 1, 1)}/day`)
+    lines.push(`Diapers: ${totalCount} ${windowLabel} (${typeCounts.pee} pee, ${typeCounts.poop} poop, ${typeCounts.mixed} mixed) — avg ${numLoc(totalCount / loggedDays, 1, 1)}/day on logged days`)
   }
 
   // Health is reference-only and excluded from this "main concern" pick —
