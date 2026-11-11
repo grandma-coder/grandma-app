@@ -4,7 +4,7 @@
  * Cream canvas · Fraunces display · paper-card inputs
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { authErrorText } from '../../lib/authError'
+import { promptCheckEmail } from '../../lib/authPrompts'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
@@ -31,7 +32,7 @@ import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseOAuthRow, DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
 import { DiffuseField, DiffuseFieldLabel, DiffuseDivider } from '../../components/ui/diffuse/DiffuseField'
-import { signInWithApple, signInWithGoogle, isAppleSignInAvailable } from '../../lib/auth-providers'
+import { signInWithApple, signInWithGoogle, isAppleSignInAvailable, isSignInCancelled } from '../../lib/auth-providers'
 import { setPendingInvite } from '../../lib/pendingInvite'
 import { Ionicons } from '@expo/vector-icons'
 import { useTranslation } from '../../lib/i18n'
@@ -59,7 +60,12 @@ export default function SignIn() {
     isAppleSignInAvailable().then(setAppleAvailable)
   }, [])
 
+  // One request at a time: setLoading re-renders a frame late, so a double tap (or tapping
+  // Google while the email sign-in is running) started a second auth request.
+  const busy = useRef(false)
+
   async function signIn() {
+    if (busy.current) return
     const trimmedEmail = email.trim()
     if (!trimmedEmail || !password) {
       Alert.alert(t('auth_missingInfo'), t('auth_missingEmailPassword'))
@@ -69,38 +75,51 @@ export default function SignIn() {
       Alert.alert(t('auth_invalidEmail'), t('auth_invalidEmailMsg'))
       return
     }
+    busy.current = true
     setLoading(true)
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
         password,
       })
-      if (error) Alert.alert(t('auth_signInFailed'), authErrorText(error))
+      if (error?.code === 'email_not_confirmed') {
+        // Right password, address never confirmed: offer the link again instead of a dead end.
+        promptCheckEmail(trimmedEmail)
+      } else if (error) {
+        Alert.alert(t('auth_signInFailed'), authErrorText(error))
+      }
     } catch (e) {
       Alert.alert(t('auth_signInFailed'), authErrorText(e))
     } finally {
+      busy.current = false
       setLoading(false)
     }
   }
 
   async function handleApple() {
+    if (busy.current) return
+    busy.current = true
     try {
       setOauthLoading('apple')
       await signInWithApple()
-    } catch (e: any) {
-      if (e.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('auth_signInError'), authErrorText(e))
+    } catch (e) {
+      if (!isSignInCancelled(e)) Alert.alert(t('auth_signInError'), authErrorText(e))
     } finally {
+      busy.current = false
       setOauthLoading(null)
     }
   }
 
   async function handleGoogle() {
+    if (busy.current) return
+    busy.current = true
     try {
       setOauthLoading('google')
       await signInWithGoogle()
-    } catch (e: any) {
-      if (e.message !== 'Google sign-in was cancelled or failed') Alert.alert(t('auth_signInError'), authErrorText(e))
+    } catch (e) {
+      if (!isSignInCancelled(e)) Alert.alert(t('auth_signInError'), authErrorText(e))
     } finally {
+      busy.current = false
       setOauthLoading(null)
     }
   }

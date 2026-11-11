@@ -10,13 +10,12 @@ import {
   View, Text, Pressable, ScrollView, Switch, Alert, StyleSheet, ActivityIndicator,
 } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
-import * as FileSystem from 'expo-file-system/legacy'
-import * as Sharing from 'expo-sharing'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, brand, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
+import { exportMyDataOnDevice } from '../../lib/dataExport'
 import { useChildStore } from '../../store/useChildStore'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
@@ -133,26 +132,10 @@ export default function PrivacyScreen() {
           onPress: async () => {
             setExporting(true)
             try {
-              // Server-side gather of the full data bundle (bypasses RLS/joins).
-              const { data, error } = await supabase.functions.invoke('export-user-data')
-              if (error) throw error
-
-              // Write a real .json file, then share it as a document.
-              const json = JSON.stringify(data, null, 2)
-              const fileUri = `${FileSystem.cacheDirectory}grandma-data-export.json`
-              await FileSystem.writeAsStringAsync(fileUri, json, {
-                encoding: FileSystem.EncodingType.UTF8,
-              })
-
-              if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(fileUri, {
-                  mimeType: 'application/json',
-                  dialogTitle: t('privacy_exportTitle'),
-                  UTI: 'public.json',
-                })
-              } else {
-                Alert.alert(t('privacy_exportTitle'), t('privacy_exportSavedMsg'))
-              }
+              // Server-side gather of the full data bundle; shared as a .json file that is deleted
+              // from the app cache straight after (it holds every log and child record).
+              const result = await exportMyDataOnDevice(t('privacy_exportTitle'))
+              if (result === 'unavailable') Alert.alert(t('common_error'), t('privacy_exportFailedMsg'))
             } catch {
               Alert.alert(t('common_error'), t('privacy_exportFailedMsg'))
             } finally {

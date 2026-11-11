@@ -15,13 +15,12 @@ import {
   View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator, Alert,
 } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
-import * as FileSystem from 'expo-file-system/legacy'
-import * as Sharing from 'expo-sharing'
 import { Copy, Check, Download } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme, useDiffuseTheme, diffuseFont, diffuseTypeRole } from '../../constants/theme'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
+import { exportMyDataOnDevice } from '../../lib/dataExport'
 import { useChildStore } from '../../store/useChildStore'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps } from '../../components/ui/Typography'
@@ -115,20 +114,9 @@ export default function DataInventoryScreen() {
   async function handleExport() {
     setExporting(true)
     try {
-      const { data, error } = await supabase.functions.invoke('export-user-data')
-      if (error) throw error
-      const json = JSON.stringify(data, null, 2)
-      const fileUri = `${FileSystem.cacheDirectory}grandma-data-export.json`
-      await FileSystem.writeAsStringAsync(fileUri, json, { encoding: FileSystem.EncodingType.UTF8 })
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'application/json',
-          dialogTitle: t('privacy_exportTitle'),
-          UTI: 'public.json',
-        })
-      } else {
-        Alert.alert(t('privacy_exportTitle'), t('privacy_exportSavedMsg'))
-      }
+      // Shared as a .json file, then deleted from the app cache (it holds every log and child record).
+      const result = await exportMyDataOnDevice(t('privacy_exportTitle'))
+      if (result === 'unavailable') Alert.alert(t('common_error'), t('privacy_exportFailedMsg'))
     } catch (e: any) {
       Alert.alert(t('common_error'), t('privacy_exportFailedMsg'))
     } finally {

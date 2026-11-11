@@ -1,4 +1,4 @@
-import { parseAuthRedirect } from '../authRedirect'
+import { parseAuthRedirect, parseOAuthReturn } from '../authRedirect'
 
 describe('parseAuthRedirect', () => {
   it('reads the implicit-flow recovery tokens from the reset link fragment', () => {
@@ -41,5 +41,31 @@ describe('parseAuthRedirect', () => {
     expect(parseAuthRedirect(null)).toBeNull()
     expect(parseAuthRedirect('grandma-app://accept-invite?token=abc')).toBeNull()
     expect(parseAuthRedirect('grandma-app://log/cycle?code=abc')).toBeNull()
+  })
+})
+
+describe('parseOAuthReturn', () => {
+  it('reads a PKCE code', () => {
+    expect(parseOAuthReturn('grandma-app://auth/callback?code=xyz')).toEqual({ kind: 'code', code: 'xyz' })
+  })
+
+  it('reads implicit-flow tokens from the fragment', () => {
+    expect(parseOAuthReturn('grandma-app://auth/callback#access_token=AT&refresh_token=RT&expires_in=3600')).toEqual({
+      kind: 'session', accessToken: 'AT', refreshToken: 'RT',
+    })
+  })
+
+  it('treats the user declining on the Google consent page as a cancel', () => {
+    expect(parseOAuthReturn('grandma-app://auth/callback?error=access_denied&error_description=The+user+denied')).toEqual({ kind: 'cancelled' })
+  })
+
+  it('surfaces a provider/server error with its code', () => {
+    expect(
+      parseOAuthReturn('grandma-app://auth/callback#error=server_error&error_code=unexpected_failure&error_description=Unable+to+exchange+external+code'),
+    ).toEqual({ kind: 'error', code: 'unexpected_failure', description: 'Unable to exchange external code' })
+  })
+
+  it('returns null when nothing usable came back', () => {
+    expect(parseOAuthReturn('grandma-app://auth/callback')).toBeNull()
   })
 })

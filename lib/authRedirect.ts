@@ -16,6 +16,14 @@
  * exchanges that code itself, and exchanging it twice fails one of the two.
  */
 
+/** Where the password-reset email link lands (must be in Supabase Auth → URL Configuration → Redirect URLs). */
+export const AUTH_RESET_REDIRECT = 'grandma-app://auth/reset'
+/**
+ * Where the sign-up confirmation link lands (same allow-list). Not allow-listed → Supabase falls back
+ * to the Site URL: the address is still confirmed, the user just isn't brought back into the app.
+ */
+export const AUTH_CONFIRM_REDIRECT = 'grandma-app://auth/confirm'
+
 export type AuthRedirect =
   | { kind: 'session'; accessToken: string; refreshToken: string; type: string | null; isRecovery: boolean }
   | { kind: 'otp'; tokenHash: string; type: string; isRecovery: boolean }
@@ -75,5 +83,39 @@ export function parseAuthRedirect(url: string | null | undefined): AuthRedirect 
   const code = params.get('code')
   if (code && isResetPath) return { kind: 'code', code, isRecovery }
 
+  return null
+}
+
+export type OAuthReturn =
+  | { kind: 'code'; code: string }
+  | { kind: 'session'; accessToken: string; refreshToken: string }
+  | { kind: 'cancelled' }
+  | { kind: 'error'; code: string | null; description: string | null }
+
+/**
+ * Read the URL the Google OAuth sheet returned to (grandma-app://auth/callback…). The user
+ * declining on Google's consent page comes back as error=access_denied — that is a cancel, not a
+ * failure to alert about. Server errors (e.g. "Unable to exchange external code") keep their code
+ * so the caller can show a translated line.
+ */
+export function parseOAuthReturn(url: string | null | undefined): OAuthReturn | null {
+  if (!url) return null
+  const hashAt = url.indexOf('#')
+  const beforeHash = hashAt === -1 ? url : url.slice(0, hashAt)
+  const queryAt = beforeHash.indexOf('?')
+  const params = readParams(queryAt === -1 ? '' : beforeHash.slice(queryAt + 1))
+  for (const [k, v] of readParams(hashAt === -1 ? '' : url.slice(hashAt + 1))) params.set(k, v)
+
+  const error = params.get('error') ?? null
+  const errorCode = params.get('error_code') ?? null
+  if (error || errorCode) {
+    if (error === 'access_denied' && !errorCode) return { kind: 'cancelled' }
+    return { kind: 'error', code: errorCode ?? error, description: params.get('error_description') ?? null }
+  }
+  const code = params.get('code')
+  if (code) return { kind: 'code', code }
+  const accessToken = params.get('access_token')
+  const refreshToken = params.get('refresh_token')
+  if (accessToken && refreshToken) return { kind: 'session', accessToken, refreshToken }
   return null
 }

@@ -49,6 +49,8 @@ export interface TieredPackage {
   period: BillingPeriod
 }
 
+let configured = false
+
 export async function initRevenueCat(userId?: string) {
   if (!IS_VALID_KEY) {
     // No prod key in this build — leave RevenueCat unconfigured. Paywall
@@ -56,10 +58,29 @@ export async function initRevenueCat(userId?: string) {
     if (__DEV__) console.warn('[revenue] RevenueCat disabled: no production API key in EXPO_PUBLIC_REVENUECAT_API_KEY')
     return
   }
+  // configure() is once per app process; a later sign-in (another account on this phone) must
+  // switch the RevenueCat customer with logIn, or purchases keep landing on the previous user.
+  if (configured) {
+    if (userId) await Purchases.logIn(userId)
+    return
+  }
   Purchases.configure({
     apiKey: API_KEY,
     appUserID: userId ?? undefined,
   })
+  configured = true
+}
+
+/** Detach this phone from the signed-out account's RevenueCat customer. Best-effort. */
+export async function logOutRevenueCat(): Promise<void> {
+  if (!IS_VALID_KEY || !configured) return
+  try {
+    // logOut() throws for an anonymous customer — nothing to detach then.
+    if (await Purchases.isAnonymous()) return
+    await Purchases.logOut()
+  } catch {
+    // best-effort — never block sign-out on RevenueCat
+  }
 }
 
 export async function getOfferings(): Promise<PurchasesPackage[]> {

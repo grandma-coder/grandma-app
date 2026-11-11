@@ -2,7 +2,7 @@
  * Sign Up — paper card form (Apr 2026 redesign)
  */
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { authErrorText } from '../../lib/authError'
+import { AUTH_CONFIRM_REDIRECT } from '../../lib/authRedirect'
+import { promptCheckEmail } from '../../lib/authPrompts'
 import { supabase } from '../../lib/supabase'
 import { useTheme, font, useDiffuseTheme, diffuseFont } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
@@ -30,7 +32,6 @@ import { useIsDiffuse } from '../../components/ui/diffuse/DiffuseKit'
 import { AuraField, AURA } from '../../components/ui/diffuse/AuraField'
 import { DiffuseSolidCTA, DiffuseTextLink } from '../../components/ui/diffuse/DiffuseActions'
 import { DiffuseField, DiffuseFieldLabel } from '../../components/ui/diffuse/DiffuseField'
-import { useSavedToast } from '../../components/ui/SavedToast'
 import { useTranslation } from '../../lib/i18n'
 import { getLegalDocument } from '../../lib/legalContent'
 
@@ -43,12 +44,16 @@ export default function SignUp() {
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
   const { t } = useTranslation()
-  const toast = useSavedToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // setLoading re-renders a frame late: a fast double tap fired two sign-up requests (the second
+  // answered with a rate-limit alert on top of the success).
+  const submitting = useRef(false)
+
   async function signUp() {
+    if (submitting.current) return
     const trimmedEmail = email.trim()
     if (!trimmedEmail || !password) {
       Alert.alert(t('auth_missingInfo'), t('auth_missingEmailPasswordSignUp'))
@@ -62,24 +67,30 @@ export default function SignUp() {
       Alert.alert(t('auth_passwordTooShort'), t('auth_passwordTooShortN', { n: 8 }))
       return
     }
+    submitting.current = true
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signUp({ email: trimmedEmail, password })
+      const { data, error } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password,
+        // The confirmation link opens the app and signs the user in (root layout → lib/authRedirect).
+        options: { emailRedirectTo: AUTH_CONFIRM_REDIRECT },
+      })
       if (error) {
         Alert.alert(t('auth_signUpFailed'), authErrorText(error))
         return
       }
-      toast.show({
-        title: t('auth_welcomeAboard'),
-        message: t('auth_confirmEmail'),
-        autoDismiss: 3200,
-      })
-      // Wait for the toast to finish before swapping screens (which would
-      // unmount the toast provider host and dismiss the message early).
-      setTimeout(() => router.replace('/(auth)/sign-in'), 3200)
+      // Email confirmation OFF: signed in already — the root layout's guard takes the user to
+      // consent/onboarding. (This used to send them to sign-in 3 s later, yanking a signed-in user
+      // out of onboarding.)
+      if (data.session) return
+      // Confirmation ON: nothing to sign in with until the link is opened. A persistent prompt
+      // (with the address, so a typo shows, and a resend) instead of a 3-second toast.
+      promptCheckEmail(trimmedEmail, () => router.replace('/(auth)/sign-in'))
     } catch (e) {
       Alert.alert(t('auth_signUpFailed'), authErrorText(e))
     } finally {
+      submitting.current = false
       setLoading(false)
     }
   }

@@ -7,7 +7,7 @@
  * fresh with the new credentials. Matches forgot-password's paper-card design.
  */
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   View,
   Text,
@@ -46,7 +46,10 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const submitting = useRef(false)
+
   async function handleUpdate() {
+    if (submitting.current) return
     if (password.length < MIN_PASSWORD_LENGTH) {
       Alert.alert(t('auth_passwordTooShort'), t('auth_passwordTooShortN', { n: MIN_PASSWORD_LENGTH }))
       return
@@ -55,6 +58,7 @@ export default function ResetPassword() {
       Alert.alert(t('auth_passwordsNoMatch'), t('auth_passwordsNoMatchMsg'))
       return
     }
+    submitting.current = true
     setLoading(true)
     try {
       const { error } = await supabase.auth.updateUser({ password })
@@ -65,13 +69,18 @@ export default function ResetPassword() {
       // Sign out so the user logs in fresh with the new password. The root
       // auth listener clears recoveryMode on SIGNED_OUT and the route guard
       // sends them to welcome; we nudge to sign-in for a clear next step.
-      await supabase.auth.signOut()
+      // Global scope also ends any other session on the account (whoever knew the old password).
+      // If that request fails (offline) no SIGNED_OUT fires and the recovery session would stay
+      // open with the guard paused — drop it locally then, which always emits SIGNED_OUT.
+      const { error: outErr } = await supabase.auth.signOut()
+      if (outErr) await supabase.auth.signOut({ scope: 'local' })
       Alert.alert(t('auth_passwordUpdated'), t('auth_passwordUpdatedMsg'), [
-        { text: 'OK', onPress: () => router.replace('/(auth)/sign-in') },
+        { text: t('common_ok'), onPress: () => router.replace('/(auth)/sign-in') },
       ])
     } catch (e) {
       Alert.alert(t('auth_couldntUpdatePassword'), authErrorText(e))
     } finally {
+      submitting.current = false
       setLoading(false)
     }
   }

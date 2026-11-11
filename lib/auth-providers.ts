@@ -3,9 +3,21 @@ import * as Crypto from 'expo-crypto'
 import { makeRedirectUri } from 'expo-auth-session'
 import * as WebBrowser from 'expo-web-browser'
 import { supabase } from './supabase'
+import { parseOAuthReturn } from './authRedirect'
 import { Platform } from 'react-native'
 
 WebBrowser.maybeCompleteAuthSession()
+
+const SIGN_IN_CANCELLED = 'auth/sign-in-cancelled'
+
+/**
+ * True when the user backed out of the Apple / Google sheet (or declined on Google's consent page):
+ * the screens stay quiet instead of alerting "Sign-in error".
+ */
+export function isSignInCancelled(e: unknown): boolean {
+  const err = (e ?? {}) as { code?: string; message?: string }
+  return err.code === 'ERR_REQUEST_CANCELED' || err.code === 'ERR_CANCELED' || err.message === SIGN_IN_CANCELLED
+}
 
 function bytesToHex(bytes: Uint8Array): string {
   let out = ''
@@ -79,37 +91,20 @@ export async function signInWithGoogle() {
     showInRecents: false,
   })
 
-  if (result.type !== 'success' || !result.url) {
-    // Message must match the string the callers (welcome/sign-in) check to
-    // suppress the alert on user-cancel — otherwise cancelling shows a spurious
-    // "Sign-In Error".
-    throw new Error('Google sign-in was cancelled or failed')
-  }
+  // cancel / dismiss, or 'locked' (another auth sheet already open — a double tap).
+  if (result.type !== 'success' || !result.url) throw new Error(SIGN_IN_CANCELLED)
 
-  const url = new URL(result.url)
-  const code = url.searchParams.get('code')
+  const ret = parseOAuthReturn(result.url)
+  if (!ret) throw new Error('Google sign-in returned no usable credentials')
+  if (ret.kind === 'cancelled') throw new Error(SIGN_IN_CANCELLED)
+  if (ret.kind === 'error') throw Object.assign(new Error(ret.description ?? 'Google sign-in failed'), { code: ret.code ?? undefined })
 
-  if (code) {
-    const { data: sessionData, error: sessionError } =
-      await supabase.auth.exchangeCodeForSession(code)
-    if (sessionError) throw sessionError
-    return sessionData
-  }
-
-  const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''))
-  const accessToken = hashParams.get('access_token')
-  const refreshToken = hashParams.get('refresh_token')
-  if (accessToken && refreshToken) {
-    const { data: sessionData, error: sessionError } =
-      await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      })
-    if (sessionError) throw sessionError
-    return sessionData
-  }
-
-  throw new Error('Google sign-in returned no usable credentials')
+  const { data: sessionData, error: sessionError } =
+    ret.kind === 'code'
+      ? await supabase.auth.exchangeCodeForSession(ret.code)
+      : await supabase.auth.setSession({ access_token: ret.accessToken, refresh_token: ret.refreshToken })
+  if (sessionError) throw sessionError
+  return sessionData
 }
 
 /**

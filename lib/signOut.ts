@@ -8,6 +8,7 @@ import { cancelAllReminderNotifications } from './reminderNotifications'
 import { cancelLocalNotification, cancelLocalSchedules, unregisterPushToken } from './pushNotifications'
 import { PERIOD_REMINDER_ID } from './cycleReminders'
 import { clearWidgets } from './widgets/publish'
+import { logOutRevenueCat } from './revenue'
 
 type Scope = 'local' | 'global'
 
@@ -121,6 +122,10 @@ export async function signOut(scope: Scope = 'local'): Promise<void> {
 
   // Always clear the stored token even if the network call failed.
   await forceClearAuthStorage()
+
+  // RevenueCat stays identified as this account until told otherwise — the next account signing in
+  // on this phone would inherit its customer (and entitlements). Bounded like the calls above.
+  await Promise.race([logOutRevenueCat(), new Promise<void>((resolve) => setTimeout(resolve, 3000))])
 
   await clearLocalAccountData()
 

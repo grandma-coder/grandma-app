@@ -2441,6 +2441,9 @@ export interface TranslationKeys {
   account_contactSupport: string
   account_contactSupportMsg: string
   account_deleteFailedMsg: string
+  account_deleteSharedNote: string
+  account_deleteSubscriptionNote: string
+  account_manageSubscription: string
 
   // ─── B6: Profile — Personal ───────────────────────────────────────────────
   personal_headerTitle: string
@@ -6484,6 +6487,18 @@ export interface TranslationKeys {
   auth_err_userExists: string
   auth_err_weakPassword: string
   auth_err_rateLimit: string
+  auth_err_samePassword: string
+  auth_err_weakPasswordChars: string
+  auth_err_pwnedPassword: string
+  auth_err_linkExpired: string
+  auth_err_sessionExpired: string
+  auth_checkEmailTitle: string
+  auth_checkEmailMsg: string
+  auth_resendEmail: string
+  auth_resendSent: string
+  auth_forgot_sentTo: string
+  auth_linkFailed: string
+  auth_loadFailedTitle: string
   pedReport_title: string
   pedReport_generated: string
   pedReport_child: string

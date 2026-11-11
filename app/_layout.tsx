@@ -96,6 +96,8 @@ import { consumePendingInvite } from '../lib/pendingInvite'
 import { clearLocalAccountData, registerLocalSignOutHandler } from '../lib/signOut'
 import { claimDeviceAccount } from '../lib/accountSwitch'
 import { parseAuthRedirect } from '../lib/authRedirect'
+import { authEventLoads } from '../lib/authEvents'
+import { reloadUserData } from '../lib/userDataReload'
 import { authErrorText } from '../lib/authError'
 import { t as translate } from '../lib/i18n'
 import * as Linking from 'expo-linking'
@@ -150,10 +152,16 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Pro
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
+  // Boot gate: holds the native splash until the first auth answer + data load.
   const [loading, setLoading] = useState(true)
+  // Data load after boot (sign-in, sign-up, OAuth return, email-confirm link): only pauses the route
+  // guard. Re-using `loading` for it unmounted the whole navigator — a blank frame on every sign-in,
+  // and (via USER_UPDATED) whenever a signed-in user changed their password.
+  const [userLoading, setUserLoading] = useState(false)
+  // Home-screen widgets + icon shortcuts follow the signed-in account's data (not while it loads —
+  // the previous account's stores may still be in memory until the account-switch wipe runs).
+  useWidgetPublisher(!!session && !loading && !userLoading)
   const [hasChildren, setHasChildren] = useState(false)
-  // Home-screen widgets + icon shortcuts follow the signed-in account's data.
-  useWidgetPublisher(!!session && !loading)
   // App-icon shortcuts carry a grandma-app://log/... path (see lib/widgets/quickActions).
   useQuickActionRouting()
   const setAccountRole = useCaregiverStore((s) => s.setAccountRole)
@@ -280,6 +288,10 @@ export default function RootLayout() {
     // truly ready and its queries succeed in <1s. So: ignore SIGNED_IN
     // until we've seen INITIAL_SESSION at least once.
     let sawInitialSession = false
+    // Account whose data is loaded; a recovery session in progress; whether boot has finished.
+    let loadedUid: string | null = null
+    let recovering = false
+    let bootDone = false
 
     /**
      * Wrap a Supabase query in a per-query timeout. If any single query
@@ -536,22 +548,31 @@ export default function RootLayout() {
     }
 
     /** Drop the session state; the route guard then sends the user to welcome. */
-    function markSignedOut() {
+    function markSignedOut(keepPendingRecovery = false) {
       setSession(null)
-      // Clear flags so signing back in starts from a fresh load state.
-      setRecoveryMode(false)
-      recoveryLinkPending = false
+      // Clear flags so signing back in starts from a fresh load state — except a reset link that is
+      // being exchanged right now: on a cold start from the email, INITIAL_SESSION (no session) can
+      // land between the link being read and its session arriving; clearing the flag then let that
+      // recovery session load the account and the guard route past the new-password screen.
+      if (!(keepPendingRecovery && recoveryLinkPending)) {
+        setRecoveryMode(false)
+        recoveryLinkPending = false
+        recovering = false
+      }
       inFlightUid = null
+      loadedUid = null
       setHasChildren(false)
       clearCaregiver()
       setLoadFailed(false)
+      bootDone = true
       setLoading(false)
+      setUserLoading(false)
       // Session gone without signOut() (expired/revoked token, global sign-out elsewhere):
       // the home-screen widgets and shortcuts must not keep this account's data.
       void clearWidgets()
     }
     // signOut() calls this itself — when supabase.auth.signOut() fails offline no SIGNED_OUT fires.
-    registerLocalSignOutHandler(markSignedOut)
+    registerLocalSignOutHandler(() => markSignedOut())
 
     // ─── Email links (password reset) ─────────────────────────────────────
     // detectSessionInUrl is off (React Native), so nothing consumed the reset email's
@@ -562,8 +583,11 @@ export default function RootLayout() {
     let recoveryLinkPending = false
     function enterRecovery() {
       recoveryLinkPending = false
+      recovering = true
       setRecoveryMode(true)
+      bootDone = true
       setLoading(false)
+      setUserLoading(false)
       router.replace('/(auth)/reset-password')
     }
     async function handleAuthLink(url: string | null) {
@@ -571,15 +595,23 @@ export default function RootLayout() {
       if (!link || cancelled) return
       try {
         if (link.kind === 'error') {
+          // Pass the code too: otp_expired then reads "link expired", not a generic "try again".
+          const text = authErrorText({ code: link.code ?? undefined, message: link.description ?? '' })
           if (link.isRecovery) {
-            Alert.alert(translate('auth_couldntUpdatePassword'), authErrorText({ message: link.description ?? '' }))
+            Alert.alert(translate('auth_couldntUpdatePassword'), text)
             router.replace('/(auth)/forgot-password')
+          } else {
+            // An expired / already-used sign-up confirmation link: say so (it was silently dropped)
+            // and offer sign-in, where an unconfirmed address gets a resend.
+            Alert.alert(translate('auth_linkFailed'), text)
+            router.replace('/(auth)/sign-in')
           }
           return
         }
         if (link.isRecovery) {
           // Hold the guard before the session lands so it can't route the recovery session to (tabs).
           recoveryLinkPending = true
+          recovering = true
           setRecoveryMode(true)
         }
         const { error } =
@@ -591,12 +623,11 @@ export default function RootLayout() {
         if (error) throw error
       } catch (e) {
         recoveryLinkPending = false
+        recovering = false
         setRecoveryMode(false)
         console.warn('[auth] email link could not be used:', e)
-        if (link.isRecovery) {
-          Alert.alert(translate('auth_couldntUpdatePassword'), authErrorText(e))
-          router.replace('/(auth)/forgot-password')
-        }
+        Alert.alert(translate(link.isRecovery ? 'auth_couldntUpdatePassword' : 'auth_linkFailed'), authErrorText(e))
+        router.replace(link.isRecovery ? '/(auth)/forgot-password' : '/(auth)/sign-in')
       }
     }
     void Linking.getInitialURL().then(handleAuthLink).catch(() => {})
@@ -605,7 +636,15 @@ export default function RootLayout() {
     registerUserDataReloader(async () => {
       const { data: { session: current } } = await supabase.auth.getSession()
       if (!current || cancelled) return
-      await loadUserData(current.user.id)
+      // Pause the guard while it runs: loadUserData clears loadFailed before the own-children
+      // fallback query returns, and the guard would route a kids-only account to onboarding.
+      setUserLoading(true)
+      try {
+        await loadUserData(current.user.id)
+        loadedUid = current.user.id
+      } finally {
+        if (!cancelled) setUserLoading(false)
+      }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -625,43 +664,36 @@ export default function RootLayout() {
 
         if (event === 'SIGNED_OUT' || !newSession) {
           authLog('[auth] no session — unblock loading, route guard will send to /(auth)/welcome')
-          markSignedOut()
+          markSignedOut(event !== 'SIGNED_OUT')
           return
         }
 
-        // On cold boot SIGNED_IN fires *before* the Supabase client is
-        // actually ready to query PostgREST. Every request in that burst
-        // hangs. Skip it — INITIAL_SESSION will fire moments later and is
-        // the one that actually works. After we've seen INITIAL_SESSION
-        // once, real sign-in events go through normally.
-        if (event === 'SIGNED_IN' && !sawInitialSession) {
-          authLog('[auth] skip premature SIGNED_IN — waiting for INITIAL_SESSION')
+        // Which events (re)load the account — see lib/authEvents. Notably: the premature SIGNED_IN
+        // on cold boot is skipped (INITIAL_SESSION follows and is the one whose queries work),
+        // USER_UPDATED for the loaded account is not a reload, and nothing loads mid-recovery.
+        const uid = newSession.user.id
+        if (!authEventLoads(event, { uid, loadedUid, inFlightUid, sawInitialSession, recovering })) {
+          authLog(`[auth] ${event} for uid=${uid.slice(0, 8)} — no load`)
           return
         }
-
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-          const uid = newSession.user.id
-          if (inFlightUid === uid) {
-            authLog(`[auth] skip duplicate ${event} for uid=${uid.slice(0, 8)} — already loading`)
-            return
-          }
-          inFlightUid = uid
-          // Re-show the loading splash while we fetch profile / children /
-          // behaviors. Without this, an in-session re-sign-in (after a
-          // SIGNED_OUT set loading=false) would let the route guard run
-          // with stale empty state — bouncing the returning user into
-          // /onboarding/journey for a frame before snapping back to (tabs)
-          // once loadUserData finishes. Showing the splash blocks the
-          // guard until the real data is in.
-          setLoading(true)
-          try {
-            await loadUserData(uid)
-          } catch (e) {
-            console.warn('[auth] loadUserData failed:', e)
-          } finally {
-            inFlightUid = null
-          }
-          if (!cancelled) setLoading(false)
+        inFlightUid = uid
+        // Pause the route guard until profile / children / behaviors are in — otherwise it runs with
+        // stale empty state and bounces a returning user into onboarding for a frame. At boot this
+        // is the splash; after boot only the guard waits (the screen stays mounted).
+        if (bootDone) setUserLoading(true)
+        else setLoading(true)
+        try {
+          await loadUserData(uid)
+          loadedUid = uid
+        } catch (e) {
+          console.warn('[auth] loadUserData failed:', e)
+        } finally {
+          inFlightUid = null
+        }
+        if (!cancelled) {
+          bootDone = true
+          setLoading(false)
+          setUserLoading(false)
         }
       }
     )
@@ -673,7 +705,9 @@ export default function RootLayout() {
     // spinner forever. Without this the app appears bricked on a stuck
     // launch — see #stuck-on-loading reports.
     const safety = setTimeout(() => {
-      if (!cancelled) setLoading(false)
+      if (cancelled) return
+      bootDone = true
+      setLoading(false)
     }, 10000)
 
     return () => {
@@ -723,8 +757,14 @@ export default function RootLayout() {
   // True from the moment a stashed invite token is routed to /accept-invite until we're there.
   const inviteRedirecting = useRef(false)
 
+  // One "couldn't load your account" prompt per failed load after a sign-in (see the guard).
+  const loadFailedPrompted = useRef(false)
   useEffect(() => {
-    if (loading || !behaviorHydrated) return
+    if (!loadFailed) loadFailedPrompted.current = false
+  }, [loadFailed])
+
+  useEffect(() => {
+    if (loading || userLoading || !behaviorHydrated) return
 
     // Dev-panel preview mode: the user is intentionally viewing an auth or
     // onboarding screen while already signed in. Don't redirect them out.
@@ -751,6 +791,9 @@ export default function RootLayout() {
     }
 
     const inAuth = segments[0] === '(auth)'
+    // /auth/callback, /auth/confirm, /auth/reset: blank landing routes for auth links. A signed-in
+    // user must be moved on from them like from any auth screen, or they stay on a blank page.
+    const onAuthLanding = segments[0] === 'auth'
 
     // accept-invite redirects signed-out users itself, keeping ?invite=<token>; sending them to a
     // bare /welcome first (this guard fires before its async session check) lost the invite.
@@ -769,11 +812,18 @@ export default function RootLayout() {
         // consent step until the user has explicitly agreed; consent.tsx then
         // continues to journey.
         router.replace(hasConsented ? '/onboarding/journey' : '/onboarding/consent')
+      } else if ((inAuth || onAuthLanding) && !loadFailedPrompted.current) {
+        // Signed in on a slow / dropping connection: the sign-in worked but the account didn't
+        // load, so nothing happened — the user sat on the sign-in screen with no feedback.
+        loadFailedPrompted.current = true
+        Alert.alert(translate('auth_loadFailedTitle'), translate('common_checkConnection'), [
+          { text: translate('common_retry'), onPress: () => { void reloadUserData().catch(() => {}) } },
+        ])
       }
-    } else if (session && hasCompletedOnboarding && inAuth) {
+    } else if (session && hasCompletedOnboarding && (inAuth || onAuthLanding)) {
       router.replace('/(tabs)')
     }
-  }, [loading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode, devActive, hasConsented])
+  }, [loading, userLoading, session, hasCompletedOnboarding, behaviorHydrated, segments, loadFailed, recoveryMode, devActive, hasConsented])
 
   // ─── Loading state ────────────────────────────────────────────────────────
   // While the app isn't ready we render nothing and let the NATIVE splash keep

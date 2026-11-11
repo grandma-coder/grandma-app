@@ -17,6 +17,7 @@ import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { useTranslation } from '../../lib/i18n'
 import { supabase } from '../../lib/supabase'
 import { signOut } from '../../lib/signOut'
+import { deleteMyAccount, openManageSubscriptions } from '../../lib/deleteAccount'
 import { ScreenHeader } from '../../components/ui/ScreenHeader'
 import { Display, DisplayItalic, MonoCaps, Body } from '../../components/ui/Typography'
 import { useSavedToast } from '../../components/ui/SavedToast'
@@ -134,17 +135,17 @@ export default function AccountScreen() {
 
   async function confirmDeleteAccount() {
     setDeleting(true)
-    try {
-      const { error } = await supabase.functions.invoke('delete-account')
-      if (error) throw error
-      // Account is gone — clear the local session and return to auth.
-      // signOut handles store resets + navigation to the welcome screen.
-      await signOut('global')
-    } catch {
+    // Deletes server-side, then wipes this phone (stores, per-account keys, PIN, reminders,
+    // widgets, RevenueCat) and lands on welcome. A reply lost after the server finished still
+    // counts as deleted (lib/deleteAccount).
+    const deleted = await deleteMyAccount().catch(() => false)
+    if (!deleted) {
       setDeleting(false)
+      // Server/edge errors come back in English — always show the warm, localized message.
       alertAfterSheets(t('common_error'), t('account_deleteFailedMsg'))
     }
   }
+
 
   function SectionLabel({ children, sticker, diffuseIcon, color }: { children: React.ReactNode; sticker: React.ReactNode; diffuseIcon?: React.ReactNode; color?: string }) {
     if (diffuse) {
@@ -505,9 +506,10 @@ export default function AccountScreen() {
       <PaperAlert
         visible={deleteConfirm}
         title={t('account_deleteTitle')}
-        message={t('account_deleteMsg')}
+        message={[t('account_deleteMsg'), t('account_deleteSharedNote'), t('account_deleteSubscriptionNote')].join('\n\n')}
         buttons={[
           { label: t('common_cancel'), variant: 'secondary' },
+          { label: t('account_manageSubscription'), variant: 'secondary', onPress: openManageSubscriptions },
           { label: t('account_deleteConfirmBtn'), variant: 'danger', onPress: () => { void confirmDeleteAccount() } },
         ]}
         onRequestClose={() => setDeleteConfirm(false)}

@@ -7,6 +7,7 @@ import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useAppLockStore } from '../../store/useAppLockStore'
 import { useConsentStore } from '../../store/useConsentStore'
 import { useThemeStore } from '../../store/useThemeStore'
+import { useMenopauseOnboardingStore } from '../../store/useMenopauseOnboardingStore'
 
 describe('resetUserStores', () => {
   it('returns user-data stores to their initial state', () => {
@@ -21,6 +22,14 @@ describe('resetUserStores', () => {
     expect(usePregnancyStore.getState().dueDate).toBeNull()
     expect(useAppLockStore.getState().enabled).toBe(false)
     expect(useConsentStore.getState().consentedAt).toBeNull()
+  })
+
+  it('clears an unfinished menopause onboarding (stage, symptoms, HRT) like the other journeys', () => {
+    useMenopauseOnboardingStore.setState({ stage: 'peri', symptoms: ['hot_flashes'], onHrt: true } as never)
+    resetUserStores()
+    expect(useMenopauseOnboardingStore.getState().stage).toBeNull()
+    expect(useMenopauseOnboardingStore.getState().symptoms).toEqual([])
+    expect(useMenopauseOnboardingStore.getState().onHrt).toBe(false)
   })
 
   it('keeps hydration flags so the route guard does not wait forever', () => {

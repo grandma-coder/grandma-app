@@ -31,6 +31,7 @@ import {
   signInWithApple,
   signInWithGoogle,
   isAppleSignInAvailable,
+  isSignInCancelled,
 } from '../../lib/auth-providers'
 import { setPendingInvite } from '../../lib/pendingInvite'
 import { useTranslation } from '../../lib/i18n'
@@ -74,26 +75,34 @@ export default function Welcome() {
     isAppleSignInAvailable().then(setAppleAvailable)
   }, [])
 
+  // One sheet at a time: a second tap before the re-render opened a second auth session
+  // (Google answers 'locked') or ran Apple twice.
+  const busy = useRef(false)
+
   async function handleApple() {
+    if (busy.current) return
+    busy.current = true
     try {
       setLoading('apple')
       await signInWithApple()
     } catch (e: unknown) {
-      const err = e as { code?: string; message?: string }
-      if (err.code !== 'ERR_REQUEST_CANCELED') Alert.alert(t('auth_signInError'), authErrorText(err))
+      if (!isSignInCancelled(e)) Alert.alert(t('auth_signInError'), authErrorText(e))
     } finally {
+      busy.current = false
       setLoading(null)
     }
   }
 
   async function handleGoogle() {
+    if (busy.current) return
+    busy.current = true
     try {
       setLoading('google')
       await signInWithGoogle()
     } catch (e: unknown) {
-      const err = e as { message?: string }
-      if (err.message !== 'Google sign-in was cancelled or failed') Alert.alert(t('auth_signInError'), authErrorText(err))
+      if (!isSignInCancelled(e)) Alert.alert(t('auth_signInError'), authErrorText(e))
     } finally {
+      busy.current = false
       setLoading(null)
     }
   }

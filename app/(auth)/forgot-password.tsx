@@ -3,7 +3,7 @@
  * Sends a Supabase recovery email; user resets via the email link.
  */
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { authErrorText } from '../../lib/authError'
+import { AUTH_RESET_REDIRECT } from '../../lib/authRedirect'
 import { supabase } from '../../lib/supabase'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
@@ -42,7 +43,11 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
 
+  // A double tap sent two reset emails (the second usually bounced off the rate limit with an alert).
+  const submitting = useRef(false)
+
   async function handleReset() {
+    if (submitting.current) return
     const trimmed = email.trim()
     if (!trimmed) {
       Alert.alert(t('auth_missingInfo'), t('auth_missingEmailOnly'))
@@ -52,10 +57,11 @@ export default function ForgotPassword() {
       Alert.alert(t('auth_invalidEmail'), t('auth_invalidEmailMsg'))
       return
     }
+    submitting.current = true
     setLoading(true)
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
-        redirectTo: 'grandma-app://auth/reset',
+        redirectTo: AUTH_RESET_REDIRECT,
       })
       if (error) {
         Alert.alert(t('auth_couldntSendReset'), authErrorText(error))
@@ -65,6 +71,7 @@ export default function ForgotPassword() {
     } catch (e) {
       Alert.alert(t('auth_couldntSendReset'), authErrorText(e))
     } finally {
+      submitting.current = false
       setLoading(false)
     }
   }
@@ -106,7 +113,7 @@ export default function ForgotPassword() {
               {t('auth_forgot_heading2')}
             </Text>
             <Text style={[dStyles.sub, { fontFamily: diffuseFont.body, color: dt.colors.ink2 }]}>
-              {sent ? t('auth_forgot_sent') : t('auth_forgot_prompt')}
+              {sent ? t('auth_forgot_sentTo', { email: email.trim() }) : t('auth_forgot_prompt')}
             </Text>
 
             {!sent && (
@@ -186,7 +193,7 @@ export default function ForgotPassword() {
           <Text style={[styles.heading, { fontFamily: font.display, color: ink }]}>{t('auth_forgot_heading')}</Text>
           <Text style={[styles.headingItalic, { fontFamily: font.display, color: ink }]}>{t('auth_forgot_heading2')}</Text>
           <Text style={[styles.sub, { fontFamily: font.body, color: ink3 }]}>
-            {sent ? t('auth_forgot_sent') : t('auth_forgot_prompt')}
+            {sent ? t('auth_forgot_sentTo', { email: email.trim() }) : t('auth_forgot_prompt')}
           </Text>
 
           {!sent && (
