@@ -9,7 +9,7 @@ describe('kidsDayMarks', () => {
 
   it('orders special logs by meaning: vaccine, fever, medicine, doctor, growth, milestone', () => {
     expect(kidsDayMarks(['milestone', 'growth', 'note', 'medicine', 'temperature', 'vaccine']))
-      .toEqual(['syringe', 'thermo', 'pill', 'doc', 'ruler', 'star'])
+      .toEqual(['syringe', 'thermo', 'pill', 'stetho', 'ruler', 'star'])
   })
 
   it('keeps only special logs when mixed with routine ones', () => {
@@ -22,8 +22,8 @@ describe('kidsDayMarks', () => {
     expect(kidsDayMarks(['vaccine', 'temperature', 'feeding', 'diaper', 'sleep'])).toHaveLength(2)
   })
 
-  it('dedupes types that share a sticker (doctor note + exam)', () => {
-    expect(kidsDayMarks(['note', 'exam'])).toEqual(['doc'])
+  it('tells a doctor visit apart from an exam', () => {
+    expect(kidsDayMarks(['note', 'exam'])).toEqual(['stetho', 'doc'])
   })
 })
 

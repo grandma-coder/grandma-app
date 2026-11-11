@@ -7,10 +7,10 @@ import { resolveMenopauseSymptomId } from './menopauseSymptoms'
 
 export const KIDS_LOG_STICKER: Record<string, SiteStickerName> = {
   feeding: 'bottle', food: 'avocado', sleep: 'moon', wake_up: 'sun', mood: 'face3', activity: 'shoe',
-  diaper: 'diaper', health: 'thermo', medicine: 'pill', vaccine: 'syringe', growth: 'ruler',
-  memory: 'camera', exam: 'doc', bath: 'drop', potty: 'drop',
+  diaper: 'diaper', health: 'heart', medicine: 'pill', vaccine: 'syringe', growth: 'ruler',
+  memory: 'camera', exam: 'doc', bath: 'duck', potty: 'potty',
   // stored child_logs.type values that map onto a canonical log
-  temperature: 'thermo', photo: 'camera', milestone: 'star', note: 'pencil',
+  temperature: 'thermo', photo: 'camera', milestone: 'star', note: 'stetho',
 }
 
 /**
@@ -30,9 +30,9 @@ export const PREGNANCY_LOG_STICKER_MAP = PREGNANCY_LOG_STICKER
 
 /** Pregnancy mood options (form + day detail): five moods, five different stickers. */
 export const PREGNANCY_MOOD_STICKER: Record<string, SiteStickerName> = {
-  excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'face1', energetic: 'star', sad: 'face1',
+  excited: 'face4', happy: 'face3', okay: 'face2', anxious: 'worry', energetic: 'sun', sad: 'face1',
   // Moods the pregnancy onboarding saves (same faces as its picker).
-  calm: 'leaf', tired: 'zz', nauseous: 'face2',
+  calm: 'leaf', tired: 'zz', nauseous: 'nausea',
 }
 
 /**
@@ -40,12 +40,11 @@ export const PREGNANCY_MOOD_STICKER: Record<string, SiteStickerName> = {
  * dock, the "what do you want to track?" picker, every log sheet header, the log launcher, the
  * calendar day marks and the day detail. Keys cover both the quick-log key, the sheet id and the
  * stored `cycle_logs.type` (e.g. `cm` sheet → `cervical_mucus` rows).
- * `ovulation` (legacy, no form) shares the egg with LH on purpose: both mean "ovulation".
  */
 export const CYCLE_LOG_STICKER: Record<string, SiteStickerName> = {
-  period_start: 'drop', period_end: 'leaf', mood: 'face3', symptom: 'headache', symptoms: 'headache',
-  bbt: 'thermo', basal_temp: 'thermo', lh: 'egg', pregnancy_test: 'otest',
-  cm: 'pee', cervical_mucus: 'pee', clots: 'rasp', intimacy: 'love', intercourse: 'love',
+  period_start: 'drop', period_end: 'periodend', mood: 'face3', symptom: 'headache', symptoms: 'headache',
+  bbt: 'thermo', basal_temp: 'thermo', lh: 'lhstrip', pregnancy_test: 'otest',
+  cm: 'mucus', cervical_mucus: 'mucus', clots: 'clot', intimacy: 'love', intercourse: 'love',
   sex_drive: 'flame', water: 'glass', weight: 'scale', activity: 'dumbbell',
   ovulation: 'egg', exam: 'doc', meds: 'pill',
 }
@@ -57,8 +56,8 @@ export const CYCLE_MOOD_STICKER: Record<string, SiteStickerName> = {
 
 export const MENOPAUSE_LOG_STICKER: Record<string, SiteStickerName> = {
   hot_flash: 'flame', night_sweat: 'thermo', sleep: 'moon', low_mood: 'face1', brain_fog: 'brain',
-  fatigue: 'cloud', anxiety: 'bubble', palpitations: 'heart', joint_pain: 'foot', headache: 'headache',
-  weight: 'scale', vaginal_dryness: 'leaf', libido: 'flower', period: 'drop', hrt: 'pill', note: 'pencil',
+  fatigue: 'battery', anxiety: 'worry', palpitations: 'heart', joint_pain: 'bone', headache: 'headache',
+  weight: 'scale', vaginal_dryness: 'leaf', libido: 'love', period: 'drop', hrt: 'pill', note: 'pencil',
 }
 
 
@@ -108,8 +107,8 @@ export function pregnancyDayMarks(types: Iterable<string>): SiteStickerName[] {
  */
 export const KIDS_MARK_ORDER = ['vaccine', 'temperature', 'health', 'medicine', 'note', 'exam', 'growth', 'milestone'] as const
 const KIDS_MARK_STICKER: Record<(typeof KIDS_MARK_ORDER)[number], SiteStickerName> = {
-  vaccine: 'syringe', temperature: 'thermo', health: 'thermo', medicine: 'pill',
-  note: 'doc', exam: 'doc', growth: 'ruler', milestone: 'star',
+  vaccine: 'syringe', temperature: 'thermo', health: 'heart', medicine: 'pill',
+  note: 'stetho', exam: 'doc', growth: 'ruler', milestone: 'star',
 }
 
 export function kidsDayMarks(types: Iterable<string>): SiteStickerName[] {

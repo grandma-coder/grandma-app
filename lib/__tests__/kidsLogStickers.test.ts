@@ -18,7 +18,8 @@ describe('kids log stickers', () => {
 
   it('stored child_logs types resolve to their canonical sticker', () => {
     expect(KIDS_LOG_STICKER.photo).toBe(KIDS_LOG_STICKER.memory)
-    expect(KIDS_LOG_STICKER.temperature).toBe(KIDS_LOG_STICKER.health)
+    expect(KIDS_LOG_STICKER.temperature).toBe('thermo')
+    expect(KIDS_LOG_STICKER.health).not.toBe(KIDS_LOG_STICKER.temperature)
     expect(KIDS_LOG_STICKER.food).not.toBe(KIDS_LOG_STICKER.feeding)
     expect(KIDS_LOG_STICKER.potty).not.toBe(KIDS_LOG_STICKER.diaper)
   })
