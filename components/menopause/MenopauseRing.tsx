@@ -7,6 +7,7 @@
  * chips). Dual-variant, tokens-only via the shared MenoPalette + sticker palette.
  */
 import { useMemo } from 'react'
+import { useTodayKey } from '../../hooks/useTodayKey'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Character } from '../characters/Characters'
@@ -53,6 +54,7 @@ export function MenopauseRing({
   const checkColor = stickers.greenInk
   const sticker = stickers as Record<string, string>
 
+  const todayKey = useTodayKey()
   const nodes = useMemo(() => {
     const byDate = new Map<string, MenopauseLogRow[]>()
     for (const r of rows) {
@@ -79,7 +81,9 @@ export function MenopauseRing({
       })
     }
     return out
-  }, [rows])
+    // todayKey: re-run at midnight so the ringed day moves while the app stays open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, todayKey])
 
   if (loading && !pal.diffuse) {
     // Ghost ring on the node orbit (stroke = node size) + ghost counter: stage

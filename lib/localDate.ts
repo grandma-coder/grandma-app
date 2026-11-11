@@ -21,3 +21,20 @@ export function fullMonthsBetween(from: Date, to: Date = new Date()): number {
   if (months > 0 && to.getDate() < from.getDate() && to.getDate() < lastDayOfToMonth) months -= 1
   return months
 }
+
+/**
+ * Calendar days from `from` to `to` in local time (midnight to midnight), so 23:00 yesterday is
+ * 1 day ago at 08:00 — counting 24h blocks called it "today". Rounded, so DST's 23/25h days count
+ * as one. Negative when `to` is on an earlier day.
+ */
+export function calendarDaysBetween(from: Date, to: Date = new Date()): number {
+  const a = new Date(from.getFullYear(), from.getMonth(), from.getDate())
+  const b = new Date(to.getFullYear(), to.getMonth(), to.getDate())
+  return Math.round((b.getTime() - a.getTime()) / 86400000)
+}
+
+/** Hours between two clock hours (0–23) the short way round midnight: 0 and 23 are 1 apart. */
+export function clockHoursApart(a: number, b: number): number {
+  const d = Math.abs(a - b) % 24
+  return Math.min(d, 24 - d)
+}

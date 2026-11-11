@@ -6341,6 +6341,8 @@ export const es: TranslationKeys = {
   widget_menoMonths: "{{n}} meses desde la última regla",
   widget_menoMonths_one: "1 mes desde la última regla",
   widget_menoMonthsZero: "Regla este mes",
+  widget_menoDays: "{{n}} días desde la última regla",
+  widget_menoDays_one: "1 día desde la última regla",
   widget_menoHotToday: "Sofocos hoy · {{n}}/5",
   widget_menoNoHotToday: "Ningún sofoco registrado hoy",
   widget_series_hotFlashes: "Sofocos · intensidad 1–5",

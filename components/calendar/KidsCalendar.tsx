@@ -146,6 +146,7 @@ import { invalidateKidsLogQueries } from '../../lib/queryClient'
 import { Skeleton } from '../ui/Skeleton'
 import { SheetModal } from '../ui/SheetModal'
 import { CenterModal } from '../ui/CenterModal'
+import { clockHoursApart } from '../../lib/localDate'
 
 // ─── Site look (light) helpers ─────────────────────────────────────────────
 // Calm ink outlines, card-less sticker rows, ink text. Used only by the light
@@ -1925,12 +1926,12 @@ export function KidsCalendar() {
             if (lv?.startTime || lv?.time) {
               const t = String(lv.startTime ?? lv.time)
               const lHour = parseInt(t.split(':')[0])
-              if (Number.isFinite(lHour)) return Math.abs(lHour - rHour) <= 2
+              if (Number.isFinite(lHour)) return clockHoursApart(lHour, rHour) <= 2
             }
           } catch {}
           // Fallback when the log payload has no time: use created_at hour.
           const logHour = new Date(log.created_at).getHours()
-          return Math.abs(logHour - rHour) <= 2
+          return clockHoursApart(logHour, rHour) <= 2
         }
         // No criteria AND no time — any food/feeding log on the day counts.
         return true
@@ -1954,7 +1955,7 @@ export function KidsCalendar() {
           try {
             const lv = log.value ? JSON.parse(log.value) : null
             if (lv?.startTime) {
-              return Math.abs(parseInt(String(lv.startTime).split(':')[0]) - rHour) <= 1
+              return clockHoursApart(parseInt(String(lv.startTime).split(':')[0]), rHour) <= 1
             }
           } catch {}
         }
@@ -1971,12 +1972,12 @@ export function KidsCalendar() {
           try {
             const lv = log.value ? JSON.parse(log.value) : null
             if (lv?.startTime) {
-              return Math.abs(parseInt(String(lv.startTime).split(':')[0]) - rHour) <= 2
+              return clockHoursApart(parseInt(String(lv.startTime).split(':')[0]), rHour) <= 2
             }
           } catch {}
           // Fallback: created_at hour (best-effort for same-day entries)
           const logHour = new Date(log.created_at).getHours()
-          return Math.abs(logHour - rHour) <= 2
+          return clockHoursApart(logHour, rHour) <= 2
         }
         // No time set → any sleep log for this child counts
         return true
@@ -2114,15 +2115,17 @@ export function KidsCalendar() {
       const childId = selectedChildId !== 'all' ? selectedChildId : children[0]?.id
       if (!childId) throw new Error(tNow('kp_kc_selectChild'))
 
+      // supabase returns { error } instead of throwing — check it, or a failed save reset the form.
       if (routineEditing) {
-        await supabase.from('child_routines').update({
+        const { error } = await supabase.from('child_routines').update({
           name: routineForm.name,
           type: routineForm.type,
           time: routineForm.time,
           days_of_week: routineForm.days,
         }).eq('id', routineEditing.id)
+        if (error) throw error
       } else {
-        await supabase.from('child_routines').insert({
+        const { error } = await supabase.from('child_routines').insert({
           child_id: childId,
           user_id: session.user.id,
           type: routineForm.type,
@@ -2131,6 +2134,7 @@ export function KidsCalendar() {
           days_of_week: routineForm.days,
           value: null,
         })
+        if (error) throw error
       }
       setRoutineEditing(null)
       setRoutineForm({ name: '', type: 'activity', time: '09:00', days: [0,1,2,3,4,5,6] })

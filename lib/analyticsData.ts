@@ -1103,7 +1103,52 @@ export interface TodayLogEntry {
   created_at: string
 }
 
-/** Returns today's pregnancy_logs grouped by log_type. Last entry per type wins. */
+/**
+ * Today's pregnancy_logs by log_type (shared by the home and the widget). Latest row wins (water is
+ * a running total); nutrition aggregates meals; kick_count sums every session — the number is
+ * "kicks today" (widget label), not the last session.
+ */
+export function groupPregnancyTodayLogs(
+  rows: Array<{ log_type: string; value: string | null; notes?: string | null; created_at: string }>,
+): Record<string, TodayLogEntry> {
+  const grouped: Record<string, TodayLogEntry> = {}
+  // For nutrition: aggregate all rows of the day → count = meals, sum of value = total kcal
+  let nutritionCount = 0
+  let nutritionTotalCals = 0
+  const nutritionEntries: Array<{ value: string | null; notes: string | null; created_at: string }> = []
+  let kicks = 0
+  let lastKick: { notes: string | null; created_at: string } | null = null
+  for (const row of rows) {
+    if (row.log_type === 'nutrition') {
+      nutritionCount += 1
+      const kcal = row.value ? parseInt(row.value, 10) : 0
+      if (!isNaN(kcal)) nutritionTotalCals += kcal
+      nutritionEntries.push({ value: row.value, notes: row.notes ?? null, created_at: row.created_at })
+      continue
+    }
+    if (row.log_type === 'kick_count') {
+      kicks += Number(row.value) || 0
+      lastKick = { notes: row.notes ?? null, created_at: row.created_at }
+      continue
+    }
+    grouped[row.log_type] = {
+      value: row.value,
+      notes: row.notes ?? null,
+      created_at: row.created_at,
+    }
+  }
+  if (lastKick) grouped['kick_count'] = { value: String(kicks), notes: lastKick.notes, created_at: lastKick.created_at }
+  if (nutritionCount > 0) {
+    grouped['nutrition'] = {
+      value: String(nutritionCount),
+      notes: JSON.stringify({ totalCals: nutritionTotalCals, entries: nutritionEntries }),
+      created_at: nutritionEntries[nutritionEntries.length - 1].created_at,
+    }
+  }
+  return grouped
+}
+
+/** Today's pregnancy_logs grouped by log_type (groupPregnancyTodayLogs). */
 export function usePregnancyTodayLogs(userId: string | undefined) {
   return useQuery({
     queryKey: ['pregnancy-today-logs', userId],
@@ -1117,33 +1162,7 @@ export function usePregnancyTodayLogs(userId: string | undefined) {
         .eq('log_date', today)
         .order('created_at', { ascending: true })
       if (error) throw error
-      const grouped: Record<string, TodayLogEntry> = {}
-      // For nutrition: aggregate all rows of the day → count = meals, sum of value = total kcal
-      let nutritionCount = 0
-      let nutritionTotalCals = 0
-      const nutritionEntries: Array<{ value: string | null; notes: string | null; created_at: string }> = []
-      for (const row of data ?? []) {
-        if (row.log_type === 'nutrition') {
-          nutritionCount += 1
-          const kcal = row.value ? parseInt(row.value, 10) : 0
-          if (!isNaN(kcal)) nutritionTotalCals += kcal
-          nutritionEntries.push({ value: row.value, notes: row.notes, created_at: row.created_at })
-          continue
-        }
-        grouped[row.log_type] = {
-          value: row.value,
-          notes: row.notes,
-          created_at: row.created_at,
-        }
-      }
-      if (nutritionCount > 0) {
-        grouped['nutrition'] = {
-          value: String(nutritionCount),
-          notes: JSON.stringify({ totalCals: nutritionTotalCals, entries: nutritionEntries }),
-          created_at: nutritionEntries[nutritionEntries.length - 1].created_at,
-        }
-      }
-      return grouped
+      return groupPregnancyTodayLogs(data ?? [])
     },
     enabled: !!userId,
     staleTime: 30_000,

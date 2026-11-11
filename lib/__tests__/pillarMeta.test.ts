@@ -38,6 +38,12 @@ describe('cycleMetaChips', () => {
     expect(cycleMetaChips(tEn, 'fertility', { ...luteal, daysUntilOvulation: 0 })[1]).toBe('Ovulation likely today')
     expect(cycleMetaChips(tEn, 'fertility', { ...luteal, daysUntilOvulation: 3 })[1]).toBe('Ovulation in 3 days')
   })
+
+  it('late period: no invented "Day 3 · period in 26d" — same late wording as the home', () => {
+    const wrapped = { ...luteal, cycleDay: 3, daysUntilPeriod: 26, daysLate: 2, cycleLength: 28 }
+    expect(cycleMetaChips(tEn, 'nutrition-prep', wrapped)).toEqual(['Cycle day 30', 'Your period is 2 days later than expected'])
+    expect(cycleMetaChips(tEn, 'fertility', { ...wrapped, daysLate: 1 })).toEqual(['Cycle day 29', 'Your period is 1 day later than expected'])
+  })
 })
 
 describe('pregnancy / kids chips', () => {

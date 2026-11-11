@@ -5,6 +5,7 @@
 
 import { supabase } from './supabase'
 import { useBadgeStore } from '../store/useBadgeStore'
+import { getCurrentWeekFromDueDate } from './pregnancyData'
 
 /** Format a Date to local YYYY-MM-DD (matches how calendar stores log dates). */
 function localDateStr(d: Date): string {
@@ -232,10 +233,8 @@ export async function syncBadgesFromSupabase(): Promise<string[]> {
     try {
       const parsed = JSON.parse(notesRaw) as { dueDate?: string }
       if (parsed.dueDate) {
-        const due = new Date(parsed.dueDate + 'T00:00:00')
-        const now = new Date()
-        const daysLeft = Math.ceil((due.getTime() - now.getTime()) / 86400000)
-        pregnancyCurrentWeek = Math.max(1, Math.min(42, 40 - Math.floor(daysLeft / 7)))
+        // Same completed-weeks count as the home (rounding up was a week ahead 6 days of 7).
+        pregnancyCurrentWeek = getCurrentWeekFromDueDate(parsed.dueDate)
       }
     } catch {
       // ignore parse errors

@@ -118,8 +118,8 @@ export default function CycleOnboarding() {
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [saving, setSaving] = useState(false)
-  // Re-entrancy guard against a double-tap on "Let's Go" (P2-78). Every path in
-  // saveAndFinish navigates away, so the guard is set once and never released.
+  // Re-entrancy guard against a double-tap on "Let's Go" (P2-78). Released only when the
+  // server save fails, so the user can retry; every other path navigates away.
   const savingRef = useRef(false)
 
   const steps = getSteps(store.tryingToConceive)
@@ -160,7 +160,6 @@ export default function CycleOnboarding() {
       return onboardingComplete('pre-pregnancy')
     }
 
-    let saveFailed = false
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
@@ -188,8 +187,7 @@ export default function CycleOnboarding() {
       const { error: profileErr } = await supabase
         .from('profiles')
         .upsert(profilePayload, { onConflict: 'id' })
-      if (profileErr) saveFailed = true
-      if (profileErr) console.warn('[onboarding] profile upsert failed:', profileErr.message)
+      if (profileErr) throw profileErr
 
       // Behavior row. Schema CHECK constraint requires PRE_PREG_DB_TYPE
       // ('cycle'), remapped to 'pre-pregnancy' on read via behaviorFromDbType.
@@ -201,11 +199,9 @@ export default function CycleOnboarding() {
         },
         { onConflict: 'user_id,type' }
       )
-      if (behaviorErr) saveFailed = true
-      if (behaviorErr) console.warn('[onboarding] behaviors upsert failed:', behaviorErr.message)
-      // Enroll locally regardless of the server result — the catch path below
-      // also lets the user proceed, so local enrollment must always happen.
-      useBehaviorStore.getState().enroll('pre-pregnancy')
+      // The journey row is what restores Cycle on another device / after a reinstall. Without it
+      // the journey lived on this phone only, so a failed write blocks and asks to retry.
+      if (behaviorErr) throw behaviorErr
 
       // Initial cycle log if we have a last period date
       if (store.lastPeriodDate) {
@@ -225,15 +221,20 @@ export default function CycleOnboarding() {
             supplements: store.supplements,
           }),
         })
-        // Don't block onboarding on this, but at least record the failure so
-        // a lost first-period entry is diagnosable rather than silent.
-        if (cycleErr) console.warn('[onboarding] cycle_logs insert failed:', cycleErr.message)
+        // The first period anchors every estimate — a lost one left an empty home. Retry is safe:
+        // the upserts above are idempotent and the history merges a re-logged start.
+        if (cycleErr) throw cycleErr
       }
     } catch (e) {
-      // Non-blocking — local mode set below so user can still proceed.
-      saveFailed = true
       console.warn('Failed to save cycle onboarding:', e)
+      // Keep the answers and stay on this screen so the tap can be retried.
+      Alert.alert(tNow('kp_ob_finishFailedTitle'), tNow('kp_ob_finishFailedBody'))
+      savingRef.current = false
+      setSaving(false)
+      return
     }
+    // Server rows committed — now safe to enroll locally.
+    useBehaviorStore.getState().enroll('pre-pregnancy')
 
     useModeStore.getState().setCycleIntent(store.tryingToConceive ? 'ttc' : 'tracking')
 
@@ -250,7 +251,6 @@ export default function CycleOnboarding() {
 
     store.clearAll()
     onboardingComplete('pre-pregnancy')
-    if (saveFailed) Alert.alert(tNow('onb_saveLater_title'), tNow('onb_saveLater_body'))
   }
 
   // ─── Render current step ────────────────────────────────────────────────

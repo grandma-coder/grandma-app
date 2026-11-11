@@ -50,7 +50,8 @@ export interface CycleLogRow {
 
 // ─── Fetch ────────────────────────────────────────────────────────────────
 
-async function fetchCycleLogs(): Promise<CycleLogRow[]> {
+/** Every cycle log of the signed-in user (paged). Shared by useCycleLogs and the widget snapshot. */
+export async function fetchCycleLogs(): Promise<CycleLogRow[]> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
   if (sessionError) throw sessionError
   const session = sessionData.session
@@ -68,12 +69,15 @@ async function fetchCycleLogs(): Promise<CycleLogRow[]> {
 }
 
 /** Base hook — all 5 stat hooks read the same cached list. */
+/** The one query the home, calendar, analytics and widget snapshot all read. */
+export const cycleLogsQuery = {
+  queryKey: ['cycleLogs'],
+  queryFn: fetchCycleLogs,
+  staleTime: 2 * 60 * 1000,
+}
+
 export function useCycleLogs() {
-  return useQuery({
-    queryKey: ['cycleLogs'],
-    queryFn: fetchCycleLogs,
-    staleTime: 2 * 60 * 1000,
-  })
+  return useQuery(cycleLogsQuery)
 }
 
 // ─── Cycle History ────────────────────────────────────────────────────────

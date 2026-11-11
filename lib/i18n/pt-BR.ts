@@ -6341,6 +6341,8 @@ export const ptBR: TranslationKeys = {
   widget_menoMonths: "{{n}} meses desde a última menstruação",
   widget_menoMonths_one: "1 mês desde a última menstruação",
   widget_menoMonthsZero: "Menstruação este mês",
+  widget_menoDays: "{{n}} dias desde a última menstruação",
+  widget_menoDays_one: "1 dia desde a última menstruação",
   widget_menoHotToday: "Calorões hoje · {{n}}/5",
   widget_menoNoHotToday: "Nenhum calorão registrado hoje",
   widget_series_hotFlashes: "Fogachos · intensidade 1–5",

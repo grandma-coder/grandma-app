@@ -201,8 +201,8 @@ export default function MenopauseOnboarding() {
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [saving, setSaving] = useState(false)
-  // Re-entrancy guard against a double-tap on the finish CTA — every path in
-  // saveAndFinish navigates away, so it's set once and never released.
+  // Re-entrancy guard against a double-tap on the finish CTA. Released only when the server
+  // save fails, so the user can retry; every other path navigates away.
   const savingRef = useRef(false)
 
   const steps = getSteps(store.stage)
@@ -239,9 +239,9 @@ export default function MenopauseOnboarding() {
       return onboardingComplete('menopause')
     }
 
-    // DB writes are best-effort — a failure still enrolls locally + navigates so
-    // the user is never stranded (mirrors the cycle flow's non-blocking finish).
-    let saveFailed = false
+    // The profile (stage, last period) and the journey row are what restore Menopause after a
+    // reinstall — a failed write used to enroll on this phone only. Block and let the user retry
+    // (both writes are idempotent upserts).
     try {
       const { data } = await supabase.auth.getSession()
       const userId = data.session?.user.id
@@ -274,20 +274,21 @@ export default function MenopauseOnboarding() {
         const { error: profileErr } = await supabase
           .from('profiles')
           .upsert(profilePayload, { onConflict: 'id' })
-        if (profileErr) saveFailed = true
-      if (profileErr) console.warn('[menopause onboarding] profile upsert failed:', profileErr.message)
+        if (profileErr) throw profileErr
 
         // 1:1 db behavior type (no alias, unlike pre-pregnancy → 'cycle').
         const { error: behaviorErr } = await supabase.from('behaviors').upsert(
           { user_id: userId, type: 'menopause', active: true },
           { onConflict: 'user_id,type' },
         )
-        if (behaviorErr) saveFailed = true
-      if (behaviorErr) console.warn('[menopause onboarding] behaviors upsert failed:', behaviorErr.message)
+        if (behaviorErr) throw behaviorErr
       }
     } catch (e) {
-      saveFailed = true
       console.warn('Failed to save menopause onboarding:', e)
+      Alert.alert(tNow('kp_ob_finishFailedTitle'), tNow('kp_ob_finishFailedBody'))
+      savingRef.current = false
+      setSaving(false)
+      return
     }
 
     if (stage) useMenopauseStore.getState().setStage(stage)
@@ -299,7 +300,6 @@ export default function MenopauseOnboarding() {
     // the active mode via setModeUnsafe once the enroll above has landed.
     // Replaces the old hardcoded setMode('menopause') + router.replace('/(tabs)').
     onboardingComplete('menopause')
-    if (saveFailed) Alert.alert(tNow('onb_saveLater_title'), tNow('onb_saveLater_body'))
   }
 
   if (currentStep === 'complete') {

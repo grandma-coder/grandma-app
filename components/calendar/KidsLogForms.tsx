@@ -564,8 +564,8 @@ export async function saveAsRoutine(
   daysOfWeek: number[] = [0, 1, 2, 3, 4, 5, 6],
 ) {
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return
-  await supabase.from('child_routines').insert({
+  if (!session) throw new Error(tNow('kp_pk_notAuth'))
+  const { error } = await supabase.from('child_routines').insert({
     child_id: childId,
     user_id: session.user.id,
     type,
@@ -575,6 +575,7 @@ export async function saveAsRoutine(
     days_of_week: daysOfWeek,
     active: true,
   })
+  if (error) throw error
 }
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -1678,7 +1679,8 @@ export function FeedingForm({ onSaved, initialDate, prefill, onSkip, editLog }: 
         const routineValue = feedType === 'solids'
           ? JSON.stringify({ feedType: 'solids', meal })
           : JSON.stringify({ feedType, amount: amount || undefined, duration: duration || undefined })
-        await saveAsRoutine(childId, feedType === 'solids' ? 'food' : 'feeding', routineName, routineValue, startTime, routineDays)
+        // The log is already saved: report a failed routine, but still close the form (no duplicate re-save).
+        await saveAsRoutine(childId, feedType === 'solids' ? 'food' : 'feeding', routineName, routineValue, startTime, routineDays).catch((e) => Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e)))
       }
       onSaved()
     } catch (e: any) {
@@ -2699,7 +2701,8 @@ export function SleepForm({ onSaved, initialDate, prefill, onSkip, editLog }: { 
         const durMins = m ? (parseInt(m[1] || '0') * 60 + parseInt(m[2] || '0')) : 0
         const longSleep = durMins >= 240 // 4h
         const isNap = !longSleep && startHour < 18
-        await saveAsRoutine(childId, 'sleep', isNap ? t('kids_routineName_nap') : t('kids_routineName_bedtime'), JSON.stringify({ startTime, quality: qualityLabel }), startTime, routineDays)
+        // The log is already saved: report a failed routine, but still close the form (no duplicate re-save).
+        await saveAsRoutine(childId, 'sleep', isNap ? t('kids_routineName_nap') : t('kids_routineName_bedtime'), JSON.stringify({ startTime, quality: qualityLabel }), startTime, routineDays).catch((e) => Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e)))
       }
       onSaved()
     } catch (e: any) {
@@ -3086,7 +3089,8 @@ export function KidsMoodForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       }
       await saveChildLog(childId, 'mood', wrappedValue, notes || undefined, undefined, logDate)
       if (routineEnabled && !prefill) {
-        await saveAsRoutine(childId, 'mood', t('kids_routineName_moodCheck'), null, startTime, routineDays)
+        // The log is already saved: report a failed routine, but still close the form (no duplicate re-save).
+        await saveAsRoutine(childId, 'mood', t('kids_routineName_moodCheck'), null, startTime, routineDays).catch((e) => Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e)))
       }
       onSaved()
     } catch (e: any) {
@@ -3417,7 +3421,8 @@ export function ActivityForm({ onSaved, initialDate, prefill, onSkip, editLog }:
       await saveChildLog(childId, 'activity', tagged, notes || undefined, undefined, logDate)
       if (routineEnabled && !prefill) {
         const routineName = name || ACTIVITY_TYPES.find((a) => a.id === activityType)?.label || t('kids_logForm_labelActivity')
-        await saveAsRoutine(childId, 'activity', routineName, value, startTime, routineDays)
+        // The log is already saved: report a failed routine, but still close the form (no duplicate re-save).
+        await saveAsRoutine(childId, 'activity', routineName, value, startTime, routineDays).catch((e) => Alert.alert(t('kids_logForm_alertError'), pregnancyLogErrorText(e)))
       }
       onSaved()
     } catch (e: any) {

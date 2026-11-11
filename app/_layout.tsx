@@ -69,6 +69,7 @@ import { useBehaviorStore, behaviorFromDbType } from '../store/useBehaviorStore'
 import { useConsentStore } from '../store/useConsentStore'
 import { useAppLockStore } from '../store/useAppLockStore'
 import { hasPin, isBiometricInFlight } from '../lib/appLock'
+import { appLockTransition } from '../lib/appLockGate'
 import LockScreen from './lock'
 import { useCaregiverStore } from '../store/useCaregiverStore'
 import { usePregnancyStore } from '../store/usePregnancyStore'
@@ -689,21 +690,17 @@ export default function RootLayout() {
   const hasCompletedOnboarding = enrolledBehaviors.length > 0 || hasChildren
 
   // ─── App-lock foreground gate (WS2d) ──────────────────────────────────────
-  // Re-lock whenever the app comes back to the foreground from background/inactive.
+  // Re-lock when the app comes back to the foreground after it was really in the background
+  // (not after a mere 'inactive': permission alerts, purchase sheet, Control Center).
   // Skip transitions caused by our own biometric prompt (the Face ID sheet
   // backgrounds the app, which would otherwise re-lock right after unlock).
   useEffect(() => {
     if (!lockEnabled) return
-    let prev = AppState.currentState
+    let backgrounded = AppState.currentState === 'background'
     const sub = AppState.addEventListener('change', (next) => {
-      if (
-        (prev === 'background' || prev === 'inactive') &&
-        next === 'active' &&
-        !isBiometricInFlight()
-      ) {
-        useAppLockStore.getState().lock()
-      }
-      prev = next
+      const r = appLockTransition(backgrounded, next)
+      backgrounded = r.backgrounded
+      if (r.lock && !isBiometricInFlight()) useAppLockStore.getState().lock()
     })
     return () => sub.remove()
   }, [lockEnabled])

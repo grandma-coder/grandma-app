@@ -205,3 +205,32 @@ describe('chart readings', () => {
     expect(s.strings.styles.cream).toBe('Cream')
   })
 })
+
+describe('logic sweep round 2', () => {
+  it('cycle late: no next period or fertile window in the stats (the home pauses estimates too)', () => {
+    const e = buildCycleEntry({ config: { ...cfg, lastPeriodStart: '2026-10-08' }, logs: [] }, ctx)
+    const labels = e.stats.map((s) => s.label)
+    expect(labels).not.toContain('Next period')
+    expect(labels).not.toContain('Fertile window')
+    expect(labels).toContain('Logged today')
+    // Not late: both still there.
+    expect(buildCycleEntry({ config: cfg, logs: [] }, ctx).stats.map((s) => s.label)).toEqual(['Next period', 'Fertile window', 'Logged today'])
+  })
+  it('kids: "since last feed" counts from the feed time, not when it was logged', () => {
+    const logs = [
+      // 3am feed logged at 7am.
+      { date: '2026-11-09', type: 'feeding', value: JSON.stringify({ feedType: 'bottle', time: '03:00' }), created_at: '2026-11-09T07:00:00' },
+      // Logged later, but the feed itself was earlier (yesterday evening).
+      { date: '2026-11-08', type: 'feeding', value: JSON.stringify({ feedType: 'breast', time: '21:00' }), created_at: '2026-11-09T07:05:00' },
+    ]
+    const e = buildKidsEntry({ id: 'c1', name: 'Leo', birthDate: '2026-03-01' }, logs, [], ctx)
+    expect(e.sinceLast?.at).toBe(new Date(2026, 10, 9, 3, 0).toISOString())
+  })
+  it('menopause: a period 25 days ago (last month) is not "this month"', () => {
+    const e = buildMenopauseEntry({ stage: 'peri', lastPeriodDate: '2026-10-15', logs: [] }, ctx)
+    expect(e.days[0].title).not.toMatch(/this month/i)
+    expect(e.days[0].title).toMatch(/25 days since last period/)
+    expect(e.days[0].hero!.caption).toMatch(/25 days since last period/)
+    expect(e.days[1].title).toMatch(/26 days/)
+  })
+})

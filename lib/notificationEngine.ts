@@ -11,15 +11,19 @@
  *  - community: channel activity (handled by DB triggers)
  */
 
-import { supabase } from './supabase'
+import { fetchAllRows, supabase } from './supabase'
 import { useFeatureFlags } from '../store/useFeatureFlags'
 import { useModeStore } from '../store/useModeStore'
-import { getCycleInfo, toDateStr } from './cycleLogic'
+import { getCycleInfo, getDaysLate, toDateStr } from './cycleLogic'
+import { computeCycleHistory, type CycleLogRow } from './cycleAnalytics'
+import { buildReminderCycleConfig } from './cycleReminders'
+import { getCurrentWeekFromDueDate } from './pregnancyData'
+import { useCycleSettingsStore } from '../store/useCycleSettingsStore'
 import { parseLocalDate } from './localDate'
 import {
   activityGoalCopy, appointmentCopy, caregiverActivityCopy, channelActivityCopy, cycleQuietCopy,
   dailySummaryCopy, dueDateCopy, fertileWindowCopy, insightCopy, insightsCopy, kickCountCopy,
-  kidsQuietCopy, latePeriodCopy, ovulationCopy, periodSoonCopy, pregnancyQuietCopy, pregnancyWeekCopy,
+  kidsQuietCopy, latePeriodCopy, ovulationCopy, pregnancyQuietCopy, pregnancyWeekCopy,
   routineMissedCopy, routinesMissedCopy, sleepGoalCopy, streakCopy, streakPausedCopy, strongSymptomsCopy,
   temperatureCopy, wellnessDropCopy, wellnessImproveCopy,
 } from './notificationCopy'
@@ -772,9 +776,9 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
       const meta = JSON.parse(noteRows[0].notes)
       if (meta.dueDate) {
         dueDate = meta.dueDate
-        const due = parseLocalDate(meta.dueDate)
-        const daysToDue = Math.ceil((due.getTime() - Date.now()) / 86400000)
-        weekNumber = Math.max(1, Math.min(40, 40 - Math.floor(daysToDue / 7)))
+        // Same completed-weeks count as the home (1–42). Rounding up put the week one ahead on 6
+        // of 7 days, so week milestones fired early.
+        weekNumber = getCurrentWeekFromDueDate(meta.dueDate)
       }
     } catch {}
   }
@@ -901,42 +905,39 @@ export async function generatePregnancyNotifications(userId: string): Promise<nu
 // ─── 13. CYCLE / PRE-PREGNANCY NOTIFICATIONS ────────────────────────────────
 
 export async function generateCycleNotifications(userId: string): Promise<number> {
-  // Find latest period_start
-  const { data: periodRows } = await supabase
-    .from('cycle_logs')
-    .select('date, value, notes')
-    .eq('user_id', userId)
-    .eq('type', 'period_start')
-    .order('date', { ascending: false })
-    .limit(1)
+  // Same cycle config as the home and the period reminder: declared cycle length → measured
+  // average → 28, anchored on the latest logged period. (Reading the cycle length from the latest
+  // period row's notes fell back to 28 from the second logged period on.)
+  const periodRows = await fetchAllRows<CycleLogRow>(() =>
+    supabase
+      .from('cycle_logs')
+      .select('id, user_id, date, type, value, notes, created_at')
+      .eq('user_id', userId)
+      .in('type', ['period_start', 'period_end'])
+      .order('date', { ascending: true })
+      .order('id', { ascending: true }),
+  )
+  const config = buildReminderCycleConfig(computeCycleHistory(periodRows), useCycleSettingsStore.getState())
+  if (!config) return 0
 
-  if (!periodRows || periodRows.length === 0) return 0
-
-  const lastPeriodStart = periodRows[0].date
-  const periodDuration = parseInt(periodRows[0].value || '5', 10) || 5
-
-  // Parse cycle config from notes JSON (onboarding stored it on the period_start row)
-  let cycleLength = 28
   let tryingToConceive = useModeStore.getState().cycleIntent === 'ttc'
+  const latestStart = periodRows.filter((r) => r.type === 'period_start').pop()
   try {
-    if (periodRows[0].notes) {
-      const meta = JSON.parse(periodRows[0].notes)
-      if (typeof meta.cycleLength === 'number') cycleLength = meta.cycleLength
+    if (latestStart?.notes) {
+      const meta = JSON.parse(latestStart.notes)
       if (typeof meta.tryingToConceive === 'boolean') tryingToConceive = meta.tryingToConceive
     }
   } catch {}
 
-  const info = getCycleInfo({
-    lastPeriodStart,
-    cycleLength,
-    periodLength: periodDuration,
-  })
-
   const notifications: NotificationPayload[] = []
   const todayDate = toDateStr(new Date())
+  const info = getCycleInfo(config, todayDate)
+  // getCycleInfo wraps into an invented new cycle once the period is overdue (daysUntilPeriod is
+  // never negative), so lateness comes from getDaysLate — and no fertile/ovulation nudges then.
+  const daysLate = getDaysLate(config, todayDate)
 
   // ── Fertile window starting today ─────────────────────────────────────────
-  if (info.cycleDay === info.fertileStart && tryingToConceive) {
+  if (daysLate === 0 && info.cycleDay === info.fertileStart && tryingToConceive) {
     const dedupeKey = `cycle_fertile_${todayDate}`
     const already = await alreadyNotifiedToday(userId, 'insight', dedupeKey)
     if (!already) {
@@ -950,7 +951,7 @@ export async function generateCycleNotifications(userId: string): Promise<number
   }
 
   // ── Ovulation day ─────────────────────────────────────────────────────────
-  if (info.cycleDay === info.ovulationDay) {
+  if (daysLate === 0 && info.cycleDay === info.ovulationDay) {
     const dedupeKey = `cycle_ovulation_${todayDate}`
     const already = await alreadyNotifiedToday(userId, 'milestone', dedupeKey)
     if (!already) {
@@ -963,23 +964,12 @@ export async function generateCycleNotifications(userId: string): Promise<number
     }
   }
 
-  // ── Period in 1–2 days ────────────────────────────────────────────────────
-  if (info.daysUntilPeriod === 1 || info.daysUntilPeriod === 2) {
-    const dedupeKey = `cycle_period_soon_${info.daysUntilPeriod}_${todayDate}`
-    const already = await alreadyNotifiedToday(userId, 'reminder', dedupeKey)
-    if (!already) {
-      notifications.push({
-        user_id: userId,
-        type: 'reminder',
-        ...periodSoonCopy(info.daysUntilPeriod),
-        data: { behavior: 'pre-pregnancy', daysUntilPeriod: info.daysUntilPeriod, dedupeKey },
-      })
-    }
-  }
+  // "Period in 1–2 days" is the local reminder's job (lib/cycleReminders.ts: user-set 1–3 days
+  // before, on/off in settings). Sending it here too gave two notifications for the same thing.
 
   // ── Late period (3+ days past expected) ───────────────────────────────────
-  if (info.daysUntilPeriod < -2 && info.daysUntilPeriod >= -10) {
-    const lateDays = Math.abs(info.daysUntilPeriod)
+  if (daysLate >= 3 && daysLate <= 10) {
+    const lateDays = daysLate
     const dedupeKey = 'cycle_late'
     const already = await alreadyNotifiedToday(userId, 'insight', dedupeKey, 3)
     if (!already) {

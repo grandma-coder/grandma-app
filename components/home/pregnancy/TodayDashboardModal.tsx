@@ -261,7 +261,7 @@ export function TodayDashboardModal({ visible, onClose, todayLogs, weekNumber, u
                 {kicksVal !== null ? String(kicksVal) : '—'}
               </Display>
               <Body size={11} color={muted} style={{ marginTop: 2, fontFamily: italicFont }}>
-                {kicksVal !== null ? t('pregnancy_dashboard_sessionsToday') : t('pregnancy_dashboard_notLogged')}
+                {kicksVal !== null ? t('pregnancy_dashboard_loggedToday') : t('pregnancy_dashboard_notLogged')}
               </Body>
             </PaperCard>
           ) : (
@@ -412,7 +412,7 @@ function CalmBody(p: {
           <Row
             sticker="foot" label={t('pregnancy_todayDash_labelKicks')}
             value={p.kicksVal !== null ? String(p.kicksVal) : '—'}
-            sub={p.kicksVal !== null ? t('pregnancy_dashboard_sessionsToday') : notLogged}
+            sub={p.kicksVal !== null ? t('pregnancy_dashboard_loggedToday') : notLogged}
           />
         ) : (
           <Row

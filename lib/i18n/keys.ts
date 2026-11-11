@@ -6640,6 +6640,8 @@ export interface TranslationKeys {
   widget_menoMonths: string
   widget_menoMonths_one: string
   widget_menoMonthsZero: string
+  widget_menoDays: string
+  widget_menoDays_one: string
   widget_menoHotToday: string
   widget_menoNoHotToday: string
   widget_series_hotFlashes: string

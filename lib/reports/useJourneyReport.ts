@@ -12,7 +12,7 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { supabase } from '../supabase'
+import { fetchAllRows, supabase } from '../supabase'
 import { useTranslation } from '../i18n'
 import { useCycleHistory, useCycleLogs } from '../cycleAnalytics'
 import { useMenopauseLogs } from '../menopauseAnalytics'
@@ -38,22 +38,26 @@ function useReportContext(period: ReportPeriod): Omit<ReportContext, 'today'> {
   return useMemo(() => ({ t, locale: language, period }), [t, language, period])
 }
 
+/** Every report-relevant pregnancy log, paged (a single select stopped at 1000 rows). */
+export async function fetchPregnancyReportLogs(): Promise<PregnancyReportLog[]> {
+  const { data: s } = await supabase.auth.getSession()
+  const userId = s.session?.user.id
+  if (!userId) return []
+  return fetchAllRows<PregnancyReportLog>(() =>
+    supabase
+      .from('pregnancy_logs')
+      .select('log_date, log_type, value, notes')
+      .eq('user_id', userId)
+      .in('log_type', [...PREGNANCY_REPORT_LOG_TYPES])
+      .order('log_date', { ascending: true })
+      .order('id', { ascending: true }),
+  )
+}
+
 function usePregnancyReportLogs() {
   return useQuery({
     queryKey: ['pregnancy-report-logs'],
-    queryFn: async (): Promise<PregnancyReportLog[]> => {
-      const { data: s } = await supabase.auth.getSession()
-      const userId = s.session?.user.id
-      if (!userId) return []
-      const { data, error } = await supabase
-        .from('pregnancy_logs')
-        .select('log_date, log_type, value, notes')
-        .eq('user_id', userId)
-        .in('log_type', [...PREGNANCY_REPORT_LOG_TYPES])
-        .order('log_date', { ascending: true })
-      if (error) throw error
-      return (data ?? []) as PregnancyReportLog[]
-    },
+    queryFn: fetchPregnancyReportLogs,
     staleTime: 60_000,
   })
 }

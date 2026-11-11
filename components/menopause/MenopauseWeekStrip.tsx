@@ -7,6 +7,7 @@
  * Dual-variant, tokens-only via the shared MenoPalette + sticker palette.
  */
 import { useMemo } from 'react'
+import { useTodayKey } from '../../hooks/useTodayKey'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { diffuseFont, useTheme } from '../../constants/theme'
 import { symptomStickerKey } from './menopauseIcons'
@@ -46,6 +47,7 @@ export function MenopauseWeekStrip({
   const s = stickers as Record<string, string>
   const { t, language } = useTranslation()
 
+  const todayKey = useTodayKey()
   const days = useMemo(() => {
     const byDate = new Map<string, MenopauseLogRow[]>()
     for (const r of rows) {
@@ -69,7 +71,9 @@ export function MenopauseWeekStrip({
       })
     }
     return out
-  }, [rows, language])
+    // todayKey: re-run at midnight so the highlighted day moves while the app stays open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, language, todayKey])
 
   return (
     <View style={styles.strip}>

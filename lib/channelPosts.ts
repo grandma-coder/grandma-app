@@ -138,11 +138,13 @@ export async function createChannel(opts: {
 
   if (error) throw error
 
-  // Auto-join creator
-  await supabase.from('channel_members').insert({
+  // Auto-join creator. The channel already exists, so don't throw (a retry would create a second
+  // one) — but don't hide it either.
+  const { error: joinErr } = await supabase.from('channel_members').insert({
     channel_id: data.id,
     user_id: session.user.id,
   })
+  if (joinErr && (joinErr as any).code !== '23505') console.warn('[channels] creator auto-join failed:', joinErr.message)
 
   return data.id
 }
@@ -386,13 +388,15 @@ async function postSystemMessage(channelId: string, messageType: 'system_join' |
   const content = messageType === 'system_join'
     ? `${authorName ?? 'Someone'} joined the channel`
     : `${authorName ?? 'Someone'} left the channel`
-  await supabase.from('channel_posts').insert({
+  // Best-effort: the join/leave itself already succeeded.
+  const { error } = await supabase.from('channel_posts').insert({
     channel_id: channelId,
     author_id: session.user.id,
     author_name: authorName,
     content,
     message_type: messageType,
   })
+  if (error) console.warn('[channels] system message failed:', error.message)
 }
 
 export async function joinChannel(channelId: string): Promise<void> {
@@ -423,11 +427,12 @@ export async function leaveChannel(channelId: string): Promise<void> {
   // Drop my old join request(s) for this channel. An approved row left behind
   // would auto-rejoin me (joinIfApproved) the next time I open the channel, and
   // a stale row blocks a fresh request (UNIQUE(channel_id, user_id)).
-  await supabase
+  const { error: reqErr } = await supabase
     .from('channel_requests')
     .delete()
     .eq('channel_id', channelId)
     .eq('user_id', session.user.id)
+  if (reqErr) console.warn('[channels] join-request cleanup failed:', reqErr.message)
   await postSystemMessage(channelId, 'system_leave')
 }
 
@@ -458,11 +463,12 @@ export async function getMyChannelIds(): Promise<string[]> {
 export async function markChannelRead(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  await supabase
+  const { error } = await supabase
     .from('channel_members')
     .update({ last_read_at: new Date().toISOString() })
     .eq('channel_id', channelId)
     .eq('user_id', session.user.id)
+  if (error) console.warn('[channels] markChannelRead failed:', error.message)
 }
 
 export async function getUnreadCounts(): Promise<Record<string, number>> {
@@ -599,13 +605,15 @@ export async function getMyRating(channelId: string): Promise<{ rating: number; 
 export async function favoriteChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Not authenticated')
-  await supabase.from('channel_saves').insert({ channel_id: channelId, user_id: session.user.id })
+  const { error } = await supabase.from('channel_saves').insert({ channel_id: channelId, user_id: session.user.id })
+  if (error && (error as any).code !== '23505') throw error
 }
 
 export async function unfavoriteChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  await supabase.from('channel_saves').delete().eq('channel_id', channelId).eq('user_id', session.user.id)
+  const { error } = await supabase.from('channel_saves').delete().eq('channel_id', channelId).eq('user_id', session.user.id)
+  if (error) throw error
 }
 
 export async function getMyFavoriteChannelIds(): Promise<string[]> {
@@ -628,7 +636,8 @@ export async function muteChannel(channelId: string): Promise<void> {
 export async function unmuteChannel(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  await supabase.from('channel_mutes').delete().eq('channel_id', channelId).eq('user_id', session.user.id)
+  const { error } = await supabase.from('channel_mutes').delete().eq('channel_id', channelId).eq('user_id', session.user.id)
+  if (error) throw error
 }
 
 export async function getMutedChannelIds(): Promise<string[]> {
@@ -659,7 +668,8 @@ export async function savePost(postId: string): Promise<void> {
 export async function unsavePost(postId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  await supabase.from('post_saves').delete().eq('post_id', postId).eq('user_id', session.user.id)
+  const { error } = await supabase.from('post_saves').delete().eq('post_id', postId).eq('user_id', session.user.id)
+  if (error) throw error
 }
 
 export async function getSavedPostIds(): Promise<string[]> {
@@ -783,13 +793,15 @@ export async function transferChannelOwnership(channelId: string, newOwnerId: st
     .single()
   const newOwnerName = newOwnerProfile?.name ?? 'Someone'
 
-  await supabase.from('channel_posts').insert({
+  // Best-effort: ownership already moved.
+  const { error: msgErr } = await supabase.from('channel_posts').insert({
     channel_id: channelId,
     author_id: session.user.id,
     author_name: authorName,
     content: `${authorName ?? 'The host'} transferred ownership to ${newOwnerName}`,
     message_type: 'system_leave',
   })
+  if (msgErr) console.warn('[channels] transfer message failed:', msgErr.message)
 }
 
 export async function getChannelMembers(channelId: string): Promise<{ user_id: string; name: string | null }[]> {
@@ -852,13 +864,15 @@ export async function fetchNotifications(): Promise<AppNotification[]> {
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
-  await supabase.from('notifications').update({ is_read: true }).eq('id', id)
+  const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', id)
+  if (error) throw error
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  await supabase.from('notifications').update({ is_read: true }).eq('user_id', session.user.id).eq('is_read', false)
+  const { error } = await supabase.from('notifications').update({ is_read: true }).eq('user_id', session.user.id).eq('is_read', false)
+  if (error) throw error
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {
@@ -1016,10 +1030,11 @@ export async function denyRequest(requestId: string): Promise<void> {
 export async function cancelRequest(channelId: string): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return
-  await supabase.from('channel_requests').delete()
+  const { error } = await supabase.from('channel_requests').delete()
     .eq('channel_id', channelId)
     .eq('user_id', session.user.id)
     .eq('status', 'pending')
+  if (error) throw error
 }
 
 // ─── Legacy exports (backward compat) ──────────────────────────────────────

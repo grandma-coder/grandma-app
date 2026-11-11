@@ -61,6 +61,7 @@ import { toDateStr } from '../../lib/cycleLogic'
 import { ChildPills, formatChildAge } from '../ui/ChildPills'
 import { useTranslation, t as tNow } from '../../lib/i18n'
 import { dateLoc } from '../../lib/kpLocale'
+import { calendarDaysBetween } from '../../lib/localDate'
 
 // ─── Lightweight Markdown Renderer ────────────────────────────────────────
 
@@ -206,9 +207,9 @@ function deriveTitle(messages: ChatMessage[]): string {
 
 function formatDate(iso: string): string {
   const d = new Date(iso)
-  const now = new Date()
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86_400_000)
-  if (diffDays === 0) return 'Today'
+  // Calendar days: a conversation from 23:00 yesterday is "Yesterday", not "Today".
+  const diffDays = calendarDaysBetween(d, new Date())
+  if (diffDays <= 0) return 'Today'
   if (diffDays === 1) return 'Yesterday'
   if (diffDays < 7) return `${diffDays} days ago`
   return d.toLocaleDateString(dateLoc(), { month: 'short', day: 'numeric' })

@@ -5,7 +5,8 @@
 import { supabase } from '../supabase'
 import { queryClient } from '../queryClient'
 import { toDateStr } from '../cycleLogic'
-import { computeCycleHistory } from '../cycleAnalytics'
+import { computeCycleHistory, cycleLogsQuery } from '../cycleAnalytics'
+import { groupPregnancyTodayLogs } from '../analyticsData'
 import { buildReminderCycleConfig } from '../cycleReminders'
 import { isMinor } from '../ageRules'
 import { useBehaviorStore } from '../../store/useBehaviorStore'
@@ -43,15 +44,10 @@ export async function collectSnapshotInput(now: Date = new Date()): Promise<Snap
 
   if (enrolled.includes('pre-pregnancy')) {
     jobs.push((async () => {
-      const { data, error } = await supabase
-        .from('cycle_logs')
-        .select('id, user_id, date, type, value, notes, created_at')
-        .eq('user_id', userId)
-        .gte('date', daysAgo(now, 200))
-        .order('date', { ascending: true })
-      if (error) throw error
-      const rows = data ?? []
-      const config = buildReminderCycleConfig(computeCycleHistory(rows as never), useCycleSettingsStore.getState()) ?? null
+      // The same cached full history the home reads: a 200-day window gave a different measured
+      // average (and so different predictions) than the app.
+      const rows = await queryClient.fetchQuery(cycleLogsQuery)
+      const config = buildReminderCycleConfig(computeCycleHistory(rows), useCycleSettingsStore.getState()) ?? null
       input.cycle = { config, logs: rows.filter((r) => r.date >= daysAgo(now, 7)).map((r) => ({ date: r.date, type: r.type, value: r.value })) }
     })())
   }
@@ -60,18 +56,13 @@ export async function collectSnapshotInput(now: Date = new Date()): Promise<Snap
     jobs.push((async () => {
       const { data, error } = await supabase
         .from('pregnancy_logs')
-        .select('log_type, value, created_at')
+        .select('log_type, value, notes, created_at')
         .eq('user_id', userId)
         .eq('log_date', today)
         .order('created_at', { ascending: true })
       if (error) throw error
-      const todayLogs: Record<string, { value: string | null }> = {}
-      let kicks = 0
-      for (const r of data ?? []) {
-        if (r.log_type === 'kick_count') kicks += Number(r.value) || 0
-        else todayLogs[r.log_type] = { value: r.value } // latest row wins (water is a running total)
-      }
-      if (kicks) todayLogs.kick_count = { value: String(kicks) }
+      // Same grouping as the home (usePregnancyTodayLogs), so kicks/water match it.
+      const todayLogs = groupPregnancyTodayLogs(data ?? [])
       const asset = useWidgetAssetStore.getState()
       input.pregnancy = { dueDate: usePregnancyStore.getState().dueDate, todayLogs, fruitPng: asset.fruitPng ?? undefined }
     })())

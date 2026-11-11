@@ -6338,6 +6338,8 @@ export const ja: TranslationKeys = {
   widget_menoMonths: "{{n}} months since last period",
   widget_menoMonths_one: "1 month since last period",
   widget_menoMonthsZero: "Period this month",
+  widget_menoDays: "{{n}} days since last period",
+  widget_menoDays_one: "1 day since last period",
   widget_menoHotToday: "Hot flashes today · {{n}}/5",
   widget_menoNoHotToday: "No hot flashes logged today",
   widget_series_hotFlashes: "Hot flashes · intensity 1–5",

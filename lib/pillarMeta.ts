@@ -23,10 +23,21 @@ export interface CycleMetaInput {
   daysUntilOvulation: number
   fertileStart: number
   fertileEnd: number
+  /** getDaysLate for today. > 0 → the fields above describe an invented next cycle. */
+  daysLate?: number
+  cycleLength?: number
 }
 
 /** Fertility gets the ovulation-focused trio; every other cycle pillar gets day · phase · period. */
 export function cycleMetaChips(t: T, pillarId: string, info: CycleMetaInput): string[] {
+  const late = info.daysLate ?? 0
+  if (late > 0 && info.cycleLength) {
+    // Same as the cycle home's late card: keep counting the cycle and say it's late.
+    return [
+      t('pillarMeta_cycleDay', { n: info.cycleLength + late }),
+      late === 1 ? t('cycleHome_late_titleOne') : t('cycleHome_late_title', { count: late }),
+    ]
+  }
   const chips = [t('pillarMeta_cycleDay', { n: info.cycleDay })]
   if (pillarId === 'fertility') {
     const d = info.daysUntilOvulation

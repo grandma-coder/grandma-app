@@ -16,7 +16,7 @@ import type { PillarId } from '../../types'
 import { useChildStore } from '../../store/useChildStore'
 import { usePregnancyStore } from '../../store/usePregnancyStore'
 import { useCycleHistory } from '../../lib/cycleAnalytics'
-import { getCycleInfo, toDateStr, type CycleConfig } from '../../lib/cycleLogic'
+import { getCycleInfo, getDaysLate, toDateStr, type CycleConfig } from '../../lib/cycleLogic'
 import { usePregnancyTodayLogs } from '../../lib/analyticsData'
 import { supabase } from '../../lib/supabase'
 import { useTranslation, type TranslationKey } from '../../lib/i18n'
@@ -110,8 +110,10 @@ function usePillarMetaChips(pillarId: PillarId): string[] {
       periodLength: settings.periodLength,
       lutealPhase: settings.lutealPhase,
     }
-    const info = getCycleInfo(cfg, toDateStr(new Date()))
-    return cycleMetaChips(t, pillarId, info)
+    const today = toDateStr(new Date())
+    const info = getCycleInfo(cfg, today)
+    // Late: getCycleInfo has wrapped into a new cycle ("Day 3 · period in 26d") — use the home's late logic.
+    return cycleMetaChips(t, pillarId, { ...info, daysLate: getDaysLate(cfg, today) })
   }
 
   if (journey === 'pregnancy') {

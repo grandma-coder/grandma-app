@@ -43,3 +43,27 @@ describe('fullMonthsBetween', () => {
     expect(fullMonthsBetween(d(2026, 1, 31), d(2026, 2, 27))).toBe(0)
   })
 })
+
+import { calendarDaysBetween } from '../localDate'
+
+describe('calendarDaysBetween', () => {
+  it('counts calendar days, not 24h blocks (23:00 yesterday is 1 day ago at 08:00)', () => {
+    expect(calendarDaysBetween(new Date(2026, 10, 8, 23, 0), new Date(2026, 10, 9, 8, 0))).toBe(1)
+    expect(calendarDaysBetween(new Date(2026, 10, 9, 0, 5), new Date(2026, 10, 9, 23, 55))).toBe(0)
+    expect(calendarDaysBetween(new Date(2026, 10, 2, 12), new Date(2026, 10, 9, 1))).toBe(7)
+  })
+  it('is whole days across a DST change', () => {
+    expect(calendarDaysBetween(new Date(2026, 2, 7, 12), new Date(2026, 2, 9, 12))).toBe(2)
+  })
+})
+
+import { clockHoursApart } from '../localDate'
+
+describe('clockHoursApart', () => {
+  it('wraps midnight: a 00:30 log is 1h from a 23:00 routine', () => {
+    expect(clockHoursApart(0, 23)).toBe(1)
+    expect(clockHoursApart(23, 1)).toBe(2)
+    expect(clockHoursApart(7, 21)).toBe(10)
+    expect(clockHoursApart(9, 9)).toBe(0)
+  })
+})

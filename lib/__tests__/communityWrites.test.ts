@@ -176,3 +176,30 @@ describe('castVote', () => {
     await expect(castVote('poll1', 'o2')).rejects.toBeTruthy()
   })
 })
+
+import {
+  favoriteChannel, unfavoriteChannel, unmuteChannel, unsavePost, cancelRequest,
+  markNotificationRead, markAllNotificationsRead,
+} from '../channelPosts'
+
+describe('toggle writes surface failures (callers revert their optimistic UI on throw)', () => {
+  const cases: [string, () => Promise<void>][] = [
+    ['favoriteChannel', () => favoriteChannel('c1')],
+    ['unfavoriteChannel', () => unfavoriteChannel('c1')],
+    ['unmuteChannel', () => unmuteChannel('c1')],
+    ['unsavePost', () => unsavePost('p1')],
+    ['cancelRequest', () => cancelRequest('c1')],
+    ['markNotificationRead', () => markNotificationRead('n1')],
+    ['markAllNotificationsRead', () => markAllNotificationsRead()],
+  ]
+  for (const [name, run] of cases) {
+    it(`${name} rejects on an RLS error`, async () => {
+      handler = () => ({ data: null, error: rlsError })
+      await expect(run()).rejects.toBeTruthy()
+    })
+  }
+  it('favoriting twice (unique violation) is not an error', async () => {
+    handler = () => ({ data: null, error: { code: '23505', message: 'duplicate' } })
+    await expect(favoriteChannel('c1')).resolves.toBeUndefined()
+  })
+})

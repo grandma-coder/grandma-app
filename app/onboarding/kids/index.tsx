@@ -270,7 +270,9 @@ export default function KidsOnboarding() {
         },
         { onConflict: 'user_id,type' }
       )
-      if (behaviorErr) console.warn('[onboarding] behaviors upsert failed:', behaviorErr.message)
+      // The journey row restores Kids after a reinstall — without it the journey lived on this
+      // phone only. Fail before the children insert so the retry can't duplicate them.
+      if (behaviorErr) throw behaviorErr
 
       // Insert children
       // Upload any local-file photo URIs to Storage so they survive a cold

@@ -391,18 +391,23 @@ export default function NotificationsScreen() {
   }, [queryClient])
 
   const handleMarkAllRead = useCallback(async () => {
-    await markAllNotificationsRead()
+    // A failed update leaves them unread (true) instead of greying them out until the next load.
+    try { await markAllNotificationsRead() } catch { return }
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
     refreshBadge()
   }, [refreshBadge])
 
   const handleTap = useCallback(async (item: AppNotification) => {
     if (!item.is_read) {
-      await markNotificationRead(item.id)
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === item.id ? { ...n, is_read: true } : n)),
-      )
-      refreshBadge()
+      try {
+        await markNotificationRead(item.id)
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === item.id ? { ...n, is_read: true } : n)),
+        )
+        refreshBadge()
+      } catch {
+        // Still open it; the item just stays unread.
+      }
     }
     navigateForNotification(item)
   }, [refreshBadge])

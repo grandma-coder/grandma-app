@@ -5,6 +5,7 @@
 import { getCycleInfo, getDaysLate, getPhaseLabel, toDateStr, DAILY_WATER_GOAL, type CycleConfig, type CyclePhase } from '../cycleLogic'
 import { getCurrentWeekFromDueDate, getDaysToGo, localizedBabySize } from '../pregnancyData'
 import { getTrimester } from '../pregnancyWeeks'
+import { parseLocalDate } from '../localDate'
 import { getUpcomingAppointment } from '../pregnancyAppointments'
 import { MINOR_HIDDEN_CYCLE_LOGS } from '../ageRules'
 import { t } from '../i18n'
@@ -138,13 +139,20 @@ export function buildCycleEntry(input: CycleInput, ctx: Ctx): WidgetEntry {
   }
 
   const info = getCycleInfo(config, today)
-  const fertileFrom = toDateStr(dayAt(now, info.fertileStart - info.cycleDay))
-  const fertileTo = toDateStr(dayAt(now, info.fertileEnd - info.cycleDay))
-  e.stats = [
-    { label: t('widget_stat_nextPeriod'), value: shortDate(info.nextPeriodDate), daily: false },
-    { label: t('widget_stat_fertile'), value: `${shortDate(fertileFrom)}–${shortDate(fertileTo)}`, daily: false },
-    { label: t('widget_stat_loggedToday'), value: String(visibleLogs.filter((l) => l.date === today).length), daily: true },
-  ]
+  const loggedToday: WidgetStat = { label: t('widget_stat_loggedToday'), value: String(visibleLogs.filter((l) => l.date === today).length), daily: true }
+  if (getDaysLate(config, today) > 0) {
+    // Late: getCycleInfo has wrapped into an invented new cycle. The home and the fertile-window
+    // read pause estimates until a new period is logged (the day line already says how late).
+    e.stats = [loggedToday]
+  } else {
+    const fertileFrom = toDateStr(dayAt(now, info.fertileStart - info.cycleDay))
+    const fertileTo = toDateStr(dayAt(now, info.fertileEnd - info.cycleDay))
+    e.stats = [
+      { label: t('widget_stat_nextPeriod'), value: shortDate(info.nextPeriodDate), daily: false },
+      { label: t('widget_stat_fertile'), value: `${shortDate(fertileFrom)}–${shortDate(fertileTo)}`, daily: false },
+      loggedToday,
+    ]
+  }
 
   const moodByDay = new Map<string, number>()
   for (const l of visibleLogs) {
@@ -203,6 +211,20 @@ export interface KidInput { id: string; name: string; birthDate: string; country
 
 const FEED_TYPES = new Set(['feeding', 'food'])
 
+/** A feed's own moment: its log date + the 'HH:MM' it stores, else when the row was created. */
+function feedTime(l: KidLog): Date {
+  let time: unknown
+  try {
+    time = l.value ? (JSON.parse(l.value) as { time?: unknown }).time : undefined
+  } catch {
+    time = undefined
+  }
+  const m = typeof time === 'string' ? /^(\d{1,2}):(\d{2})/.exec(time) : null
+  const [y, mo, d] = l.date.split('-').map(Number)
+  if (m && y && mo && d) return new Date(y, mo - 1, d, Number(m[1]), Number(m[2]))
+  return new Date(l.created_at)
+}
+
 function sleepDuration(value: string | null): string | null {
   if (!value) return null
   try {
@@ -220,7 +242,13 @@ export function buildKidsEntry(child: KidInput, logs: KidLog[], given: HealthRec
   const byNewest = [...logs].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
   const lastSleep = byNewest.find((l) => l.type === 'sleep')
   const slept = lastSleep ? sleepDuration(lastSleep.value) : null
-  const lastFeed = byNewest.find((l) => FEED_TYPES.has(l.type))
+  // When the feed happened (its own date + time), not when it was logged: a 3am feed logged at
+  // 7am read "0m ago".
+  const lastFeedAt = logs
+    .filter((l) => FEED_TYPES.has(l.type))
+    .map(feedTime)
+    .reduce<Date | null>((latest, d) => (!latest || d.getTime() > latest.getTime() ? d : latest), null)
+  const lastFeed = lastFeedAt != null
 
   for (let i = 0; i < WIDGET_DAYS; i++) {
     const d = dayAt(now, i)
@@ -237,7 +265,7 @@ export function buildKidsEntry(child: KidInput, logs: KidLog[], given: HealthRec
     })
   }
   // Normalised to ms + Z: Supabase sends microseconds and an offset, which iOS parsing doesn't reliably accept.
-  if (lastFeed) e.sinceLast = { label: t('widget_sinceLastFeed'), at: new Date(lastFeed.created_at).toISOString() }
+  if (lastFeedAt) e.sinceLast = { label: t('widget_sinceLastFeed'), at: lastFeedAt.toISOString() }
 
   const feedsOn = (date: string) => logs.filter((l) => l.date === date && FEED_TYPES.has(l.type)).length
   const feeds = last7(now).map(feedsOn)
@@ -260,6 +288,13 @@ export interface MenopauseInput {
   logs: { date: string; type: string; value: string | null; severity: number | null }[]
 }
 
+/** Whole calendar days from a 'YYYY-MM-DD' to `d` (never negative). */
+function daysSince(iso: string, d: Date): number {
+  const from = parseLocalDate(iso)
+  const to = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  return Math.max(0, Math.round((to.getTime() - from.getTime()) / 86400000))
+}
+
 const STAGE_KEY = { peri: 'report_meno_stage_peri', meno: 'report_meno_stage_meno', post: 'report_meno_stage_post' } as const
 
 export function buildMenopauseEntry(input: MenopauseInput, ctx: Ctx): WidgetEntry {
@@ -278,8 +313,10 @@ export function buildMenopauseEntry(input: MenopauseInput, ctx: Ctx): WidgetEntr
     const d = dayAt(now, i)
     const date = toDateStr(d)
     const months = monthsSinceDate(lastPeriod, d)
+    // Under a month: count days. "Period this month" was false for a period late last month.
+    const sinceText = months == null ? '' : months === 0 ? plural('widget_menoDays', daysSince(lastPeriod as string, d)) : plural('widget_menoMonths', months)
     const parts: string[] = []
-    if (months != null) parts.push(months === 0 ? t('widget_menoMonthsZero') : plural('widget_menoMonths', months))
+    if (sinceText) parts.push(sinceText)
     if (input.stage) parts.push(t(STAGE_KEY[input.stage]))
     const hot = severityOn(date, 'hot_flash')
     const footer = hot > 0 ? t('widget_menoHotToday', { n: hot }) : t('widget_menoNoHotToday')
@@ -290,7 +327,7 @@ export function buildMenopauseEntry(input: MenopauseInput, ctx: Ctx): WidgetEntr
       subtitle: footer,
       hero: months != null && months > 0
         ? { eyebrow, big: String(months), unit: plural('widget_unit_months', months), caption: t('widget_sinceLastPeriod'), footer }
-        : { eyebrow, big: '', unit: '', caption: months === 0 ? t('widget_menoMonthsZero') : '', footer },
+        : { eyebrow, big: '', unit: '', caption: months === 0 ? sinceText : '', footer },
     })
   }
 

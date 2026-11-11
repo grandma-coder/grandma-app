@@ -520,7 +520,8 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
   const [diaperModalVisible, setDiaperModalVisible] = useState(false)
   const [goalsModalVisible, setGoalsModalVisible] = useState(false)
   const [logSheetType, setLogSheetType] = useState<KidsLogType | null>(null)
-  useConsumeWidgetIntent('kids', (t) => setLogSheetType(t as KidsLogType))
+  // A widget tap must not open a log sheet for a view-only caregiver (same rule as the home's log buttons).
+  useConsumeWidgetIntent('kids', (t) => { if (!readOnly) setLogSheetType(t as KidsLogType) })
   // Handoff — share a "since …" summary with whoever takes the child next (light look only).
   const [handoffVisible, setHandoffVisible] = useState(false)
 
@@ -2696,7 +2697,7 @@ export function KidsHome({ caregiverView }: KidsHomeProps = {}) {
 
       {/* ─── Log Sheets (open from empty hero tiles) ─────────────────── */}
       <KidsLogRouter
-        sheetType={logSheetType}
+        sheetType={readOnly ? null : logSheetType}
         date={toDateStr(new Date())}
         childId={child?.id ?? null}
         onClose={() => setLogSheetType(null)}

@@ -309,7 +309,8 @@ export default function MemoriesScreen() {
                 { const { error: delErr } = await supabase.from('child_logs').delete().eq('id', post.logId); if (delErr) throw delErr }
               } else {
                 const remaining = post.photos.filter((_, i) => i !== photoIdx)
-                await supabase.from('child_logs').update({ photos: remaining }).eq('id', post.logId)
+                const { error: updErr } = await supabase.from('child_logs').update({ photos: remaining }).eq('id', post.logId)
+                if (updErr) throw updErr
               }
               setViewPost(null)
               await loadMemories()
@@ -339,10 +340,12 @@ export default function MemoriesScreen() {
   // ─── Edit caption ───────────────────────────────────────────────
   async function saveCaption(post: MemoryPost) {
     try {
-      await supabase.from('child_logs').update({
+      const { error } = await supabase.from('child_logs').update({
         notes: editCaptionText.trim() || null,
         value: editCaptionText.trim() || null,
       }).eq('id', post.logId)
+      // supabase returns { error } instead of throwing — without this the editor closed as if saved.
+      if (error) throw error
       setEditingCaption(false)
       await loadMemories()
       // Update the viewPost in-place
