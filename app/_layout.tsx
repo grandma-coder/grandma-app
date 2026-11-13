@@ -691,19 +691,28 @@ export default function RootLayout() {
         // is the splash; after boot only the guard waits (the screen stays mounted).
         if (bootDone) setUserLoading(true)
         else setLoading(true)
-        try {
-          await loadUserData(uid)
-          loadedUid = uid
-        } catch (e) {
-          console.warn('[auth] loadUserData failed:', e)
-        } finally {
-          inFlightUid = null
-        }
-        if (!cancelled) {
-          bootDone = true
-          setLoading(false)
-          setUserLoading(false)
-        }
+        // Run the load OUTSIDE this callback. supabase-js holds its auth lock while it awaits
+        // onAuthStateChange subscribers (e.g. inside exchangeCodeForSession after an OAuth return),
+        // and every query needs that lock to read the access token — awaiting them here deadlocks
+        // until the 4s per-query timeouts fire, flagging loadFailed and showing the
+        // "signed in but couldn't load" alert on every Google sign-in.
+        setTimeout(() => {
+          void (async () => {
+            try {
+              await loadUserData(uid)
+              loadedUid = uid
+            } catch (e) {
+              console.warn('[auth] loadUserData failed:', e)
+            } finally {
+              inFlightUid = null
+            }
+            if (!cancelled) {
+              bootDone = true
+              setLoading(false)
+              setUserLoading(false)
+            }
+          })()
+        }, 0)
       }
     )
 
