@@ -85,6 +85,7 @@ export interface TranslationKeys {
   menu_garage_sub: string
   menu_channels_sub: string
   menu_community_sub: string
+  menu_memories_sub: string
   cycleRing_title_menstruation: string
   cycleRing_title_follicular: string
   cycleRing_title_ovulation: string

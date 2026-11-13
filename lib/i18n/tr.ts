@@ -63,6 +63,7 @@ export const tr: TranslationKeys = {
   menu_garage_sub: "başkasına devret",
   menu_channels_sub: "kendi insanlarını bul",
   menu_community_sub: "kendi insanlarını bul",
+  menu_memories_sub: "küçük hatıralar",
   cycleRing_title_menstruation: "sakin gün",
   cycleRing_title_follicular: "yükselen gün",
   cycleRing_title_ovulation: "zirve gün",

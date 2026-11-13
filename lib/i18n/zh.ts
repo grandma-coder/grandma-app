@@ -63,6 +63,7 @@ export const zh: TranslationKeys = {
   menu_garage_sub: "传下去",
   menu_channels_sub: "找到同路人",
   menu_community_sub: "找到同路人",
+  menu_memories_sub: "点滴回忆",
   cycleRing_title_menstruation: "安静的一天",
   cycleRing_title_follicular: "回升的一天",
   cycleRing_title_ovulation: "高峰的一天",

@@ -63,6 +63,7 @@ export const ja: TranslationKeys = {
   menu_garage_sub: "次の人へ",
   menu_channels_sub: "仲間を見つけよう",
   menu_community_sub: "仲間を見つけよう",
+  menu_memories_sub: "小さな思い出",
   cycleRing_title_menstruation: "静かな日",
   cycleRing_title_follicular: "上向きの日",
   cycleRing_title_ovulation: "ピークの日",

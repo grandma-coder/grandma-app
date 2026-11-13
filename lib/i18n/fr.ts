@@ -63,6 +63,7 @@ export const fr: TranslationKeys = {
   menu_garage_sub: "transmettre",
   menu_channels_sub: "trouve les tiens",
   menu_community_sub: "trouve les tiens",
+  menu_memories_sub: "petits souvenirs",
   cycleRing_title_menstruation: "jour calme",
   cycleRing_title_follicular: "jour montant",
   cycleRing_title_ovulation: "jour de pic",

@@ -82,6 +82,7 @@ export const en: TranslationKeys = {
   menu_garage_sub: "pass it on",
   menu_channels_sub: "find your people",
   menu_community_sub: "find your people",
+  menu_memories_sub: "little keepsakes",
   cycleRing_title_menstruation: "quiet day",
   cycleRing_title_follicular: "rising day",
   cycleRing_title_ovulation: "peak day",

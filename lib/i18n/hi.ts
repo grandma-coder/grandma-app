@@ -63,6 +63,7 @@ export const hi: TranslationKeys = {
   menu_garage_sub: "आगे बढ़ाओ",
   menu_channels_sub: "अपने लोग खोजें",
   menu_community_sub: "अपने लोग खोजें",
+  menu_memories_sub: "छोटी यादें",
   cycleRing_title_menstruation: "शांत दिन",
   cycleRing_title_follicular: "चढ़ता दिन",
   cycleRing_title_ovulation: "शिखर का दिन",

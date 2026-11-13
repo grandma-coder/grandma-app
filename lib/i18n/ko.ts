@@ -63,6 +63,7 @@ export const ko: TranslationKeys = {
   menu_garage_sub: "다음 사람에게 전해요",
   menu_channels_sub: "나와 맞는 사람들",
   menu_community_sub: "나와 맞는 사람들",
+  menu_memories_sub: "작은 추억들",
   cycleRing_title_menstruation: "조용한 날",
   cycleRing_title_follicular: "차오르는 날",
   cycleRing_title_ovulation: "활짝 핀 날",

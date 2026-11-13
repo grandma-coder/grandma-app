@@ -63,6 +63,7 @@ export const ptBR: TranslationKeys = {
   menu_garage_sub: "repasse",
   menu_channels_sub: "encontre sua gente",
   menu_community_sub: "encontre a sua gente",
+  menu_memories_sub: "lembrancinhas",
   cycleRing_title_menstruation: "dia tranquilo",
   cycleRing_title_follicular: "dia em ascensão",
   cycleRing_title_ovulation: "dia de pico",

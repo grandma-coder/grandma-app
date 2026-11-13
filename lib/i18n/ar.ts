@@ -63,6 +63,7 @@ export const ar: TranslationKeys = {
   menu_garage_sub: "مرّريها لغيرك",
   menu_channels_sub: "اعثري على أشباهك",
   menu_community_sub: "اعثري على أشباهك",
+  menu_memories_sub: "تذكارات صغيرة",
   cycleRing_title_menstruation: "يوم هادئ",
   cycleRing_title_follicular: "يوم صاعد",
   cycleRing_title_ovulation: "يوم الذروة",

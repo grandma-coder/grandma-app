@@ -63,6 +63,7 @@ export const es: TranslationKeys = {
   menu_garage_sub: "pásalo",
   menu_channels_sub: "encuentra a tu gente",
   menu_community_sub: "encuentra a los tuyos",
+  menu_memories_sub: "pequeños recuerdos",
   cycleRing_title_menstruation: "día tranquilo",
   cycleRing_title_follicular: "día en ascenso",
   cycleRing_title_ovulation: "día de pico",

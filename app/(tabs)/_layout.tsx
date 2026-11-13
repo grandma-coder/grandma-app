@@ -14,7 +14,7 @@ import { getUnreadCount } from '../../lib/notifications'
 import { supabase } from '../../lib/supabase'
 import {
   Home, Calendar, BarChart3, User, Sparkles, Plus,
-  MessageCircle, Lightbulb, ShoppingBag, Users, Gift,
+  MessageCircle, Lightbulb, ShoppingBag, Users, Gift, Camera,
   LucideIcon,
 } from 'lucide-react-native'
 import Svg, { Path } from 'react-native-svg'
@@ -33,6 +33,7 @@ import { SiteSticker, type SiteStickerName } from '../../components/stickers/Sit
 import { useGrandmaChatEnabled, useDailyRewardsEnabled } from '../../store/useFeatureFlags'
 import { useTranslation } from '../../lib/i18n'
 import { StickerPalette } from '../../components/stickers/BrandStickers'
+import { MemoriesSheet } from '../../components/home/MemoriesSheet'
 import { useIsDiffuse, SoftBloom, DiffuseArrow } from '../../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../../components/ui/diffuse/DiffusePrimitives'
 import { GrandmaLogo } from '../../components/ui/GrandmaLogo'
@@ -61,10 +62,13 @@ const SWISS_MED = 'HankenGrotesk_500Medium'
 
 interface WheelItem {
   id: string
-  labelKey: 'menu_grandmaTalk' | 'menu_insights' | 'menu_dailyRewards' | 'menu_garage' | 'menu_channels' | 'menu_community'
-  subtitleKey: 'menu_insights_sub' | 'menu_dailyRewards_sub' | 'menu_grandmaTalk_sub' | 'menu_garage_sub' | 'menu_channels_sub' | 'menu_community_sub'
+  labelKey: 'menu_grandmaTalk' | 'menu_insights' | 'menu_dailyRewards' | 'menu_garage' | 'menu_channels' | 'menu_community' | 'profile_memories'
+  subtitleKey: 'menu_insights_sub' | 'menu_dailyRewards_sub' | 'menu_grandmaTalk_sub' | 'menu_garage_sub' | 'menu_channels_sub' | 'menu_community_sub' | 'menu_memories_sub'
   icon: LucideIcon
-  route: string
+  // Either a router route to push, or an in-menu action (memories opens the
+  // behavior-scoped sheet inline instead of navigating).
+  route?: string
+  action?: 'memories'
   rotation: number // degrees of playful tilt
   site: SiteStickerName // site-look tile sticker
   tone: string // site-look tile fill
@@ -127,6 +131,17 @@ const WHEEL_ITEMS: WheelItem[] = [
     tone: stickers.blueSoft,
     accent: StickerPalette.peach,
   },
+  {
+    id: 'memories',
+    labelKey: 'profile_memories',
+    subtitleKey: 'menu_memories_sub',
+    icon: Camera,
+    action: 'memories',
+    rotation: 5,
+    site: 'camera',
+    tone: stickers.peachSoft,
+    accent: StickerPalette.coral,
+  },
 ]
 
 // Fan layout — items arc from lower-left (210°) to lower-right (330°),
@@ -154,6 +169,13 @@ function CenterTabButton() {
   const fullName = (profile?.name ?? parentName ?? '').trim()
   const userName = fullName.split(/\s+/)[0] || t('greeting_noName')
   const [open, setOpen] = useState(false)
+  // Memories moved from Settings into the center menu — opens the same
+  // behavior-scoped sheet (mode → behavior mirrors the old settings mapping).
+  const [showMemories, setShowMemories] = useState(false)
+  const memoriesBehavior: 'kids' | 'pregnancy' | 'cycle' =
+    mode === 'kids' ? 'kids' : mode === 'pregnancy' ? 'pregnancy' : 'cycle'
+  // Kids memories are scoped to a child, so the item needs one.
+  const hasChildren = useChildStore((s) => s.children.length > 0)
 
   // Animated values
   const overlayAnim = useRef(new Animated.Value(0)).current
@@ -165,7 +187,7 @@ function CenterTabButton() {
   const rewardsOn = useDailyRewardsEnabled()
   // AI insights (generate-insights → Claude) ride the same flag as the chat — no AI cost while it's off.
   const minor = useIsMinor()
-  const items = WHEEL_ITEMS.filter((it) => (it.id !== 'chat' || chatOn) && (it.id !== 'insights' || chatOn) && (it.id !== 'rewards' || rewardsOn) && !(minor && (it.id === 'garage' || it.id === 'community')))
+  const items = WHEEL_ITEMS.filter((it) => (it.id !== 'chat' || chatOn) && (it.id !== 'insights' || chatOn) && (it.id !== 'rewards' || rewardsOn) && !(minor && (it.id === 'garage' || it.id === 'community')) && (it.id !== 'memories' || mode !== 'kids' || hasChildren))
   // Aurora swirl — a slow continuous rotation of the pastel bloom field behind
   // the menu, so it drifts like the reference gradient instead of sitting flat.
   const auroraSpin = useRef(new Animated.Value(0)).current
@@ -206,9 +228,12 @@ function CenterTabButton() {
     })
   }, [overlayAnim, spinAnim, itemAnims, auroraSpin])
 
-  function handleItem(route: string) {
+  function handleItem(item: WheelItem) {
     animateClose()
-    setTimeout(() => router.push(route as any), 360)
+    setTimeout(() => {
+      if (item.action === 'memories') setShowMemories(true)
+      else if (item.route) router.push(item.route as any)
+    }, 360)
   }
 
   // Shared rotation + scale on the + button itself
@@ -339,7 +364,7 @@ function CenterTabButton() {
                     }}
                   >
                     <Pressable
-                      onPress={() => handleItem(item.route)}
+                      onPress={() => handleItem(item)}
                       style={({ pressed }) => [styles.wordRow, { opacity: pressed ? 0.6 : 1 }]}
                     >
                       <Text style={[styles.word, { color: inkColor, fontFamily: SWISS, letterSpacing: -0.8 }]}>
@@ -396,7 +421,7 @@ function CenterTabButton() {
                 ]}
               >
                 <Pressable
-                  onPress={() => handleItem(item.route)}
+                  onPress={() => handleItem(item)}
                   accessibilityRole="button"
                   accessibilityLabel={t(item.labelKey)}
                   style={({ pressed }) => [
@@ -448,6 +473,13 @@ function CenterTabButton() {
         </>
         )}
       </Modal>
+
+      {/* Memories — behavior-scoped keepsakes sheet, opened from the menu */}
+      <MemoriesSheet
+        behavior={memoriesBehavior}
+        visible={showMemories}
+        onClose={() => setShowMemories(false)}
+      />
     </>
   )
 }

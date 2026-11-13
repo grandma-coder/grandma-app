@@ -49,7 +49,6 @@ import { SiteRow, QuietPill } from '../../components/profile/SiteSettingsKit'
 import { childColor } from '../../components/ui/ChildPills'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
 import { Character } from '../../components/characters/Characters'
-import { MemoriesSheet } from '../../components/home/MemoriesSheet'
 import { PaperAlert } from '../../components/ui/PaperAlert'
 import { usePaywallEnabled, useDailyRewardsEnabled } from '../../store/useFeatureFlags'
 
@@ -88,7 +87,6 @@ export default function ProfileScreen() {
   const [isPremium, setIsPremium] = useState(false)
   const paywallOn = usePaywallEnabled()
   const rewardsOn = useDailyRewardsEnabled()
-  const [showMemories, setShowMemories] = useState(false)
   const [signOutConfirm, setSignOutConfirm] = useState(false)
 
   // Dev-panel 5-tap trigger on the version text (bottom of screen)
@@ -219,13 +217,6 @@ export default function ProfileScreen() {
   const isPrePregBehavior = currentBehavior === 'pre-pregnancy'
   const isMenopauseBehavior = currentBehavior === 'menopause'
   const showKidsItems = isKidsBehavior && hasChildren
-
-  // Memories are available in every behavior (kids per-child, pregnancy + cycle
-  // per-user). The row opens the behavior-scoped inline MemoriesSheet. Kids
-  // needs a child to scope photos to, so it still requires hasChildren.
-  const memoriesBehavior: 'kids' | 'pregnancy' | 'cycle' =
-    isKidsBehavior ? 'kids' : isPregnancyBehavior ? 'pregnancy' : 'cycle'
-  const showMemoriesRow = isKidsBehavior ? hasChildren : true
 
   // Hide the per-child sticker pills in the hero unless the user is
   // actually in the kids journey — a pregnant user seeing kid pills
@@ -373,14 +364,6 @@ export default function ProfileScreen() {
                   onPress={() => router.push('/profile/kids')}
                 />
               )}
-              {showMemoriesRow && (
-                <DiffuseListRow
-                  icon={<Character name="photo" size={18} />}
-                  title={t('profile_memories')}
-                  value="—"
-                  onPress={() => setShowMemories(true)}
-                />
-              )}
               {showKidsItems && (
                 <DiffuseListRow
                   icon={<Character name="health" size={18} />}
@@ -489,13 +472,6 @@ export default function ProfileScreen() {
                   onPress={() => router.push('/profile/kids')}
                 />
               )}
-              {showMemoriesRow && (
-                <SiteRow
-                  sticker="camera"
-                  label={t('profile_memories')}
-                  onPress={() => setShowMemories(true)}
-                />
-              )}
               {showKidsItems && (
                 <SiteRow
                   sticker="thermo"
@@ -599,11 +575,6 @@ export default function ProfileScreen() {
         </Pressable>
       </ScrollView>
 
-      <MemoriesSheet
-        behavior={memoriesBehavior}
-        visible={showMemories}
-        onClose={() => setShowMemories(false)}
-      />
       {/* Paper band under the status bar so scrolled rows never run beneath the clock. */}
       {!diffuse && (
         <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top, backgroundColor: colors.bg }} />
