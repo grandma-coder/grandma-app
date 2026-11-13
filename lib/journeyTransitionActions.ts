@@ -15,7 +15,6 @@ import { supabase } from './supabase'
 import { queryClient } from './queryClient'
 import { createChild, deleteCreatedChild } from './createChild'
 import { cancelJourneyAlerts } from './reminderNotifications'
-import { provisionChildSpace } from './skeletonSync'
 import { dueDateFromLmp } from './pregnancyData'
 import { toDateStr } from './cycleLogic'
 import { lmpFromPeriodStarts } from './journeyTransitions'
@@ -130,8 +129,6 @@ function commitBabyArrived(child: ChildWithRole): ChildWithRole {
   useModeStore.getState().setModeUnsafe('kids')
   endJourneyLocally('pregnancy')
 
-  // Best-effort, like kids onboarding: never blocks the transition.
-  void provisionChildSpace(child.id)
   void queryClient.invalidateQueries()
 
   useJourneyTransitionStore.getState().setCelebrateBaby({ name: child.name })
