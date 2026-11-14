@@ -24,7 +24,11 @@
         "com.apple.security.application-groups": [
           "group.co.sauceroom.grandma"
         ]
-      }
+      },
+      "associatedDomains": [
+        "applinks:www.thegrandma.app",
+        "applinks:thegrandma.app"
+      ]
     },
     "android": {
       "allowBackup": false,
@@ -33,6 +37,17 @@
         "backgroundColor": "#F3F0E8"
       },
       "package": "com.grandmacoder.grandmaapp",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "www.thegrandma.app", "pathPrefix": "/accept-invite" },
+            { "scheme": "https", "host": "thegrandma.app", "pathPrefix": "/accept-invite" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "versionCode": 4
     },
     "plugins": [

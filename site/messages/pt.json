@@ -290,5 +290,14 @@
       "label": "Tour guiado",
       "skip": "pular"
     }
+  },
+  "invite": {
+    "metaTitle": "Você recebeu um convite — Grandma",
+    "eyebrow": "Convite para a rede de cuidado",
+    "title": "Alguém convidou você para ajudar a cuidar do pequeno",
+    "body": "Abra o convite no app Grandma para ver o que foi compartilhado com você e aceitar.",
+    "open": "Abrir no Grandma",
+    "noApp": "Ainda não tem o app? O Grandma está em beta fechado — peça acesso a quem te convidou e toque neste link de novo no celular.",
+    "missing": "Este link de convite está incompleto. Peça para quem te convidou enviar de novo."
   }
 }

@@ -112,10 +112,11 @@ serve(async (req) => {
       'PRODUCT_CHANGE',
       'UNCANCELLATION',
     ]
+    // Only EXPIRATION ends access. CANCELLATION = auto-renew turned off (still paid
+    // until the period ends); BILLING_ISSUE = store grace period (still entitled).
+    // RevenueCat sends EXPIRATION when access actually lapses.
     const inactiveEvents = [
-      'CANCELLATION',
       'EXPIRATION',
-      'BILLING_ISSUE',
     ]
 
     let tier: 'free' | 'premium_solo' | 'premium_family' | null = null

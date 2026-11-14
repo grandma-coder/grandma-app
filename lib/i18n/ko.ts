@@ -3807,6 +3807,7 @@ export const ko: TranslationKeys = {
   manageCaregivers_linkInvite: "링크 초대",
   careCircle_seatsFullTitle: "돌봄 서클이 가득 찼어요",
   careCircle_seatsFullBody: "새로운 사람을 초대하려면 한 명을 내보내 주세요.",
+  careCircle_coparentExistsBody: "This child already has a co-parent invited. Remove that invite to add someone else as a parent.",
   notFound_title: "이 페이지를 찾을 수 없어요",
   notFound_body: "링크가 오래되었거나 페이지가 옮겨졌을 수 있어요. 기록은 안전해요.",
   notFound_cta: "홈으로",

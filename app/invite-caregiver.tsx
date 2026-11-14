@@ -37,6 +37,7 @@ import { SiteSticker } from '../components/stickers/SiteSticker'
 import { useModeStore } from '../store/useModeStore'
 import { useIsDiffuse } from '../components/ui/diffuse/DiffuseKit'
 import { DiffuseBloomIcon } from '../components/ui/diffuse/DiffusePrimitives'
+import { buildInviteLink } from '../lib/inviteLink'
 
 type RoleGlyph = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
 
@@ -187,7 +188,7 @@ export default function InviteCaregiver() {
       if (error) throw new Error(error.message)
       if (data?.error) throw new Error(data.error)
 
-      const link = `grandma-app://accept-invite?token=${data.inviteToken}`
+      const link = buildInviteLink(data.inviteToken)
       setInviteLink(link)
     } catch {
       Alert.alert(t('common_error'), t('common_checkConnection'))

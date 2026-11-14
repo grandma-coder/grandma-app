@@ -3794,6 +3794,7 @@ export const es: TranslationKeys = {
   manageCaregivers_linkInvite: "Invitación por enlace",
   careCircle_seatsFullTitle: "Tu círculo de cuidado está completo",
   careCircle_seatsFullBody: "Quita a alguien para invitar a otra persona.",
+  careCircle_coparentExistsBody: "Este niño ya tiene un co-progenitor invitado. Quita esa invitación para invitar a otra persona como progenitor.",
   notFound_title: "Esta página no está aquí",
   notFound_body: "Puede que el enlace sea antiguo o que la página se haya movido. Tus registros están a salvo.",
   notFound_cta: "Ir al inicio",

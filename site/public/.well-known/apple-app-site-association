@@ -1,0 +1,23 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "C7H9AXWR6A.co.sauceroom.grandma",
+        "appIDs": [
+          "C7H9AXWR6A.co.sauceroom.grandma"
+        ],
+        "paths": [
+          "/accept-invite",
+          "/accept-invite/*"
+        ],
+        "components": [
+          {
+            "/": "/accept-invite",
+            "comment": "Caregiver invite"
+          }
+        ]
+      }
+    ]
+  }
+}

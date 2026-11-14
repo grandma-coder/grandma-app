@@ -290,5 +290,14 @@
       "label": "Guided tour",
       "skip": "skip"
     }
+  },
+  "invite": {
+    "metaTitle": "You've been invited — Grandma",
+    "eyebrow": "Care circle invite",
+    "title": "Someone invited you to help care for their little one",
+    "body": "Open the invite in the Grandma app to see what they've shared with you and accept.",
+    "open": "Open in Grandma",
+    "noApp": "Don't have the app yet? Grandma is in private beta — ask the person who invited you for access, then tap this link again on your phone.",
+    "missing": "This invite link is incomplete. Ask the person who invited you to send it again."
   }
 }

@@ -7,11 +7,13 @@
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { createSecureChunkedStorage } from '../lib/secureChunkedStorage'
 import type { ChatMessage } from '../lib/grandmaChat'
 
-const MAX_SESSIONS = 20
-const MAX_MESSAGES_PER_SESSION = 50
+// Kept in the Keychain/Keystore (health free text) — smaller caps keep the
+// encrypted blob and each debounced write small.
+const MAX_SESSIONS = 10
+const MAX_MESSAGES_PER_SESSION = 30
 
 export interface ChatSession {
   id: string
@@ -61,7 +63,7 @@ export const useGrandmaHistoryStore = create<GrandmaHistoryStore>()(
     }),
     {
       name: 'grandma-chat-history',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => createSecureChunkedStorage({ legacyAsyncStorageKey: 'grandma-chat-history' })),
       partialize: (state) => ({ sessions: state.sessions }),
       // Flip the flag via setState so it always fires, even on a fresh install
       // where `state` is undefined (nothing persisted yet). See useBehaviorStore

@@ -97,6 +97,7 @@ import { kidsLogSummary, kidsLogTitle } from '../../lib/kidsLogSummary'
 import { useUnitsStore } from '../../store/useUnitsStore'
 import { dateLoc } from '../../lib/kpLocale'
 import { AfterTransition } from '../../components/ui/AfterTransition'
+import { buildInviteLink } from '../../lib/inviteLink'
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -696,7 +697,7 @@ export default function CareCircleScreen() {
       Alert.alert(t('common_error'), e?.message ?? t('common_tryAgain'))
       return
     }
-    const inviteLink = `grandma-app://accept-invite?token=${token}`
+    const inviteLink = buildInviteLink(token)
     const msg = t('app_cc_inviteMsg', { name: member.displayName || t('app_cc_there'), link: inviteLink })
 
     Alert.alert(t('careCircle_resend_invite'), t('app_cc_resendHow', { name: member.displayName || t('app_cc_them') }), [
@@ -1632,7 +1633,7 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
         onSaved()
         return
       }
-      const inviteLink = `grandma-app://accept-invite?token=${token}`
+      const inviteLink = buildInviteLink(token)
       const msg = t('app_cc_inviteMsg', { name: name.trim() || t('app_cc_there'), link: inviteLink })
 
       if (sendMethod === 'email') {
@@ -1674,6 +1675,8 @@ function AddMemberSheet({ visible, onClose, onSaved }: { visible: boolean; onClo
             { text: t('app_cc_seePlans'), onPress: () => router.push('/paywall?tier=premium_solo') },
           ],
         )
+      } else if (msg.includes('already has a co-parent')) {
+        Alert.alert(t('app_cc_couldntSendInvite'), t('careCircle_coparentExistsBody'))
       } else {
         Alert.alert(t('app_cc_couldntSendInvite'), msg || t('common_tryAgain'))
       }

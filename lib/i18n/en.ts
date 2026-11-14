@@ -4129,6 +4129,7 @@ export const en: TranslationKeys = {
   manageCaregivers_linkInvite: "Invite link",
   careCircle_seatsFullTitle: "Your care circle is full",
   careCircle_seatsFullBody: "Remove someone to invite a new person.",
+  careCircle_coparentExistsBody: "This child already has a co-parent invited. Remove that invite to add someone else as a parent.",
   notFound_title: "This page isn't here",
   notFound_body: "The link may be old or the page has moved. Your logs are safe.",
   notFound_cta: "Go to home",
