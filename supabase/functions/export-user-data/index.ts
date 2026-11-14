@@ -14,7 +14,7 @@
 // max_rows, so long-time users silently got a truncated log history before).
 // Read errors are listed in export_meta.errors instead of silently exporting an
 // empty table. Photos / documents are listed under `files` with signed links
-// valid for 7 days.
+// valid for 24 hours.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -28,7 +28,9 @@ const corsHeaders = {
 }
 
 const PAGE = 1000
-const LINK_TTL_SECONDS = 7 * 24 * 60 * 60
+// 24h: these links point at medical documents — a forwarded/leaked export
+// shouldn't stay live for a week.
+const LINK_TTL_SECONDS = 24 * 60 * 60
 
 // Tables that exist only in some environments — absence is not an error.
 const isMissingTable = (msg: string) => /does not exist|could not find the table|schema cache/i.test(msg)
@@ -87,7 +89,7 @@ serve(async (req) => {
         user_id: uid,
         email: user.email ?? null,
         format: 'grandma.app data export v2',
-        note: 'This JSON contains all personal data grandma.app holds about you. Links under "files" expire after 7 days.',
+        note: 'This JSON contains all personal data grandma.app holds about you. Links under "files" expire after 24 hours.',
         incomplete: false,
         errors,
       },

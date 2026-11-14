@@ -95,7 +95,7 @@ export default function ProfileScreen() {
   const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleVersionPress() {
-    if (!__DEV__ && process.env.EXPO_PUBLIC_ENABLE_DEV_PANEL !== 'true') return
+    if (!__DEV__) return
     tapCount.current += 1
     if (tapTimer.current) clearTimeout(tapTimer.current)
     tapTimer.current = setTimeout(() => { tapCount.current = 0 }, 1500)

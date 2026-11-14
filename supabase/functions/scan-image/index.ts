@@ -2,15 +2,14 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { logAiUsage } from '../_shared/aiUsage.ts'
+import { checkAiQuota, quotaExceededResponse, validateImage } from '../_shared/aiQuota.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-// Free tier may run a limited number of scans (lifetime, per account) — must
-// match FREE_SCAN_LIMIT in app/scan.tsx. Enforced server-side here so the
-// client-side gate can't simply be bypassed.
-const FREE_SCAN_LIMIT = 3
+// Free tier scan limit (3, lifetime) lives in _shared/aiQuota.ts AI_LIMITS — keep in
+// sync with FREE_SCAN_LIMIT in app/scan.tsx.
 const VALID_SCAN_TYPES = ['medicine', 'food', 'nutrition', 'insurance_card', 'exam', 'cycle_test', 'general']
 
 // CORS: mobile clients send no Origin, so '*' is the safe default. Set
@@ -97,10 +96,6 @@ serve(async (req) => {
   try {
     const { imageBase64, mediaType, scanType, childContext, pregnancyContext }: RequestBody = await req.json()
 
-    if (!imageBase64) {
-      throw new Error('No image provided')
-    }
-
     // Validate scanType against the known set (also guards prompt injection via
     // an unexpected scanType branch).
     if (!VALID_SCAN_TYPES.includes(scanType)) {
@@ -110,30 +105,24 @@ serve(async (req) => {
       )
     }
 
-    // Server-side free-tier quota enforcement. The client also gates + records
-    // scans (app/scan.tsx); this is the authoritative check so the client gate
-    // can't be bypassed. Count is lifetime per account to match the client.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_tier, subscription_status')
-      .eq('id', userId)
-      .single()
-    const isPremium =
-      profile?.subscription_tier === 'premium_solo' ||
-      profile?.subscription_tier === 'premium_family' ||
-      profile?.subscription_status === 'premium'
-    if (!isPremium) {
-      const { count } = await supabase
-        .from('scan_history')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-      if ((count ?? 0) >= FREE_SCAN_LIMIT) {
-        return new Response(
-          JSON.stringify({ error: 'Free scan limit reached', code: 'scan_limit_reached' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
+    const imageError = validateImage(imageBase64, mediaType)
+    if (imageError) {
+      return new Response(
+        JSON.stringify({ error: imageError }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
+
+    // Server-side quota. The slot is recorded HERE (ai_request_log, service role)
+    // before the Anthropic call — the old check counted scan_history rows that only
+    // the client inserts, so skipping that insert gave unlimited free scans.
+    // Existing scan_history rows still count toward the free lifetime limit.
+    const { count: priorScans } = await supabase
+      .from('scan_history')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+    const quota = await checkAiQuota(supabase, userId, 'scan-image', priorScans ?? 0)
+    if (!quota.ok) return quotaExceededResponse(quota, corsHeaders)
 
     const systemPrompt = buildScanPrompt(scanType, childContext, pregnancyContext)
 

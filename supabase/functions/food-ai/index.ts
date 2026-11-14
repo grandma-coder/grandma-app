@@ -4,6 +4,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { logAiUsage } from '../_shared/aiUsage.ts'
+import { checkAiQuota, quotaExceededResponse, sanitizeChatMessages, validateImage } from '../_shared/aiQuota.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -150,7 +151,14 @@ serve(async (req) => {
     const body: RequestBody = await req.json()
     if (body.mode !== 'text' && body.mode !== 'image') throw new Error('mode must be "text" or "image"')
     if (body.mode === 'text' && !body.text?.trim()) throw new Error('text required')
-    if (body.mode === 'image' && !body.imageBase64) throw new Error('imageBase64 required')
+    if (body.mode === 'image') {
+      const imageError = validateImage(body.imageBase64, body.mediaType)
+      if (imageError) throw new Error(imageError)
+    }
+    if (body.mode === 'text' && body.text && body.text.length > 4000) throw new Error('text too long')
+
+    const quota = await checkAiQuota(supabase, userId, 'food-ai')
+    if (!quota.ok) return quotaExceededResponse(quota, corsHeaders)
 
     const audience: 'child' | 'pregnant' = body.audience === 'pregnant' ? 'pregnant' : 'child'
 

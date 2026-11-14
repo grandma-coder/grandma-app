@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { authErrorText } from '../../lib/authError'
 import { AUTH_CONFIRM_REDIRECT } from '../../lib/authRedirect'
+import { markAuthEmailRequested } from '../../lib/authLinkGuard'
 import { promptCheckEmail } from '../../lib/authPrompts'
 import { supabase } from '../../lib/supabase'
 import { useLanguageStore } from '../../store/useLanguageStore'
@@ -71,6 +72,7 @@ export default function SignUp() {
     submitting.current = true
     setLoading(true)
     try {
+      await markAuthEmailRequested()
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,

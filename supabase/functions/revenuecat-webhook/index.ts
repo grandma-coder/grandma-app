@@ -96,6 +96,16 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Sandbox purchases (TestFlight, Play license testers) must not grant
+    // production premium unless explicitly allowed (e.g. during a closed beta).
+    const allowSandbox = Deno.env.get('REVENUECAT_ALLOW_SANDBOX') === 'true'
+    if (event?.environment && event.environment !== 'PRODUCTION' && !allowSandbox) {
+      console.warn('[revenuecat-webhook] ignoring non-production event', event.type, event.environment)
+      return new Response(JSON.stringify({ ok: true, ignored: 'sandbox' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const activeEvents = [
       'INITIAL_PURCHASE',
       'RENEWAL',
@@ -112,18 +122,27 @@ serve(async (req) => {
     let status: 'free' | 'premium' | null = null
 
     if (activeEvents.includes(event.type)) {
-      tier = resolveTier(event) ?? 'premium_solo'
+      tier = resolveTier(event)
       status = 'premium'
+      if (!tier) {
+        // Unknown product: don't guess a paid tier — log so the mapping gets fixed.
+        console.error('[revenuecat-webhook] unmapped product/entitlement', event.product_id, event.entitlement_ids)
+        status = null
+      }
     } else if (inactiveEvents.includes(event.type)) {
       tier = 'free'
       status = 'free'
     }
 
     if (tier) {
+      // Ignore events older than the last one applied — an out-of-order or
+      // retried RENEWAL must not re-grant premium after an EXPIRATION.
+      const eventMs = Number(event.event_timestamp_ms) || Date.now()
       const { error } = await supabase
         .from('profiles')
-        .update({ subscription_tier: tier, subscription_status: status })
+        .update({ subscription_tier: tier, subscription_status: status, subscription_event_ms: eventMs })
         .eq('id', userId)
+        .or(`subscription_event_ms.is.null,subscription_event_ms.lte.${eventMs}`)
       if (error) throw error
     }
 

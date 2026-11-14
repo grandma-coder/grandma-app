@@ -1,5 +1,5 @@
 /**
- * DevPanelContext — gated behind __DEV__ or EXPO_PUBLIC_ENABLE_DEV_PANEL.
+ * DevPanelContext — gated behind __DEV__ only (never in release builds).
  *
  * Provides openDevPanel/closeDevPanel to the app.
  * Mounts DevPanel overlay only in dev mode.
@@ -27,7 +27,7 @@ import { useOnboardingStore } from '../store/useOnboardingStore'
 import { supabase } from '../lib/supabase'
 import { signOut } from '../lib/signOut'
 
-const IS_DEV = __DEV__ || process.env.EXPO_PUBLIC_ENABLE_DEV_PANEL === 'true'
+const IS_DEV = __DEV__
 
 // ─── Context ───────────────────────────────────────────────────────────────
 

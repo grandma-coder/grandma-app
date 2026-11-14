@@ -98,6 +98,7 @@ import { consumePendingInvite } from '../lib/pendingInvite'
 import { clearLocalAccountData, registerLocalSignOutHandler } from '../lib/signOut'
 import { claimDeviceAccount } from '../lib/accountSwitch'
 import { parseAuthRedirect } from '../lib/authRedirect'
+import { consumeAuthEmailRequest } from '../lib/authLinkGuard'
 import { authEventLoads } from '../lib/authEvents'
 import { reloadUserData } from '../lib/userDataReload'
 import { authErrorText } from '../lib/authError'
@@ -602,6 +603,14 @@ export default function RootLayout() {
     async function handleAuthLink(url: string | null) {
       const link = parseAuthRedirect(url)
       if (!link || cancelled) return
+      // session / otp links can carry an attacker's own credentials (custom scheme — any page
+      // or app can open it). Only honour them if this device requested an auth email.
+      if ((link.kind === 'session' || link.kind === 'otp') && !(await consumeAuthEmailRequest())) {
+        if (cancelled) return
+        console.warn('[auth] ignored an email auth link this device did not request')
+        Alert.alert(translate('auth_linkFailed'))
+        return
+      }
       try {
         if (link.kind === 'error') {
           // Pass the code too: otp_expired then reads "link expired", not a generic "try again".

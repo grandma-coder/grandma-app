@@ -2,11 +2,13 @@ import { Alert } from 'react-native'
 import { supabase } from './supabase'
 import { authErrorText } from './authError'
 import { AUTH_CONFIRM_REDIRECT } from './authRedirect'
+import { markAuthEmailRequested } from './authLinkGuard'
 import { t } from './i18n'
 
 /** Send the sign-up confirmation email again (Supabase rate-limits this per address). */
 async function resendConfirmation(email: string): Promise<void> {
   try {
+    await markAuthEmailRequested()
     const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: AUTH_CONFIRM_REDIRECT } })
     if (error) Alert.alert(t('auth_signUpFailed'), authErrorText(error))
     else Alert.alert(t('auth_checkEmailTitle'), t('auth_resendSent'))

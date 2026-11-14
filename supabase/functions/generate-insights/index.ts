@@ -3,6 +3,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { logAiUsage } from '../_shared/aiUsage.ts'
+import { checkAiQuota, quotaExceededResponse } from '../_shared/aiQuota.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -64,6 +65,12 @@ serve(async (req) => {
     }
     const user_id = authData.user.id
 
+    const quota = await checkAiQuota(supabase, user_id, 'generate-insights')
+    if (!quota.ok) return quotaExceededResponse(quota, corsHeaders)
+
+    // Children the caller owns — model-supplied child_id is only kept if it's one of these.
+    const ownedChildIds = new Set<string>()
+
     // ─── Fetch last 30 days of logs ──────────────────────────────────────
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -110,6 +117,7 @@ serve(async (req) => {
 
       const childList = children ?? []
       const childIds = childList.map((c: any) => c.id)
+      childIds.forEach((id: string) => ownedChildIds.add(id))
       const childNames = Object.fromEntries(childList.map((c: any) => [c.id, c.name]))
       const childAges = Object.fromEntries(childList.map((c: any) => {
         if (!c.birth_date) return [c.id, null]
@@ -214,7 +222,8 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errText = await response.text()
-      throw new Error(`Claude API error: ${response.status} — ${errText}`)
+      console.error('Claude API error:', response.status, errText)
+      throw new Error('ai_upstream_error')
     }
 
     const aiResponse = await response.json()
@@ -241,7 +250,7 @@ serve(async (req) => {
         insights = JSON.parse(jsonMatch[0])
       }
     } catch (parseErr: any) {
-      console.error('Failed to parse insights JSON:', parseErr.message, 'Raw:', aiText.slice(0, 500))
+      console.error('Failed to parse insights JSON:', parseErr.message, 'raw length:', aiText.length)
       insights = []
     }
 
@@ -255,7 +264,7 @@ serve(async (req) => {
           title: ins.title ?? 'Insight',
           body: ins.body ?? '',
           behavior,
-          child_id: ins.child_id ?? null,
+          child_id: typeof ins.child_id === 'string' && ownedChildIds.has(ins.child_id) ? ins.child_id : null,
         }))
       : [{
           user_id,
@@ -295,7 +304,7 @@ serve(async (req) => {
   } catch (err: any) {
     console.error('generate-insights error:', err)
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: 'Something went wrong. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

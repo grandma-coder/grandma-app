@@ -17,7 +17,6 @@ import {
   PaywallTier,
   BillingPeriod,
 } from '../lib/revenue'
-import { supabase } from '../lib/supabase'
 import { InkBackButton } from '../components/ui/InkBackButton'
 import { SiteChoice } from '../components/ui/SiteChoice'
 import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
@@ -187,13 +186,7 @@ export default function Paywall() {
       const customerInfo = await purchasePackage(match.package)
       const tier = detectTier(customerInfo)
       if (tier !== 'free') {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          await supabase
-            .from('profiles')
-            .update({ subscription_tier: tier, subscription_status: 'premium' })
-            .eq('id', user.id)
-        }
+        // profiles.subscription_* is written only by revenuecat-webhook (DB-guarded).
         setAlert({
           title: t('paywall_welcomePremiumTitle'),
           italic: t('paywall_welcomePremiumItalic'),
@@ -214,13 +207,7 @@ export default function Paywall() {
       const customerInfo = await restorePurchases()
       const tier = detectTier(customerInfo)
       if (tier !== 'free') {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          await supabase
-            .from('profiles')
-            .update({ subscription_tier: tier, subscription_status: 'premium' })
-            .eq('id', user.id)
-        }
+        // profiles.subscription_* is written only by revenuecat-webhook (DB-guarded).
         setAlert({
           title: t('paywall_restoredTitle'),
           italic: t('paywall_restoredItalic'),

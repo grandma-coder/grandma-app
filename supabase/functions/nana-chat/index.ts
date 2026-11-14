@@ -3,6 +3,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { logAiUsage } from '../_shared/aiUsage.ts'
+import { checkAiQuota, quotaExceededResponse, sanitizeChatMessages, validateImage } from '../_shared/aiQuota.ts'
 import { isFeatureEnabled } from '../_shared/featureFlag.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
@@ -85,6 +86,16 @@ serve(async (req) => {
   try {
     const { messages, childContext, pillarId, mode, weekNumber } = await req.json()
 
+    const safeMessages = sanitizeChatMessages(messages)
+    if (!safeMessages) {
+      return new Response(
+        JSON.stringify({ error: 'messages are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const quota = await checkAiQuota(supabase, authData.user.id, 'nana-chat')
+    if (!quota.ok) return quotaExceededResponse(quota, corsHeaders)
+
     const systemPrompt = buildSystemPrompt(childContext, pillarId, mode, weekNumber)
 
     const startedAt = Date.now()
@@ -100,7 +111,7 @@ serve(async (req) => {
         max_tokens: 4096,
         temperature: 0.8,
         system: systemPrompt,
-        messages,
+        messages: safeMessages,
       }),
     })
 

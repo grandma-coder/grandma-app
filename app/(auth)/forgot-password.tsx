@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { authErrorText } from '../../lib/authError'
 import { AUTH_RESET_REDIRECT } from '../../lib/authRedirect'
+import { markAuthEmailRequested } from '../../lib/authLinkGuard'
 import { supabase } from '../../lib/supabase'
 import { useTheme, useDiffuseTheme, diffuseFont, getDiffuseAccent } from '../../constants/theme'
 import { SiteSticker } from '../../components/stickers/SiteSticker'
@@ -60,6 +61,7 @@ export default function ForgotPassword() {
     submitting.current = true
     setLoading(true)
     try {
+      await markAuthEmailRequested()
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
         redirectTo: AUTH_RESET_REDIRECT,
       })

@@ -2,6 +2,7 @@
 // @ts-nocheck — Deno Edge Function: TS errors in VS Code are expected (runs in Deno, not Node)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { logAiUsage } from '../_shared/aiUsage.ts'
+import { checkAiQuota, quotaExceededResponse, sanitizeChatMessages, validateImage } from '../_shared/aiQuota.ts'
 import { isFeatureEnabled } from '../_shared/featureFlag.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
@@ -75,6 +76,16 @@ Deno.serve(async (req) => {
       )
     }
     const user_id = authData.user.id
+
+    const safeMessages = sanitizeChatMessages(messages)
+    if (!safeMessages) {
+      return new Response(
+        JSON.stringify({ error: 'messages are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const quota = await checkAiQuota(supabase, user_id, 'grandma-chat')
+    if (!quota.ok) return quotaExceededResponse(quota, corsHeaders)
 
     const behavior = context?.behavior ?? 'kids'
     const allBehaviors: string[] = context?.allBehaviors ?? [behavior]
@@ -188,7 +199,7 @@ Deno.serve(async (req) => {
     }
 
     // ─── Detect topic for knowledge injection ─────────────────────────
-    const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')?.content ?? ''
+    const lastUserMsg = [...safeMessages].reverse().find((m: any) => m.role === 'user')?.content ?? ''
     const topicKnowledge = getTopicKnowledge(lastUserMsg, behavior)
 
     // ─── Build system prompt ───────────────────────────────────────────
@@ -243,13 +254,14 @@ She may ask about any of them. Answer using whichever context is most relevant t
         max_tokens: 4096,
         temperature: 0.8,
         system: systemPrompt,
-        messages,
+        messages: safeMessages,
       }),
     })
 
     if (!response.ok) {
       const errText = await response.text()
-      throw new Error(`Claude API error: ${response.status} — ${errText}`)
+      console.error('Claude API error:', response.status, errText)
+      throw new Error('ai_upstream_error')
     }
 
     const data = await response.json()
@@ -275,7 +287,7 @@ She may ask about any of them. Answer using whichever context is most relevant t
   } catch (err: any) {
     console.error('grandma-chat error:', err)
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: 'Something went wrong. Please try again.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

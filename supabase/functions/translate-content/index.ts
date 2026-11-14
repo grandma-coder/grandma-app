@@ -11,6 +11,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
+import { checkAiQuota, quotaExceededResponse } from '../_shared/aiQuota.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -80,6 +81,13 @@ serve(async (req) => {
   try {
     const { contentKey, sourceText, locale } = await req.json()
 
+    if (typeof sourceText === 'string' && sourceText.length > 20000) {
+      return new Response(
+        JSON.stringify({ error: 'sourceText too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
     if (!contentKey || !sourceText || !locale) {
       return new Response(
         JSON.stringify({ error: 'contentKey, sourceText, and locale are required' }),
@@ -120,7 +128,10 @@ serve(async (req) => {
       )
     }
 
-    // Miss (or stale) — translate via Claude Haiku.
+    // Miss (or stale) — translate via Claude Haiku. Only misses count toward the quota.
+    const quota = await checkAiQuota(supabase, authData.user.id, 'translate-content')
+    if (!quota.ok) return quotaExceededResponse(quota, corsHeaders)
+
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {

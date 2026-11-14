@@ -69,6 +69,11 @@ serve(async (req) => {
     if (!isPlaceholderEmail && inviteEmail !== user.email?.toLowerCase()) {
       throw new Error('This invite was sent to a different email address')
     }
+    // The email match only proves identity if the address is verified — otherwise
+    // anyone could sign up as the invitee's address and take the invite.
+    if (!isPlaceholderEmail && !user.email_confirmed_at) {
+      throw new Error('Please confirm your email address before accepting this invite')
+    }
 
     // Preview mode: the accept-invite screen calls this to show the actual
     // granted capabilities before the user taps Accept. It runs the same
@@ -106,8 +111,9 @@ serve(async (req) => {
       .from('profiles')
       .upsert({ id: user.id, email: user.email, user_role: 'nanny' }, { onConflict: 'id', ignoreDuplicates: true })
 
-    // Accept the invite
-    const { error: updateError } = await supabase
+    // Accept the invite. Conditional on still being pending + unclaimed so two
+    // concurrent accepts of the same link can't both succeed.
+    const { data: acceptedRows, error: updateError } = await supabase
       .from('child_caregivers')
       .update({
         user_id: user.id,
@@ -115,10 +121,17 @@ serve(async (req) => {
         accepted_at: new Date().toISOString(),
       })
       .eq('id', invite.id)
+      .eq('status', 'pending')
+      // A re-issued invite may still carry the same user's id from before.
+      .or(`user_id.is.null,user_id.eq.${user.id}`)
+      .select('id')
 
     if (updateError) {
       if ((updateError.message ?? '').includes('seat_limit_exceeded')) throw new Error(SEAT_LIMIT_MESSAGE)
       throw updateError
+    }
+    if (!acceptedRows || acceptedRows.length === 0) {
+      throw new Error('This invite is no longer valid')
     }
 
     // One invite can cover several children (care-circle writes one row per child, same inviter +

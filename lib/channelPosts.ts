@@ -109,7 +109,8 @@ export async function createChannel(opts: {
     } else {
       try {
         const ext = opts.avatarUri.split('.').pop()?.toLowerCase() ?? 'jpg'
-        const path = `channels/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
+        // channels/<uid>/… — storage policy binds uploads to the uploader's folder.
+        const path = `channels/${session.user.id}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
         const formData = new FormData()
         formData.append('', { uri: opts.avatarUri, name: path.split('/').pop(), type: `image/${ext}` } as any)
         const { error: uploadErr } = await supabase.storage
