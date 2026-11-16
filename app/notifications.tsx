@@ -456,7 +456,12 @@ export default function NotificationsScreen() {
             ) : (
               <>
                 <SiteSticker name="bell" size={30} cut />
-                <Text style={{ fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                  style={{ flexShrink: 1, fontFamily: font.display, fontSize: 24, letterSpacing: 0.3, textTransform: 'uppercase', color: colors.text }}
+                >
                   {t('notifications_title')}
                 </Text>
               </>
@@ -487,7 +492,7 @@ export default function NotificationsScreen() {
           {hasUnread ? (
             <Pressable onPress={handleMarkAllRead} hitSlop={8} style={styles.markAllBtn}>
               <CheckCheck size={16} color={diffuse ? dt.colors.ink3 : colors.text} strokeWidth={diffuse ? 1.6 : 2} />
-              <Text style={[
+              <Text numberOfLines={2} style={[
                 styles.markAllText,
                 diffuse
                   ? { color: dt.colors.ink, fontFamily: diffuseFont.mono, letterSpacing: 1.4, textTransform: 'uppercase', fontSize: 11 }
@@ -839,6 +844,7 @@ const styles = StyleSheet.create({
   },
   titleWrap: {
     flex: 1,
+    minWidth: 0, // let the title shrink instead of running under "mark all read"
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
@@ -857,8 +863,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    maxWidth: '38%',
   },
-  markAllText: { fontSize: 13 },
+  markAllText: { fontSize: 13, flexShrink: 1, textAlign: 'right' },
   markAllPlaceholder: { width: 0, height: 0 },
 
   // Filter pills — slim single-line scroll rows
