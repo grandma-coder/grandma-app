@@ -21,7 +21,7 @@ export type PregnancyLogType =
 
 /**
  * Site look: the sticker each pregnancy log form wants beside its `LogSheet` title
- * (`<LogSheet sticker={PREGNANCY_LOG_STICKER[type]} …>`). The forms no longer draw
+ * (`<LogSheet requiresWrite sticker={PREGNANCY_LOG_STICKER[type]} …>`). The forms no longer draw
  * their own header chip in the light look, so the sheet title carries the sticker.
  */
 export const PREGNANCY_LOG_STICKER: Record<PregnancyLogType, SiteStickerName> = PREGNANCY_LOG_STICKER_MAP as Record<PregnancyLogType, SiteStickerName>

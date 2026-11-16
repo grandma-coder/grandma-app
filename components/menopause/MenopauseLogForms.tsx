@@ -1,7 +1,7 @@
 /**
  * Menopause Log Forms (E1 / U7)
  *
- * Two bottom-sheet forms rendered inside the shared <LogSheet> (the parent
+ * Two bottom-sheet forms rendered inside the shared <LogSheet requiresWrite> (the parent
  * supplies the sheet shell + title), mirroring the cycle log forms:
  *
  *  - MenopauseSymptomForm — pick a symptom from ALL_MENOPAUSE_SYMPTOMS (grouped

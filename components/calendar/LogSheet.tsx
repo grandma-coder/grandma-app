@@ -17,6 +17,7 @@ import { StickerEnter } from '../ui/Motion'
 import { useIsDiffuse } from '../ui/diffuse/DiffuseKit'
 import { SheetModal } from '../ui/SheetModal'
 import { useTranslation } from '../../lib/i18n'
+import { useWriteGuard } from '../../lib/writeGuard'
 
 // Forms rendered inside a sheet hand their primary action to the sheet so it sits in a
 // fixed footer — always visible, never scrolled away. Outside a sheet it renders inline.
@@ -57,11 +58,28 @@ interface LogSheetProps {
   footer?: ReactNode
   /** Site look: a sticker beside the title. */
   sticker?: SiteStickerName
+  /** This sheet CREATES/EDITS logs. With a lapsed trial/subscription the form is
+   *  replaced by ReadOnlyNotice (history + export stay available elsewhere). */
+  requiresWrite?: boolean
 }
 
 export function LogSheet(props: LogSheetProps) {
+  return props.requiresWrite ? <WriteGuardedLogSheet {...props} /> : <PlainLogSheet {...props} />
+}
+
+function PlainLogSheet(props: LogSheetProps) {
   const diffuse = useIsDiffuse()
   return diffuse ? <DiffuseLogSheet {...props} /> : <CurrentLogSheet {...props} />
+}
+
+function WriteGuardedLogSheet(props: LogSheetProps) {
+  const { readOnly, renderNotice } = useWriteGuard()
+  if (!readOnly) return <PlainLogSheet {...props} />
+  return (
+    <PlainLogSheet {...props} footer={undefined}>
+      {renderNotice(props.onClose)}
+    </PlainLogSheet>
+  )
 }
 
 function CurrentLogSheet({ visible, title, onClose, children, chip, chipColor, titleRight, footer, sticker }: LogSheetProps) {

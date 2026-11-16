@@ -38,31 +38,31 @@ export function KidsLogRouter({
 
   return (
     <>
-      <LogSheet sticker={KIDS_LOG_STICKER['feeding']} visible={sheetType === 'feeding'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_feeding'))} onClose={onClose}>
+      <LogSheet requiresWrite sticker={KIDS_LOG_STICKER['feeding']} visible={sheetType === 'feeding'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_feeding'))} onClose={onClose}>
         <FeedingForm onSaved={onSaved} initialDate={date} prefill={prefill} editLog={edit} onSkip={skip('feeding')} />
       </LogSheet>
-      <LogSheet sticker={KIDS_LOG_STICKER['sleep']} visible={sheetType === 'sleep'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_sleep'))} onClose={onClose}>
+      <LogSheet requiresWrite sticker={KIDS_LOG_STICKER['sleep']} visible={sheetType === 'sleep'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_sleep'))} onClose={onClose}>
         <SleepForm onSaved={onSaved} initialDate={date} prefill={prefill} editLog={edit} onSkip={skip('sleep')} />
       </LogSheet>
-      <LogSheet sticker={KIDS_LOG_STICKER['wake_up']} visible={sheetType === 'wake_up'} title={routinePrefill?.name ?? t('kids_calendar_logSheet_wakeUp')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={KIDS_LOG_STICKER['wake_up']} visible={sheetType === 'wake_up'} title={routinePrefill?.name ?? t('kids_calendar_logSheet_wakeUp')} onClose={onClose}>
         <WakeUpForm onSaved={onSaved} prefill={prefill} onSkip={skip('wake_up')} />
       </LogSheet>
-      <LogSheet sticker={KIDS_LOG_STICKER['health']} visible={sheetType === 'health'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_health'))} onClose={onClose}>
+      <LogSheet requiresWrite sticker={KIDS_LOG_STICKER['health']} visible={sheetType === 'health'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_health'))} onClose={onClose}>
         <HealthEventForm onSaved={onSaved} initialDate={date} prefill={prefill} editLog={edit} onSkip={skip('health')} />
       </LogSheet>
-      <LogSheet sticker={KIDS_LOG_STICKER['mood']} visible={sheetType === 'mood'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_mood'))} onClose={onClose}>
+      <LogSheet requiresWrite sticker={KIDS_LOG_STICKER['mood']} visible={sheetType === 'mood'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_mood'))} onClose={onClose}>
         <KidsMoodForm onSaved={onSaved} initialDate={date} prefill={prefill} editLog={edit} onSkip={skip('mood')} />
       </LogSheet>
-      <LogSheet sticker={KIDS_LOG_STICKER['activity']} visible={sheetType === 'activity'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_activity'))} onClose={onClose}>
+      <LogSheet requiresWrite sticker={KIDS_LOG_STICKER['activity']} visible={sheetType === 'activity'} title={edit ? t('kids_calendar_logSheet_editEntry') : (routinePrefill?.name ?? t('kids_calendar_logSheet_activity'))} onClose={onClose}>
         <ActivityForm onSaved={onSaved} initialDate={date} prefill={prefill} editLog={edit} onSkip={skip('activity')} />
       </LogSheet>
-      <LogSheet sticker={KIDS_LOG_STICKER['memory']} visible={sheetType === 'memory'} title={t('kids_calendar_logSheet_memory')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={KIDS_LOG_STICKER['memory']} visible={sheetType === 'memory'} title={t('kids_calendar_logSheet_memory')} onClose={onClose}>
         <MemoryForm onSaved={onSaved} initialDate={date} />
       </LogSheet>
-      <LogSheet sticker={KIDS_LOG_STICKER['diaper']} visible={sheetType === 'diaper'} title={edit ? t('kids_calendar_logSheet_editDiaper') : t('kids_calendar_logSheet_diaper')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={KIDS_LOG_STICKER['diaper']} visible={sheetType === 'diaper'} title={edit ? t('kids_calendar_logSheet_editDiaper') : t('kids_calendar_logSheet_diaper')} onClose={onClose}>
         <DiaperForm onSaved={onSaved} initialDate={date} editLog={edit} />
       </LogSheet>
-      <LogSheet sticker={KIDS_LOG_STICKER['exam']} visible={sheetType === 'exam'} title={t('kids_calendar_logSheet_exam')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={KIDS_LOG_STICKER['exam']} visible={sheetType === 'exam'} title={t('kids_calendar_logSheet_exam')} onClose={onClose}>
         <ExamForm behavior="kids" childId={childId} date={date} onSaved={onSaved} />
       </LogSheet>
     </>

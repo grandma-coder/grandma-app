@@ -93,7 +93,7 @@ export function QuickLogPicker({ visible, onClose, weekNumber }: Props) {
   })
 
   return (
-    <LogSheet
+    <LogSheet requiresWrite
       visible={visible}
       title={t('kids_quickLogs_pickTitle')}
       sticker={diffuse ? undefined : 'pencil'}

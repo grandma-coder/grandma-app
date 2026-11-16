@@ -107,7 +107,7 @@ export function CycleQuickLogPicker({ visible, onClose }: Props) {
   })
 
   return (
-    <LogSheet
+    <LogSheet requiresWrite
       visible={visible}
       title={t('kids_quickLogs_pickTitle')}
       onClose={onClose}

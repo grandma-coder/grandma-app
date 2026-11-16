@@ -36,49 +36,49 @@ export function CycleLogRouter({ sheetType, date, cycleConfig, onClose, onSaved 
 
   return (
     <>
-      <LogSheet sticker={CYCLE_LOG_STICKER['period_start']} visible={sheetType === 'period_start'} title={t('cycleCalendar_logSheet_periodStart')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['period_start']} visible={sheetType === 'period_start'} title={t('cycleCalendar_logSheet_periodStart')} onClose={onClose}>
         <PeriodStartForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['period_end']} visible={sheetType === 'period_end'} title={t('cycleCalendar_logSheet_periodEnd')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['period_end']} visible={sheetType === 'period_end'} title={t('cycleCalendar_logSheet_periodEnd')} onClose={onClose}>
         <PeriodEndForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['symptom']} visible={sheetType === 'symptom'} title={t('cycleCalendar_logSheet_symptoms')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['symptom']} visible={sheetType === 'symptom'} title={t('cycleCalendar_logSheet_symptoms')} onClose={onClose}>
         <SymptomsForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['mood']} visible={sheetType === 'mood'} title={t('cycleCalendar_logSheet_mood')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['mood']} visible={sheetType === 'mood'} title={t('cycleCalendar_logSheet_mood')} onClose={onClose}>
         <MoodForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['basal_temp']} visible={sheetType === 'basal_temp'} title={t('cycleCalendar_logSheet_temperature')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['basal_temp']} visible={sheetType === 'basal_temp'} title={t('cycleCalendar_logSheet_temperature')} onClose={onClose}>
         <BbtForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['lh']} visible={sheetType === 'lh'} title={t('cycleDash_lh')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['lh']} visible={sheetType === 'lh'} title={t('cycleDash_lh')} onClose={onClose}>
         <LhForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['cm']} visible={sheetType === 'cm'} title={t('cycleDash_cervicalMucus')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['cm']} visible={sheetType === 'cm'} title={t('cycleDash_cervicalMucus')} onClose={onClose}>
         <CmForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['intercourse']} visible={sheetType === 'intercourse'} title={t('cycleCalendar_logSheet_intimacy')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['intercourse']} visible={sheetType === 'intercourse'} title={t('cycleCalendar_logSheet_intimacy')} onClose={onClose}>
         <IntimacyForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['pregnancy_test']} visible={sheetType === 'pregnancy_test'} title={t('cycleCalendar_logSheet_pregTest')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['pregnancy_test']} visible={sheetType === 'pregnancy_test'} title={t('cycleCalendar_logSheet_pregTest')} onClose={onClose}>
         <PregnancyTestForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['sex_drive']} visible={sheetType === 'sex_drive'} title={t('cycleCalendar_logSheet_sexDrive')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['sex_drive']} visible={sheetType === 'sex_drive'} title={t('cycleCalendar_logSheet_sexDrive')} onClose={onClose}>
         <SexDriveForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['clots']} visible={sheetType === 'clots'} title={t('cycleCalendar_logSheet_clots')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['clots']} visible={sheetType === 'clots'} title={t('cycleCalendar_logSheet_clots')} onClose={onClose}>
         <ClotsForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['weight']} visible={sheetType === 'weight'} title={t('cycleCalendar_logSheet_weight')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['weight']} visible={sheetType === 'weight'} title={t('cycleCalendar_logSheet_weight')} onClose={onClose}>
         <WeightForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['water']} visible={sheetType === 'water'} title={t('cycleCalendar_logSheet_water')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['water']} visible={sheetType === 'water'} title={t('cycleCalendar_logSheet_water')} onClose={onClose}>
         <WaterForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['activity']} visible={sheetType === 'activity'} title={t('cycleCalendar_logSheet_activity')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['activity']} visible={sheetType === 'activity'} title={t('cycleCalendar_logSheet_activity')} onClose={onClose}>
         <ActivityForm date={date} phase={phase} onSaved={onSaved} />
       </LogSheet>
-      <LogSheet sticker={CYCLE_LOG_STICKER['exam']} visible={sheetType === 'exam'} title={t('cycleCalendar_logSheet_exam')} onClose={onClose}>
+      <LogSheet requiresWrite sticker={CYCLE_LOG_STICKER['exam']} visible={sheetType === 'exam'} title={t('cycleCalendar_logSheet_exam')} onClose={onClose}>
         <ExamForm behavior="pre-pregnancy" date={date} onSaved={onSaved} />
       </LogSheet>
     </>

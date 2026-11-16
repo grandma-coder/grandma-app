@@ -2357,6 +2357,18 @@ export interface TranslationKeys {
   paywall_bestValue: string
   paywall_annual: string
   paywall_restorePurchases: string
+  paywall_choosePlan: string
+  paywall_trialThen: string
+  paywall_priceLine: string
+  paywall_ctaStartTrial: string
+  paywall_ctaSubscribe: string
+  paywall_termsLink: string
+  paywall_privacyLink: string
+  paywall_signOut: string
+  readOnly_title: string
+  readOnly_body: string
+  readOnly_subscribe: string
+  readOnly_export: string
   paywall_unavailableTitle: string
   paywall_unavailableItalic: string
   paywall_unavailableMsg: string

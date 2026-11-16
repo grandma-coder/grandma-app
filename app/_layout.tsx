@@ -99,6 +99,8 @@ import { clearLocalAccountData, registerLocalSignOutHandler } from '../lib/signO
 import { claimDeviceAccount } from '../lib/accountSwitch'
 import { parseAuthRedirect } from '../lib/authRedirect'
 import { consumeAuthEmailRequest } from '../lib/authLinkGuard'
+import { PaywallGate } from '../components/subscription/PaywallGate'
+import { WriteGuardProvider } from '../components/subscription/WriteGuardProvider'
 import { authEventLoads } from '../lib/authEvents'
 import { reloadUserData } from '../lib/userDataReload'
 import { authErrorText } from '../lib/authError'
@@ -890,6 +892,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <DevPanelProvider>
         <SavedToastProvider>
+        <WriteGuardProvider>
         <NavThemeProvider value={navTheme}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: canvasBg } }}>
           <Stack.Screen name="(auth)" />
@@ -898,6 +901,9 @@ export default function RootLayout() {
           <Stack.Screen name="pillar/[id]" />
           <Stack.Screen name="scan" options={{ presentation: 'modal' }} />
           <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+          {/* Hard-paywall gate: a plain stack screen (not a modal) so router.replace in/out of it
+              swaps the whole screen instead of nesting the tabs inside a modal. No back gesture. */}
+          <Stack.Screen name="subscribe" options={{ gestureEnabled: false, animation: 'fade' }} />
           <Stack.Screen name="manage-caregivers" />
           <Stack.Screen name="invite-caregiver" options={{ presentation: 'modal' }} />
           <Stack.Screen name="accept-invite" />
@@ -912,6 +918,8 @@ export default function RootLayout() {
           <Stack.Screen name="report" options={{ presentation: 'modal' }} />
         </Stack>
         </NavThemeProvider>
+        </WriteGuardProvider>
+        <PaywallGate signedIn={!!session && !recoveryMode} onboarded={hasCompletedOnboarding} />
         {/* App-lock overlay (WS2d) — covers everything while locked. Rendered
             outside the router so it can't be swiped away; verify mode by default. */}
         {lockEnabled && isLocked && (

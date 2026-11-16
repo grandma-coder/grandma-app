@@ -143,6 +143,8 @@ export default function DevPanel() {
   const setVariant = useThemeStore((s) => s.setVariant)
   const granularCaregiverAccess = useFeatureFlags((s) => s.granularCaregiverAccess)
   const setGranularCaregiverAccess = useFeatureFlags((s) => s.setGranularCaregiverAccess)
+  const devAccessOverride = useFeatureFlags((s) => s.devAccessOverride)
+  const setDevAccessOverride = useFeatureFlags((s) => s.setDevAccessOverride)
   const enrolled = useBehaviorStore((s) => s.enrolledBehaviors)
   const enroll = useBehaviorStore((s) => s.enroll)
   const unenroll = useBehaviorStore((s) => s.unenroll)
@@ -401,6 +403,29 @@ export default function DevPanel() {
         </Section>
 
         {/* Mode */}
+        <Section title="SUBSCRIPTION (simulate)">
+          <Body size={11} color={colors.textMuted}>
+            This device only, not persisted. Turns the paywall on and forces the access state.
+          </Body>
+          {([null, 'none', 'expired', 'active'] as const).map((opt) => (
+            <Pressable
+              key={opt ?? 'real'}
+              onPress={() => setDevAccessOverride(opt)}
+              style={({ pressed }) => [
+                styles.actionRow,
+                { borderColor: devAccessOverride === opt ? colors.primary : colors.borderLight, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Body size={14} color={colors.text} style={{ fontWeight: '600', flex: 1 }}>
+                {opt === null ? 'Real (server flag)' : opt === 'none' ? 'Never subscribed → paywall' : opt === 'expired' ? 'Trial ended → read-only' : 'Active (trial / paid)'}
+              </Body>
+              <Body size={12} color={devAccessOverride === opt ? colors.primary : colors.textMuted}>
+                {devAccessOverride === opt ? '✓' : ''}
+              </Body>
+            </Pressable>
+          ))}
+        </Section>
+
         <Section title="MODE">
           <Body size={12} color={colors.textMuted}>Current: {mode}</Body>
           <View style={styles.row}>
@@ -520,6 +545,7 @@ export default function DevPanel() {
             </Body>
           </Pressable>
         </Section>
+
 
         {/* Enrollment */}
         <Section title="ENROLLMENT">

@@ -4,6 +4,7 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  Linking,
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -13,10 +14,14 @@ import {
   purchasePackage,
   restorePurchases,
   detectTier,
+  getTrialEligibleProductIds,
   TieredPackage,
   PaywallTier,
   BillingPeriod,
 } from '../lib/revenue'
+import { useRefreshSubscriptionAccess } from '../lib/useSubscriptionAccess'
+import { getLegalDocument } from '../lib/legalContent'
+import { signOut } from '../lib/signOut'
 import { InkBackButton } from '../components/ui/InkBackButton'
 import { SiteChoice } from '../components/ui/SiteChoice'
 import { SiteSticker, type SiteStickerName } from '../components/stickers/SiteSticker'
@@ -70,7 +75,7 @@ function FeatureStickerIcon({ kind, size = 32 }: { kind: FeatureSticker; size?: 
   return <SiteSticker name={siteName[kind]} size={size} cut />
 }
 
-export default function Paywall() {
+export default function Paywall({ gate = false }: { gate?: boolean } = {}) {
   const { colors, font, brand, stickers, isDark } = useTheme()
   const diffuse = useIsDiffuse()
   const dt = useDiffuseTheme()
@@ -81,7 +86,11 @@ export default function Paywall() {
   const paywallOn = usePaywallEnabled()
   const chatOn = useGrandmaChatEnabled()
   // Subscriptions are server-switched (feature_flags 'paywall'); a stale deep link closes itself.
-  useEffect(() => { if (!paywallOn) router.back() }, [paywallOn])
+  // In gate mode PaywallGate owns navigation (flag off → access 'open' → it leaves /subscribe).
+  useEffect(() => { if (!paywallOn && !gate) router.back() }, [paywallOn, gate])
+  const refreshAccess = useRefreshSubscriptionAccess()
+  const [trialEligible, setTrialEligible] = useState<Set<string>>(new Set())
+  const done = () => (gate ? router.replace('/(tabs)') : router.back())
   const dAccent = getDiffuseAccent(mode, dt.isDark)
   const paper = diffuse ? dt.colors.surface : colors.surface
   const paperBorder = diffuse ? dt.colors.line : colors.border
@@ -136,7 +145,10 @@ export default function Paywall() {
 
   useEffect(() => {
     getTieredPackages()
-      .then(setTieredPackages)
+      .then(async (pkgs) => {
+        setTieredPackages(pkgs)
+        setTrialEligible(await getTrialEligibleProductIds(pkgs.map((p) => p.package.product.identifier)))
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -151,20 +163,33 @@ export default function Paywall() {
   const available = (f: { needs?: 'chat' | 'scan' }) => (f.needs === 'chat' ? chatOn : f.needs !== 'scan')
   const tierCopy = { ...TIER_COPY[selectedTier], features: TIER_COPY[selectedTier].features.filter(available) }
 
+  // Free-trial length of the selected package, or null when there's no free intro
+  // offer or this Apple ID already used it (never promise a trial we won't give).
+  const trialDays = useMemo(() => {
+    if (selectedPeriod === null) return null
+    const pkg = tieredPackages.find((p) => p.tier === selectedTier && p.period === selectedPeriod)?.package
+    const intro = pkg?.product.introPrice
+    if (!pkg || !intro || intro.price !== 0 || !trialEligible.has(pkg.product.identifier)) return null
+    const unit = intro.periodUnit === 'WEEK' ? 7 : intro.periodUnit === 'MONTH' ? 30 : 1
+    return intro.periodNumberOfUnits * unit
+  }, [selectedPeriod, selectedTier, tieredPackages, trialEligible])
+
+  const per = (period: BillingPeriod) => (period === 'annual' ? t('paywall_perYear') : t('paywall_perMonth'))
+
   const trialLine = useMemo(() => {
-    if (selectedPeriod === null) return `Choose a plan — ${tierCopy.seats.toLowerCase()}`
+    if (selectedPeriod === null) return t('paywall_choosePlan', { seats: tierCopy.seats.toLowerCase() })
     const price = priceFor(selectedTier, selectedPeriod)
-    const suffix = selectedPeriod === 'annual' ? '/year' : '/month'
-    return `7-day free trial, then ${price}${suffix}`
-  }, [selectedPeriod, selectedTier, tieredPackages])
+    return trialDays
+      ? t('paywall_trialThen', { days: trialDays, price, per: per(selectedPeriod) })
+      : t('paywall_priceLine', { price, per: per(selectedPeriod) })
+  }, [selectedPeriod, selectedTier, tieredPackages, trialDays])
 
   const ctaLabel = useMemo(() => {
     if (purchasing) return '…'
     if (selectedPeriod === null) return t('paywall_selectPlan')
-    const price = priceFor(selectedTier, selectedPeriod)
-    const suffix = selectedPeriod === 'annual' ? '/year' : '/month'
-    return `Start free trial · ${price}${suffix}`
-  }, [purchasing, selectedPeriod, selectedTier, tieredPackages])
+    if (trialDays) return t('paywall_ctaStartTrial')
+    return t('paywall_ctaSubscribe', { price: priceFor(selectedTier, selectedPeriod), per: per(selectedPeriod) })
+  }, [purchasing, selectedPeriod, selectedTier, tieredPackages, trialDays])
 
   const ctaDisabled = purchasing || selectedPeriod === null
 
@@ -187,11 +212,12 @@ export default function Paywall() {
       const tier = detectTier(customerInfo)
       if (tier !== 'free') {
         // profiles.subscription_* is written only by revenuecat-webhook (DB-guarded).
+        await refreshAccess()
         setAlert({
           title: t('paywall_welcomePremiumTitle'),
           italic: t('paywall_welcomePremiumItalic'),
           message: t('paywall_welcomePremiumMsg'),
-          buttons: [{ label: 'OK', variant: 'primary', onPress: () => router.back() }],
+          buttons: [{ label: 'OK', variant: 'primary', onPress: done }],
         })
       }
     } catch (e: any) {
@@ -208,11 +234,12 @@ export default function Paywall() {
       const tier = detectTier(customerInfo)
       if (tier !== 'free') {
         // profiles.subscription_* is written only by revenuecat-webhook (DB-guarded).
+        await refreshAccess()
         setAlert({
           title: t('paywall_restoredTitle'),
           italic: t('paywall_restoredItalic'),
           message: t('paywall_restoredMsg'),
-          buttons: [{ label: 'OK', variant: 'primary', onPress: () => router.back() }],
+          buttons: [{ label: 'OK', variant: 'primary', onPress: done }],
         })
       } else {
         setAlert({
@@ -237,7 +264,7 @@ export default function Paywall() {
         { backgroundColor: diffuse ? dt.colors.bg : colors.bg, paddingTop: insets.top + 28, paddingBottom: insets.bottom + 16 },
       ]}
     >
-      {!diffuse && (
+      {!diffuse && !gate && (
         <InkBackButton
           icon="close"
           ink={colors.text}
@@ -246,7 +273,7 @@ export default function Paywall() {
           style={{ position: 'absolute', right: 20, top: insets.top + 8, marginBottom: 0, zIndex: 10 }}
         />
       )}
-      {diffuse && <Pressable
+      {diffuse && !gate && <Pressable
         onPress={() => router.back()}
         hitSlop={10}
         style={[
@@ -266,7 +293,9 @@ export default function Paywall() {
         )}
       </Pressable>}
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      {/* Horizontal padding lives INSIDE the scroll content: iOS ScrollViews clip to their frame, and a
+          selected SiteChoice grows 3% — with the padding on the container its edge got cut off. */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 24 }} showsVerticalScrollIndicator={false}>
         <View style={styles.heroBlock}>
           {/* Floating decorative accents */}
           {diffuse ? (
@@ -446,7 +475,7 @@ export default function Paywall() {
                     <SiteChoice
                       align="start"
                       label={isAnnual ? t('paywall_annual') : t('paywall_monthly')}
-                      sub={`${price}${isAnnual ? '/year' : '/month'}`}
+                      sub={`${price}${per(isAnnual ? 'annual' : 'monthly')}`}
                       sticker={isAnnual ? 'star' : 'cal'}
                       tone={getModeColorSoft(mode, isDark)}
                       selected={isSelected}
@@ -555,7 +584,7 @@ export default function Paywall() {
                     color={diffuse ? dt.colors.ink3 : colors.textMuted}
                     style={{ marginTop: 2, fontFamily: diffuse ? diffuseFont.mono : font.body, letterSpacing: diffuse ? 0.5 : undefined }}
                   >
-                    {isAnnual ? '/year' : '/month'}
+                    {per(isAnnual ? 'annual' : 'monthly')}
                   </Body>
                 </Pressable>
               )
@@ -606,6 +635,27 @@ export default function Paywall() {
         >
           {t('paywall_autoRenewLegal')}
         </Body>
+
+        {/* Apple requires functional Terms of Use + Privacy Policy links on the purchase screen. */}
+        <View style={styles.legalRow}>
+          <Pressable onPress={() => Linking.openURL(getLegalDocument('terms').hostedUrl)} hitSlop={8}>
+            <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} style={styles.legalLink}>
+              {t('paywall_termsLink')}
+            </Body>
+          </Pressable>
+          <Pressable onPress={() => Linking.openURL(getLegalDocument('privacy').hostedUrl)} hitSlop={8}>
+            <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} style={styles.legalLink}>
+              {t('paywall_privacyLink')}
+            </Body>
+          </Pressable>
+          {gate && (
+            <Pressable onPress={() => { void signOut() }} hitSlop={8}>
+              <Body size={12} color={diffuse ? dt.colors.ink3 : colors.textSecondary} style={styles.legalLink}>
+                {t('paywall_signOut')}
+              </Body>
+            </Pressable>
+          )}
+        </View>
       </ScrollView>
       <PaperAlert
         visible={alert !== null}
@@ -620,7 +670,7 @@ export default function Paywall() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 24 },
+  container: { flex: 1 },
   closeButton: {
     position: 'absolute',
     right: 20,
@@ -696,4 +746,6 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   restoreButton: { alignItems: 'center', paddingVertical: 12 },
+  legalRow: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 20, marginTop: 14 },
+  legalLink: { textDecorationLine: 'underline' },
 })

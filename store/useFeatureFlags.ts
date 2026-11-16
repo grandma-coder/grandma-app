@@ -18,6 +18,9 @@ interface FeatureFlagsState {
    *  (caregiver seats use the Family cap) — the DB seat trigger reads the same flag. */
   paywall: boolean
   hydrated: boolean
+  /** DEV ONLY, never persisted: simulate a subscription state (turns the paywall on for this device). */
+  devAccessOverride: 'none' | 'expired' | 'active' | null
+  setDevAccessOverride: (v: 'none' | 'expired' | 'active' | null) => void
   setGranularCaregiverAccess: (v: boolean) => void
   setRemoteFlags: (flags: { grandmaChat: boolean; dailyRewards: boolean; paywall: boolean }) => void
   setHydrated: (v: boolean) => void
@@ -31,6 +34,8 @@ export const useFeatureFlags = create<FeatureFlagsState>()(
       dailyRewards: false,
       paywall: false,
       hydrated: false,
+      devAccessOverride: null,
+      setDevAccessOverride: (v) => set({ devAccessOverride: __DEV__ ? v : null }),
       setGranularCaregiverAccess: (v) => set({ granularCaregiverAccess: v }),
       setRemoteFlags: (flags) => set(flags),
       setHydrated: (v) => set({ hydrated: v }),
@@ -54,4 +59,5 @@ export const useGrandmaChatEnabled = () => useFeatureFlags((s) => s.grandmaChat)
 export const useDailyRewardsEnabled = () => useFeatureFlags((s) => s.dailyRewards)
 
 /** True only when the server has switched subscriptions (paywall + upgrade prompts) on. */
-export const usePaywallEnabled = () => useFeatureFlags((s) => s.paywall)
+export const usePaywallEnabled = () =>
+  useFeatureFlags((s) => s.paywall || (__DEV__ && s.devAccessOverride !== null))

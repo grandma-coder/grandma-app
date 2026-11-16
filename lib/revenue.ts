@@ -1,4 +1,4 @@
-import Purchases, { PurchasesPackage, CustomerInfo } from 'react-native-purchases'
+import Purchases, { PurchasesPackage, CustomerInfo, INTRO_ELIGIBILITY_STATUS } from 'react-native-purchases'
 
 const API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? ''
 /**
@@ -135,4 +135,45 @@ export async function getCurrentTier(): Promise<SubscriptionTier> {
   if (!IS_VALID_KEY) return 'free'
   const customerInfo = await Purchases.getCustomerInfo()
   return detectTier(customerInfo)
+}
+
+/**
+ * Entitlement state for the paywall gate. `ever` covers lapsed trials/subscriptions
+ * (entitlements.all keeps expired ones). null when RevenueCat isn't available
+ * (no production key / not configured) — callers fall back to the webhook-written profile.
+ */
+export async function getEntitlementState(): Promise<{ active: boolean; ever: boolean } | null> {
+  if (!IS_VALID_KEY || !configured) return null
+  try {
+    const info = await Purchases.getCustomerInfo()
+    return {
+      active: detectTier(info) !== 'free',
+      ever: Object.keys(info.entitlements.all ?? {}).length > 0,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Product ids still eligible for their introductory offer (the 7-day free trial).
+ * Someone who already used the trial must not see "Start free trial".
+ * Unknown eligibility (Android, errors) counts as eligible only if the store
+ * product actually has a free intro price.
+ */
+export async function getTrialEligibleProductIds(productIds: string[]): Promise<Set<string>> {
+  const eligible = new Set<string>()
+  if (!IS_VALID_KEY || !configured || productIds.length === 0) return eligible
+  try {
+    const result = await Purchases.checkTrialOrIntroductoryPriceEligibility(productIds)
+    for (const [id, r] of Object.entries(result)) {
+      if (
+        r.status === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE ||
+        r.status === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_UNKNOWN
+      ) eligible.add(id)
+    }
+  } catch {
+    // leave empty → no trial claim
+  }
+  return eligible
 }
