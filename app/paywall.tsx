@@ -112,11 +112,11 @@ export default function Paywall() {
       title: t('paywall_tierSolo'),
       seats: t('paywall_tierSoloSeats'),
       features: [
+        // Only list what the plan actually unlocks (seat limit, scan quota, chat quota).
+        // Vaccine reminders, priority replies etc. aren't plan-gated — don't sell them.
         { sticker: 'heart', text: t('paywall_featureSoloCaregiver') },
         { sticker: 'cross', text: t('paywall_featureUnlimitedScansDetail'), needs: 'scan' },
         { sticker: 'sparkle', text: t('paywall_featureUnlimitedChat'), needs: 'chat' },
-        { sticker: 'star', text: t('paywall_featureVaccineReminders') },
-        { sticker: 'sun', text: t('paywall_featurePriorityResponses'), needs: 'chat' },
       ],
       highlight: t('paywall_soloHighlight'),
     },
@@ -124,11 +124,11 @@ export default function Paywall() {
       title: t('paywall_tierFamily'),
       seats: t('paywall_tierFamilySeats'),
       features: [
+        // Scans/chat quotas follow the PAYER's plan (edge functions check the caller's tier),
+        // so these are the subscriber's own perks — not "for every caregiver".
         { sticker: 'family', text: t('paywall_featureFamilyAccounts') },
-        { sticker: 'cross', text: t('paywall_featureFamilyScans'), needs: 'scan' },
-        { sticker: 'sparkle', text: t('paywall_featureSharedChat'), needs: 'chat' },
-        { sticker: 'star', text: t('paywall_featureSyncedVaccines') },
-        { sticker: 'sun', text: t('paywall_featurePriorityEarly'), needs: 'chat' },
+        { sticker: 'cross', text: t('paywall_featureUnlimitedScansDetail'), needs: 'scan' },
+        { sticker: 'sparkle', text: t('paywall_featureUnlimitedChat'), needs: 'chat' },
       ],
       highlight: t('paywall_familyHighlight'),
     },
