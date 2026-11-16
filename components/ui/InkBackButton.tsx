@@ -31,7 +31,9 @@ export function InkBackButton({
   const to = (v: number) => Animated.spring(press, { toValue: v, friction: 6, tension: 260, useNativeDriver: true }).start()
   return (
     <Pressable
-      onPress={onPress ?? (() => router.back())}
+      // Opened from a deep link / notification there's no screen to go back to —
+      // fall back to home instead of a dead button.
+      onPress={onPress ?? (() => (router.canGoBack() ? router.back() : router.replace('/(tabs)')))}
       onPressIn={() => to(1)}
       onPressOut={() => to(0)}
       hitSlop={12}
