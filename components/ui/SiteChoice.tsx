@@ -84,6 +84,9 @@ export function SiteChoice({
       <Animated.View
         onLayout={(e) => setSize({ w: Math.round(e.nativeEvent.layout.width), h: Math.round(e.nativeEvent.layout.height) })}
         style={{
+          // Fill the Pressable's height so side-by-side choices (flex row) render at the
+          // height of the tallest one instead of hugging their own text.
+          flexGrow: 1,
           transform: [
             { rotate: '0deg' },
             { scale: Animated.multiply(
