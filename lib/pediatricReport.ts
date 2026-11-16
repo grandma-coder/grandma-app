@@ -129,7 +129,7 @@ export function buildReportHtml(d: PediatricReportData): string {
       <p class="title">${esc(d.childName)}</p>
       <p class="subtitle">${esc(t('pedReport_title'))} · ${esc(d.ageLabel)}${d.sex ? ' · ' + esc(d.sex) : ''}</p>
     </div>
-    <div class="brand">grandma.app<br/>${esc(t('pedReport_generated', { date: d.generatedOn }))}</div>
+    <div class="brand">Grandma<br/>${esc(t('pedReport_generated', { date: d.generatedOn }))}</div>
   </div>
 
   <section>

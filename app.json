@@ -70,7 +70,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Unlock grandma.app with Face ID."
+          "faceIDPermission": "Unlock Grandma with Face ID."
         }
       ],
       "@react-native-community/datetimepicker",
