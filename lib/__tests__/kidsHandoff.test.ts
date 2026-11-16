@@ -61,7 +61,7 @@ describe('buildKidsHandoff', () => {
       '🙂 Mood: Happy',
       '🧸 Activities: Playground (45 min)',
       '📝 Note: "a bit fussy after nap"',
-      '— sent from grandma.app',
+      '— sent from Grandma',
     ])
     // In-app rows carry stickers, never emoji.
     expect(h.lines.map((l) => l.sticker)).toEqual(['bottle', 'moon', 'diaper', 'pill', 'face3', 'shoe', 'pencil'])
@@ -73,7 +73,7 @@ describe('buildKidsHandoff', () => {
     const h = buildKidsHandoff(logs, kenji, at(DAY, '14:00'), at(DAY, '17:00'), t, 'en')
     expect(h.empty).toBe(true)
     expect(h.lines).toEqual([])
-    expect(plain(h.text)).toBe('Nothing logged for Kenji since 2:00 PM.\n— sent from grandma.app')
+    expect(plain(h.text)).toBe('Nothing logged for Kenji since 2:00 PM.\n— sent from Grandma')
   })
 
   it('handles a window crossing midnight, including an overnight sleep', () => {
