@@ -12,6 +12,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { checkAiQuota, quotaExceededResponse } from '../_shared/aiQuota.ts'
+import { LOCALE_NAMES } from '../_shared/locales.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -34,19 +35,6 @@ function corsHeadersFor(req: Request): Record<string, string> {
 }
 
 // Human-readable language names for the translation prompt (locale code → name).
-const LOCALE_NAMES: Record<string, string> = {
-  'pt-BR': 'Brazilian Portuguese',
-  es: 'Spanish',
-  fr: 'French',
-  de: 'German',
-  it: 'Italian',
-  ja: 'Japanese',
-  ko: 'Korean',
-  zh: 'Simplified Chinese',
-  ar: 'Arabic',
-  hi: 'Hindi',
-  tr: 'Turkish',
-}
 
 async function sha256(s: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))

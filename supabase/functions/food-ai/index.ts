@@ -5,6 +5,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { logAiUsage } from '../_shared/aiUsage.ts'
 import { checkAiQuota, quotaExceededResponse, sanitizeChatMessages, validateImage } from '../_shared/aiQuota.ts'
+import { LOCALE_NAMES } from '../_shared/locales.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -41,6 +42,8 @@ interface RequestBody {
   meal?: 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' | 'night_snack'
   /** Who is eating. Default 'child'. 'pregnant' uses adult portions + pregnancy-aware notes. */
   audience?: 'child' | 'pregnant'
+  /** App language (e.g. 'pt-BR'). Only `notes` is localized; food names stay canonical English. */
+  locale?: string
 }
 
 interface FoodItem {
@@ -178,7 +181,11 @@ serve(async (req) => {
           ? `${ageLine}\n${mealLine}\nCaregiver wrote: "${body.text}"\n\nIdentify each food they listed and estimate calories for the child's portion. Respond with JSON only.`
           : `${ageLine}\n${mealLine}\nHere is a photo of what the child is eating. Identify each distinct food item visible on the plate/bowl/bottle/cup and estimate calories for what appears to be the child's portion. If the image is not food, return empty foods array. Respond with JSON only.`)
 
-    const systemPrompt = audience === 'pregnant' ? SYSTEM_PROMPT_PREGNANT : SYSTEM_PROMPT_CHILD
+    const languageName = typeof body.locale === 'string' ? LOCALE_NAMES[body.locale] : undefined
+    const systemPrompt = (audience === 'pregnant' ? SYSTEM_PROMPT_PREGNANT : SYSTEM_PROMPT_CHILD) +
+      (languageName
+        ? `\n\nLANGUAGE: write the "notes" value in ${languageName}. Keep every "name" value in lowercase canonical English exactly as specified above — the app matches on them.`
+        : '')
 
     const content: unknown[] = []
     if (body.mode === 'image') {

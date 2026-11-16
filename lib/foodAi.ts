@@ -11,6 +11,7 @@
  * fallback used while the user types. This one is the authoritative backend.
  */
 import { supabase } from './supabase'
+import { useLanguageStore } from '../store/useLanguageStore'
 
 export interface AiFoodItem {
   name: string
@@ -46,7 +47,9 @@ interface ImageArgs {
 }
 
 async function invoke(body: Record<string, unknown>): Promise<AiFoodResult> {
-  const { data, error } = await supabase.functions.invoke('food-ai', { body })
+  // notes come back in the app language; food names stay canonical English.
+  const locale = useLanguageStore.getState().language
+  const { data, error } = await supabase.functions.invoke('food-ai', { body: { ...body, locale } })
   if (error) {
     // supabase.functions.invoke surfaces a generic "non-2xx status code" message
     // and hides the real reason in the response body. Dig the function's own
