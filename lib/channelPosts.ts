@@ -900,7 +900,8 @@ export async function notifyMentions(
   channelId: string,
   channelName: string,
   messageContent: string,
-  mentionedUserIds: string[]
+  mentionedUserIds: string[],
+  postId: string
 ): Promise<void> {
   if (mentionedUserIds.length === 0) return
   const { data: { session } } = await supabase.auth.getSession()
@@ -916,9 +917,9 @@ export async function notifyMentions(
         p_type: 'mention',
         p_title: `${authorName ?? 'Someone'} mentioned you in #${channelName}`,
         p_body: messageContent.slice(0, 100),
-        // Structured fields so the inbox can render this in the reader's
-        // language (p_title above is stored English).
-        p_data: { channelId, channelName, authorName: authorName ?? null, kind: 'mention' },
+        // The server rebuilds title/body/data from the post (postId) — these are
+        // only a fallback for older servers. The post's mentions must include uid.
+        p_data: { channelId, channelName, authorName: authorName ?? null, kind: 'mention', postId },
         p_channel_id: channelId,
       })
     )

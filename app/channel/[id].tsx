@@ -420,7 +420,7 @@ export default function ChannelChat() {
 
       // Notify mentioned users
       if (mentionIds.length > 0 && channel) {
-        notifyMentions(id, channel.name, content, mentionIds).catch(() => {})
+        notifyMentions(id, channel.name, content, mentionIds, newMsg.id).catch(() => {})
       }
 
       setText('')
