@@ -15,7 +15,7 @@
   "footer": {
     "privacy": "Privacy",
     "terms": "Terms",
-    "rights": "© 2026 grandma.app",
+    "rights": "© 2026 Sauce Room LLC · 418 Broadway Ste N, Albany, NY 12207",
     "navLabel": "Footer",
     "whatsapp": "WhatsApp"
   },
@@ -24,7 +24,7 @@
     "title": "Privacy Policy",
     "updated": "Last updated · November 9, 2026",
     "note": "This is the authoritative version.",
-    "intro": "Your privacy matters to us. This policy explains what data we collect, how we use it, and how you can control it.",
+    "intro": "Grandma is operated by Sauce Room LLC, a New York limited liability company (\"we\", \"us\"). Your privacy matters to us. This policy explains what data we collect, how we use it, and how you can control it.",
     "sections": [
       {
         "heading": "What We Collect",
@@ -117,7 +117,7 @@
     "title": "Terms of Service",
     "updated": "Last updated · November 9, 2026",
     "note": "This is the authoritative version.",
-    "intro": "By using Grandma, you agree to these terms. Please read them carefully.",
+    "intro": "Grandma is operated by Sauce Room LLC, a New York limited liability company (\"we\", \"us\"). By using Grandma, you agree to these terms. Please read them carefully.",
     "sections": [
       {
         "heading": "Medical Disclaimer",
